@@ -96,9 +96,8 @@ function slugifyShopCode(shopName) {
   return base + rand;
 }
 
-
 /* ============================================================
-   4. OWNER LOGIN
+   4. OWNER LOGIN (Fixed version)
    ============================================================ */
 window.ownerLogin = async function () {
   clearAllErrors();
@@ -114,14 +113,74 @@ window.ownerLogin = async function () {
   setBtnLoading('ownerLoginBtn', true, 'Signing in...');
 
   try {
-    await signInWithEmailAndPassword(auth, email, pass);
-    /* onAuthStateChanged will handle the redirect */
+    // ---- Step 1: Firebase Auth sign-in ----
+    console.log('🔐 Attempting login for:', email);
+    const cred = await signInWithEmailAndPassword(auth, email, pass);
+    console.log('✅ Auth success. UID:', cred.user.uid);
+
+    // ---- Step 2: Verify store document exists ----
+    try {
+      const storeRef  = doc(db, PATHS.stores, cred.user.uid);
+      const storeSnap = await getDoc(storeRef);
+      console.log('📦 Store document exists?', storeSnap.exists());
+
+      if (!storeSnap.exists()) {
+        setError('ownerError',
+          'Your store setup is incomplete. Please register again with a different email.');
+        setBtnLoading('ownerLoginBtn', false, 'Sign In →');
+        await signOut(auth);
+        return;
+      }
+
+      const storeData = storeSnap.data();
+      console.log('🏪 Store:', storeData.shopName, '| Code:', storeData.shopCode);
+
+      // Cache store info for app.html to use
+      try {
+        localStorage.setItem('sfp_current_store', JSON.stringify({
+          uid:      cred.user.uid,
+          shopName: storeData.shopName,
+          shopCode: storeData.shopCode,
+          email:    storeData.ownerEmail
+        }));
+      } catch (e) { /* ignore quota errors */ }
+
+    } catch (storeErr) {
+      console.error('❌ Firestore read failed:', storeErr);
+      setError('ownerError',
+        'Cannot read store data. Check Firestore Rules. (' + (storeErr.code || 'unknown') + ')');
+      setBtnLoading('ownerLoginBtn', false, 'Sign In →');
+      return;
+    }
+
+    // ---- Step 3: Success! Redirect ----
+    setError('ownerError', '');
+    setBtnLoading('ownerLoginBtn', false, 'Sign In →');
+
+    // Check if app.html exists first
+    const appCheck = await fetch('./app.html', { method: 'HEAD' }).catch(() => null);
+    if (!appCheck || !appCheck.ok) {
+      // app.html not yet created — show friendly message
+      alert(
+        '✅ Login successful!\n\n' +
+        'Your store "' + (JSON.parse(localStorage.getItem('sfp_current_store') || '{}').shopName || '') + '" is ready.\n\n' +
+        '⚠ app.html is not created yet — please wait for the next file from your developer.\n\n' +
+        'You are signed in. Session will stay active.'
+      );
+      return;
+    }
+
+    // app.html exists — go there
+    console.log('➡️ Redirecting to app.html...');
+    location.href = './app.html';
+
   } catch (err) {
-    console.error('Login error:', err);
+    console.error('❌ Login error:', err);
     setError('ownerError', friendlyError(err.code));
     setBtnLoading('ownerLoginBtn', false, 'Sign In →');
   }
 };
+
 
 
 /* ============================================================
