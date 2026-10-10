@@ -1,0 +1,956 @@
+<!-- ============================================================
+     SMARTFIX ERP — Books Module (Cash/Bank/TB/GST)
+     File: modules/books.html
+     Version: 4.0.0
+     ============================================================ -->
+
+<section id="booksModule" class="space-y-4">
+
+  <!-- ============================================================
+       HEADER + CONTROLS
+       ============================================================ -->
+  <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4">
+    <div class="flex flex-wrap justify-between items-center gap-3">
+      <div>
+        <h2 class="text-lg font-black text-white">Cash Book, Bank Book & Trial Balance</h2>
+        <p class="text-[11px] text-slate-400 mt-0.5">
+          Auto-generated from sales, purchases, vouchers & returns
+        </p>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <div>
+          <label class="block text-[10px] font-bold uppercase text-slate-500 mb-0.5">From</label>
+          <input type="date" id="booksFromDate" onchange="SF.books.renderAll()"
+                 class="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200">
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold uppercase text-slate-500 mb-0.5">To</label>
+          <input type="date" id="booksToDate" onchange="SF.books.renderAll()"
+                 class="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200">
+        </div>
+        <button type="button" onclick="SF.books.setRange('fy')"
+                class="mt-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition">
+          ↻ FY
+        </button>
+        <button type="button" onclick="SF.books.setRange('month')"
+                class="mt-3.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-3 py-1.5 rounded-lg text-xs transition">
+          This Month
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       TAB BAR
+       ============================================================ -->
+  <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-1">
+    <div class="flex gap-1 overflow-x-auto" style="scrollbar-width:none">
+      <button type="button" onclick="SF.books.switch('cash')" id="bkTabCash"
+              class="book-tab flex-1 py-2.5 px-4 rounded-xl text-xs font-bold whitespace-nowrap transition bg-sky-600 text-white">
+        💵 Cash Book
+      </button>
+      <button type="button" onclick="SF.books.switch('bank')" id="bkTabBank"
+              class="book-tab flex-1 py-2.5 px-4 rounded-xl text-xs font-bold whitespace-nowrap transition text-slate-400 hover:text-white">
+        🏦 Bank Book
+      </button>
+      <button type="button" onclick="SF.books.switch('tb')" id="bkTabTB"
+              class="book-tab flex-1 py-2.5 px-4 rounded-xl text-xs font-bold whitespace-nowrap transition text-slate-400 hover:text-white">
+        ⚖️ Trial Balance
+      </button>
+      <button type="button" onclick="SF.books.switch('gst')" id="bkTabGST"
+              class="book-tab flex-1 py-2.5 px-4 rounded-xl text-xs font-bold whitespace-nowrap transition text-slate-400 hover:text-white">
+        📊 GST Summary
+      </button>
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       PANEL: CASH BOOK
+       ============================================================ -->
+  <div id="bkPanel-cash" class="book-panel space-y-3">
+
+    <div class="grid grid-cols-3 gap-3">
+      <div class="bg-emerald-950/40 border border-emerald-800/50 rounded-2xl p-4">
+        <div class="text-[10px] uppercase font-bold text-emerald-400 tracking-wider">Cash In</div>
+        <div id="bkCashIn" class="text-lg sm:text-xl font-black mt-1 text-emerald-300">₹0</div>
+      </div>
+      <div class="bg-rose-950/40 border border-rose-800/50 rounded-2xl p-4">
+        <div class="text-[10px] uppercase font-bold text-rose-400 tracking-wider">Cash Out</div>
+        <div id="bkCashOut" class="text-lg sm:text-xl font-black mt-1 text-rose-300">₹0</div>
+      </div>
+      <div class="bg-indigo-950/40 border border-indigo-800/50 rounded-2xl p-4">
+        <div class="text-[10px] uppercase font-bold text-indigo-400 tracking-wider">Balance</div>
+        <div id="bkCashBal" class="text-lg sm:text-xl font-black mt-1 text-indigo-300">₹0</div>
+      </div>
+    </div>
+
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden">
+      <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+        <h3 class="font-bold text-xs uppercase tracking-wider text-slate-300">💵 Cash Book Register</h3>
+        <span id="bkCashCount" class="text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded font-mono">0 entries</span>
+      </div>
+      <div class="overflow-x-auto max-h-[60vh]">
+        <table class="w-full text-left text-xs border-collapse min-w-[700px]">
+          <thead class="bg-slate-950 sticky top-0 z-10">
+            <tr>
+              <th class="p-2.5 border-b border-slate-800 text-slate-500 uppercase text-[10px] whitespace-nowrap">Date</th>
+              <th class="p-2.5 border-b border-slate-800 text-slate-500 uppercase text-[10px]">Particulars</th>
+              <th class="p-2.5 border-b border-slate-800 text-slate-500 uppercase text-[10px] whitespace-nowrap">Ref</th>
+              <th class="p-2.5 border-b border-slate-800 text-slate-500 uppercase text-[10px] text-right whitespace-nowrap">In ₹</th>
+              <th class="p-2.5 border-b border-slate-800 text-slate-500 uppercase text-[10px] text-right whitespace-nowrap">Out ₹</th>
+              <th class="p-2.5 border-b border-slate-800 text-slate-500 uppercase text-[10px] text-right whitespace-nowrap">Balance ₹</th>
+            </tr>
+          </thead>
+          <tbody id="bkCashBody" class="divide-y divide-slate-800/60">
+            <tr>
+              <td colspan="6" class="text-center py-8 text-slate-500 text-xs">No cash transactions in this period.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ============================================================
+       PANEL: BANK BOOK
+       ============================================================ -->
+  <div id="bkPanel-bank" class="book-panel space-y-3" style="display:none">
+
+    <div class="grid grid-cols-3 gap-3">
+      <div class="bg-emerald-950/40 border border-emerald-800/50 rounded-2xl p-4">
+        <div class="text-[10px] uppercase font-bold text-emerald-400 tracking-wider">Bank In</div>
+        <div id="bkBankIn" class="text-lg sm:text-xl font-black mt-1 text-emerald-300">₹0</div>
+      </div>
+      <div class="bg-rose-950/40 border border-rose-800/50 rounded-2xl p-4">
+        <div class="text-[10px] uppercase font-bold text-rose-400 tracking-wider">Bank Out</div>
+        <div id="bkBankOut" class="text-lg sm:text-xl font-black mt-1 text-rose-300">₹0</div>
+      </div>
+      <div class="bg-indigo-950/40 border border-indigo-800/50 rounded-2xl p-4">
+        <div class="text-[10px] uppercase font-bold text-indigo-400 tracking-wider">Balance</div>
+        <div id="bkBankBal" class="text-lg sm:text-xl font-black mt-1 text-indigo-300">₹0</div>
+      </div>
+    </div>
+
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden">
+      <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+        <h3 class="font-bold text-xs uppercase tracking-wider text-slate-300">🏦 Bank / UPI Register</h3>
+        <span id="bkBankCount" class="text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded font-mono">0 entries</span>
+      </div>
+      <div class="overflow-x-auto max-h-[60vh]">
+        <table class="w-full text-left text-xs border-collapse min-w-[700px]">
+          <thead class="bg-slate-950 sticky top-0 z-10">
+            <tr>
+              <th class="p-2.5 border-b border-slate-800 text-slate-500 uppercase text-[10px] whitespace-nowrap">Date</th>
+              <th class="p-2.5 border-b border-slate-800 text-slate-500 uppercase text-[10px]">Particulars</th>
+              <th class="p-2.5 border-b border-slate-800 text-slate-500 uppercase text-[10px] whitespace-nowrap">Ref</th>
+              <th class="p-2.5 border-b border-slate-800 text-slate-500 uppercase text-[10px] text-right whitespace-nowrap">In ₹</th>
+              <th class="p-2.5 border-b border-slate-800 text-slate-500 uppercase text-[10px] text-right whitespace-nowrap">Out ₹</th>
+              <th class="p-2.5 border-b border-slate-800 text-slate-500 uppercase text-[10px] text-right whitespace-nowrap">Balance ₹</th>
+            </tr>
+          </thead>
+          <tbody id="bkBankBody" class="divide-y divide-slate-800/60">
+            <tr>
+              <td colspan="6" class="text-center py-8 text-slate-500 text-xs">No bank transactions in this period.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ============================================================
+       PANEL: TRIAL BALANCE
+       ============================================================ -->
+  <div id="bkPanel-tb" class="book-panel space-y-3" style="display:none">
+
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden">
+      <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+        <h3 class="font-bold text-xs uppercase tracking-wider text-slate-300">⚖️ Trial Balance</h3>
+        <span id="bkTBStatus" class="text-[10px] px-2 py-1 rounded font-bold">—</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead class="bg-slate-950">
+            <tr>
+              <th class="p-3 border-b border-slate-800 text-slate-500 uppercase text-[10px]">Account Head</th>
+              <th class="p-3 border-b border-slate-800 text-slate-500 uppercase text-[10px] text-right">Debit (Dr) ₹</th>
+              <th class="p-3 border-b border-slate-800 text-slate-500 uppercase text-[10px] text-right">Credit (Cr) ₹</th>
+            </tr>
+          </thead>
+          <tbody id="bkTBBody" class="divide-y divide-slate-800/60">
+            <tr>
+              <td colspan="3" class="text-center py-8 text-slate-500 text-xs">No data.</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr class="bg-slate-950/70 font-black">
+              <td class="p-3 border-t-2 border-slate-700 text-white">TOTAL</td>
+              <td id="bkTBTotalDr" class="p-3 border-t-2 border-slate-700 text-right font-mono text-sky-400">₹0</td>
+              <td id="bkTBTotalCr" class="p-3 border-t-2 border-slate-700 text-right font-mono text-emerald-400">₹0</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ============================================================
+       PANEL: GST SUMMARY
+       ============================================================ -->
+  <div id="bkPanel-gst" class="book-panel space-y-3" style="display:none">
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+      <!-- Output GST -->
+      <div class="bg-slate-900/70 border border-sky-800/50 rounded-2xl overflow-hidden">
+        <div class="p-4 border-b border-sky-800/50 bg-sky-950/40">
+          <h3 class="font-bold text-xs uppercase tracking-wider text-sky-300">📤 Output GST (Sales)</h3>
+        </div>
+        <div class="p-4 space-y-2">
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-400">Taxable Sales</span>
+            <strong id="bkGstOutTaxable" class="font-mono text-slate-200">₹0</strong>
+          </div>
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-400">CGST</span>
+            <strong id="bkGstOutCGST" class="font-mono text-slate-200">₹0</strong>
+          </div>
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-400">SGST</span>
+            <strong id="bkGstOutSGST" class="font-mono text-slate-200">₹0</strong>
+          </div>
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-400">IGST</span>
+            <strong id="bkGstOutIGST" class="font-mono text-slate-200">₹0</strong>
+          </div>
+          <div class="flex justify-between text-xs border-t border-slate-800 pt-2 mt-2">
+            <span class="text-slate-400">Returns GST (-)</span>
+            <strong id="bkGstOutReturns" class="font-mono text-rose-400">₹0</strong>
+          </div>
+          <div class="flex justify-between border-t-2 border-sky-800/50 pt-2 mt-2">
+            <span class="text-sm font-bold text-white">Net Output</span>
+            <strong id="bkGstOutTotal" class="text-base font-black font-mono text-sky-300">₹0</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input GST -->
+      <div class="bg-slate-900/70 border border-emerald-800/50 rounded-2xl overflow-hidden">
+        <div class="p-4 border-b border-emerald-800/50 bg-emerald-950/40">
+          <h3 class="font-bold text-xs uppercase tracking-wider text-emerald-300">📥 Input GST (Purchases)</h3>
+        </div>
+        <div class="p-4 space-y-2">
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-400">Taxable Purchases</span>
+            <strong id="bkGstInTaxable" class="font-mono text-slate-200">₹0</strong>
+          </div>
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-400">Input CGST</span>
+            <strong id="bkGstInCGST" class="font-mono text-slate-200">₹0</strong>
+          </div>
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-400">Input SGST</span>
+            <strong id="bkGstInSGST" class="font-mono text-slate-200">₹0</strong>
+          </div>
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-400">Input IGST</span>
+            <strong id="bkGstInIGST" class="font-mono text-slate-200">₹0</strong>
+          </div>
+          <div class="flex justify-between border-t-2 border-emerald-800/50 pt-2 mt-3">
+            <span class="text-sm font-bold text-white">Total Input GST</span>
+            <strong id="bkGstInTotal" class="text-base font-black font-mono text-emerald-300">₹0</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Net Payable -->
+      <div class="md:col-span-2 bg-gradient-to-r from-rose-950 to-slate-900 border border-rose-800/60 rounded-2xl p-5">
+        <div class="flex flex-wrap justify-between items-center gap-3">
+          <div>
+            <div class="text-[11px] uppercase font-bold text-rose-400 tracking-wider">
+              Net GST Payable to Government
+            </div>
+            <div class="text-[10px] text-slate-400 mt-0.5">
+              (Net Output − Total Input GST)
+            </div>
+          </div>
+          <div id="bkGstNetPayable" class="text-2xl sm:text-3xl font-black font-mono text-rose-300">₹0</div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- ============================================================
+     BOOKS MODULE LOGIC
+     ============================================================ -->
+<script>
+(function () {
+  'use strict';
+
+  const S  = window.SF?.state?.state;
+  const C  = window.SF?.common;
+
+  if (!S || !C) {
+    console.error('Books module: SF globals not ready');
+    return;
+  }
+
+  /* ============================================================
+     STATE
+     ============================================================ */
+  const B = {
+    current: 'cash',
+    from:    null,
+    to:      null
+  };
+
+
+  /* ============================================================
+     1. INIT
+     ============================================================ */
+  function init_booksModule() {
+    console.log('%c📚 Books module initialized', 'color:#38bdf8;font-weight:bold');
+
+    /* Default FY */
+    const fy = C.getFY(new Date());
+    B.from = C.fmtDate(fy.start);
+    B.to   = C.fmtDate(fy.end);
+
+    const fromEl = document.getElementById('booksFromDate');
+    const toEl   = document.getElementById('booksToDate');
+    if (fromEl) fromEl.value = B.from;
+    if (toEl)   toEl.value   = B.to;
+
+    /* Current tab */
+    B.current = 'cash';
+    switchTab('cash');
+
+    /* Render all */
+    renderAll();
+
+    /* Subscribe to state changes */
+    if (window.SF?.state?.on) {
+      window.SF.state.on('change:invoices', () => renderAll());
+      window.SF.state.on('change:creditNotes', () => renderAll());
+      window.SF.state.on('change:vouchers', () => renderAll());
+      window.SF.state.on('change:purchases', () => renderAll());
+    }
+
+    return {
+      onUnload: () => {
+        console.log('Books module unloading');
+      }
+    };
+  }
+
+
+  /* ============================================================
+     2. TAB SWITCH
+     ============================================================ */
+  function switchTab(tab) {
+    B.current = tab;
+    const panels = { cash: 'bkPanel-cash', bank: 'bkPanel-bank', tb: 'bkPanel-tb', gst: 'bkPanel-gst' };
+    const tabs   = { cash: 'bkTabCash',    bank: 'bkTabBank',    tb: 'bkTabTB',    gst: 'bkTabGST' };
+
+    Object.entries(panels).forEach(([key, id]) => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = (key === tab) ? 'block' : 'none';
+    });
+
+    Object.entries(tabs).forEach(([key, id]) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (key === tab) {
+        el.className = 'book-tab flex-1 py-2.5 px-4 rounded-xl text-xs font-bold whitespace-nowrap transition bg-sky-600 text-white';
+      } else {
+        el.className = 'book-tab flex-1 py-2.5 px-4 rounded-xl text-xs font-bold whitespace-nowrap transition text-slate-400 hover:text-white';
+      }
+    });
+  }
+
+
+  /* ============================================================
+     3. SET RANGE
+     ============================================================ */
+  function setRange(period) {
+    const today = new Date();
+    let from = new Date();
+    let to   = new Date();
+
+    if (period === 'fy') {
+      const fy = C.getFY(today);
+      from = fy.start;
+      to   = fy.end;
+    } else if (period === 'month') {
+      from = new Date(today.getFullYear(), today.getMonth(), 1);
+      to   = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59);
+    } else if (period === 'today') {
+      from = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      to   = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+    }
+
+    B.from = C.fmtDate(from);
+    B.to   = C.fmtDate(to);
+
+    const fromEl = document.getElementById('booksFromDate');
+    const toEl   = document.getElementById('booksToDate');
+    if (fromEl) fromEl.value = B.from;
+    if (toEl)   toEl.value   = B.to;
+
+    renderAll();
+    C.toast('Range: ' + B.from + ' → ' + B.to, 'info', 2000);
+  }
+
+
+  /* ============================================================
+     4. RENDER ALL
+     ============================================================ */
+  function renderAll() {
+    /* Read dates */
+    const fromStr = document.getElementById('booksFromDate')?.value || B.from;
+    const toStr   = document.getElementById('booksToDate')?.value   || B.to;
+    B.from = fromStr;
+    B.to   = toStr;
+
+    renderCashBook();
+    renderBankBook();
+    renderTrialBalance();
+    renderGSTSummary();
+  }
+
+
+  /* ============================================================
+     5. DATE HELPERS
+     ============================================================ */
+  function inRange(dateStr) {
+    if (!dateStr) return false;
+    const d = new Date(dateStr + 'T12:00:00');
+    const from = new Date(B.from + 'T00:00:00');
+    const to   = new Date(B.to   + 'T23:59:59');
+    return d >= from && d <= to;
+  }
+
+
+  /* ============================================================
+     6. GET ACCOUNT ENTRIES
+     ============================================================ */
+  function getAccountEntries(accountName) {
+    const entries = [];
+
+    /* Sales (invoices) */
+    (S.invoices || []).forEach((inv) => {
+      if (inv.ledger !== accountName) return;
+      if (!inRange(inv.date)) return;
+      entries.push({
+        date: inv.date,
+        desc: 'Sale — ' + (inv.customerName || 'Cash Customer'),
+        ref:  inv.invoiceNo,
+        dr:   inv.totalGross || 0,
+        cr:   0,
+        type: 'SALE'
+      });
+    });
+
+    /* Returns (credit notes) — cash refunded */
+    if (accountName === 'Cash-in-Hand') {
+      (S.creditNotes || []).forEach((crn) => {
+        if (!inRange(crn.date)) return;
+        if (crn.refundMode !== 'Cash-in-Hand') return;
+        entries.push({
+          date: crn.date,
+          desc: 'Refund — ' + (crn.customerName || ''),
+          ref:  crn.crnNo,
+          dr:   0,
+          cr:   crn.refundTotal || 0,
+          type: 'RETURN'
+        });
+      });
+    }
+    if (accountName === 'Bank / UPI') {
+      (S.creditNotes || []).forEach((crn) => {
+        if (!inRange(crn.date)) return;
+        if (crn.refundMode !== 'Bank / UPI') return;
+        entries.push({
+          date: crn.date,
+          desc: 'Refund — ' + (crn.customerName || ''),
+          ref:  crn.crnNo,
+          dr:   0,
+          cr:   crn.refundTotal || 0,
+          type: 'RETURN'
+        });
+      });
+    }
+
+    /* Purchases */
+    (S.purchases || []).forEach((p) => {
+      if (p.ledger !== accountName) return;
+      if (!inRange(p.date)) return;
+      entries.push({
+        date: p.date,
+        desc: 'Purchase — ' + (p.supplierName || ''),
+        ref:  p.purchaseNo,
+        dr:   0,
+        cr:   p.totalCost || 0,
+        type: 'PURCHASE'
+      });
+    });
+
+    /* Vouchers */
+    (S.vouchers || []).forEach((v) => {
+      if (!inRange(v.date)) return;
+
+      /* Expense */
+      if (v.type === 'EXPENSE' && v.account === accountName) {
+        entries.push({
+          date: v.date,
+          desc: v.category || 'Expense',
+          ref:  'VCH-' + String(v.id).slice(-6),
+          dr:   0,
+          cr:   v.amount || 0,
+          type: 'EXPENSE'
+        });
+      }
+
+      /* Receipt */
+      if (v.type === 'RECEIPT' && v.account === accountName) {
+        entries.push({
+          date: v.date,
+          desc: (v.category || 'Receipt') + ' (due)',
+          ref:  'VCH-' + String(v.id).slice(-6),
+          dr:   v.amount || 0,
+          cr:   0,
+          type: 'RECEIPT'
+        });
+      }
+
+      /* Contra */
+      if (v.type === 'CONTRA') {
+        if (v.fromAccount === accountName) {
+          entries.push({
+            date: v.date,
+            desc: 'Contra → ' + shortAcc(v.toAccount),
+            ref:  'VCH-' + String(v.id).slice(-6),
+            dr:   0,
+            cr:   v.amount || 0,
+            type: 'CONTRA'
+          });
+        }
+        if (v.toAccount === accountName) {
+          entries.push({
+            date: v.date,
+            desc: 'Contra ← ' + shortAcc(v.fromAccount),
+            ref:  'VCH-' + String(v.id).slice(-6),
+            dr:   v.amount || 0,
+            cr:   0,
+            type: 'CONTRA'
+          });
+        }
+      }
+
+      /* Journal */
+      if (v.type === 'JOURNAL') {
+        if (v.drAccount === accountName) {
+          entries.push({
+            date: v.date,
+            desc: 'Journal Dr (Cr ' + v.crAccount + ')',
+            ref:  'VCH-' + String(v.id).slice(-6),
+            dr:   v.amount || 0,
+            cr:   0,
+            type: 'JOURNAL'
+          });
+        }
+        if (v.crAccount === accountName) {
+          entries.push({
+            date: v.date,
+            desc: 'Journal Cr (Dr ' + v.drAccount + ')',
+            ref:  'VCH-' + String(v.id).slice(-6),
+            dr:   0,
+            cr:   v.amount || 0,
+            type: 'JOURNAL'
+          });
+        }
+      }
+    });
+
+    /* Sort by date asc */
+    entries.sort((a, b) => new Date(a.date + 'T12:00:00') - new Date(b.date + 'T12:00:00'));
+    return entries;
+  }
+
+
+  /* ============================================================
+     7. RENDER CASH BOOK
+     ============================================================ */
+  function renderCashBook() {
+    const entries = getAccountEntries('Cash-in-Hand');
+    const body = document.getElementById('bkCashBody');
+    if (!body) return;
+
+    let totalIn = 0, totalOut = 0, balance = 0;
+
+    if (entries.length === 0) {
+      body.innerHTML = `
+        <tr>
+          <td colspan="6" class="text-center py-8 text-slate-500 text-xs">
+            No cash transactions in this period.
+          </td>
+        </tr>`;
+    } else {
+      body.innerHTML = entries.map((e) => {
+        totalIn += e.dr;
+        totalOut += e.cr;
+        balance += (e.dr - e.cr);
+        const balColor = balance >= 0 ? 'text-indigo-300' : 'text-rose-400';
+        return `
+          <tr class="hover:bg-slate-800/30">
+            <td class="p-2.5 border-b border-slate-800/60 font-mono text-slate-400 text-[11px] whitespace-nowrap">
+              ${C.escapeHTML(e.date)}
+            </td>
+            <td class="p-2.5 border-b border-slate-800/60 text-slate-200 text-[11px]">
+              ${C.escapeHTML(e.desc)}
+            </td>
+            <td class="p-2.5 border-b border-slate-800/60 font-mono text-[10px] text-slate-500 whitespace-nowrap">
+              ${C.escapeHTML(e.ref || '')}
+            </td>
+            <td class="p-2.5 border-b border-slate-800/60 text-right font-mono text-emerald-400 text-[11px] whitespace-nowrap">
+              ${e.dr > 0 ? '₹' + fmt2(e.dr) : '—'}
+            </td>
+            <td class="p-2.5 border-b border-slate-800/60 text-right font-mono text-rose-400 text-[11px] whitespace-nowrap">
+              ${e.cr > 0 ? '₹' + fmt2(e.cr) : '—'}
+            </td>
+            <td class="p-2.5 border-b border-slate-800/60 text-right font-mono font-bold ${balColor} text-[11px] whitespace-nowrap">
+              ₹${fmt2(balance)}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    setText('bkCashIn',  '₹' + fmt0(totalIn));
+    setText('bkCashOut', '₹' + fmt0(totalOut));
+    setText('bkCashBal', '₹' + fmt2(balance));
+    setText('bkCashCount', entries.length + ' entries');
+  }
+
+
+  /* ============================================================
+     8. RENDER BANK BOOK
+     ============================================================ */
+  function renderBankBook() {
+    const entries = getAccountEntries('Bank / UPI');
+    const body = document.getElementById('bkBankBody');
+    if (!body) return;
+
+    let totalIn = 0, totalOut = 0, balance = 0;
+
+    if (entries.length === 0) {
+      body.innerHTML = `
+        <tr>
+          <td colspan="6" class="text-center py-8 text-slate-500 text-xs">
+            No bank transactions in this period.
+          </td>
+        </tr>`;
+    } else {
+      body.innerHTML = entries.map((e) => {
+        totalIn += e.dr;
+        totalOut += e.cr;
+        balance += (e.dr - e.cr);
+        const balColor = balance >= 0 ? 'text-indigo-300' : 'text-rose-400';
+        return `
+          <tr class="hover:bg-slate-800/30">
+            <td class="p-2.5 border-b border-slate-800/60 font-mono text-slate-400 text-[11px] whitespace-nowrap">
+              ${C.escapeHTML(e.date)}
+            </td>
+            <td class="p-2.5 border-b border-slate-800/60 text-slate-200 text-[11px]">
+              ${C.escapeHTML(e.desc)}
+            </td>
+            <td class="p-2.5 border-b border-slate-800/60 font-mono text-[10px] text-slate-500 whitespace-nowrap">
+              ${C.escapeHTML(e.ref || '')}
+            </td>
+            <td class="p-2.5 border-b border-slate-800/60 text-right font-mono text-emerald-400 text-[11px] whitespace-nowrap">
+              ${e.dr > 0 ? '₹' + fmt2(e.dr) : '—'}
+            </td>
+            <td class="p-2.5 border-b border-slate-800/60 text-right font-mono text-rose-400 text-[11px] whitespace-nowrap">
+              ${e.cr > 0 ? '₹' + fmt2(e.cr) : '—'}
+            </td>
+            <td class="p-2.5 border-b border-slate-800/60 text-right font-mono font-bold ${balColor} text-[11px] whitespace-nowrap">
+              ₹${fmt2(balance)}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    setText('bkBankIn',  '₹' + fmt0(totalIn));
+    setText('bkBankOut', '₹' + fmt0(totalOut));
+    setText('bkBankBal', '₹' + fmt2(balance));
+    setText('bkBankCount', entries.length + ' entries');
+  }
+
+
+  /* ============================================================
+     9. RENDER TRIAL BALANCE
+     ============================================================ */
+  function renderTrialBalance() {
+    const body = document.getElementById('bkTBBody');
+    if (!body) return;
+
+    /* Build accounts */
+    const accounts = {
+      'Cash-in-Hand':           { dr: 0, cr: 0 },
+      'Bank / UPI':             { dr: 0, cr: 0 },
+      'Card Payment':           { dr: 0, cr: 0 },
+      'Bajaj / EMI Finance':    { dr: 0, cr: 0 },
+      'Sundry Debtors':         { dr: 0, cr: 0 },
+      'Sundry Creditors':       { dr: 0, cr: 0 },
+      'Sales':                  { dr: 0, cr: 0 },
+      'Sales Return':           { dr: 0, cr: 0 },
+      'Purchases':              { dr: 0, cr: 0 },
+      'Expenses':               { dr: 0, cr: 0 },
+      'GST Output':             { dr: 0, cr: 0 },
+      'GST Input':              { dr: 0, cr: 0 }
+    };
+
+    /* Invoices */
+    (S.invoices || []).forEach((inv) => {
+      if (!inRange(inv.date)) return;
+      const ledger = inv.ledger || '';
+      if (ledger === 'Cash-in-Hand')       accounts['Cash-in-Hand'].dr += inv.totalGross || 0;
+      else if (ledger === 'Bank / UPI')    accounts['Bank / UPI'].dr += inv.totalGross || 0;
+      else if (ledger === 'Card Payment')  accounts['Card Payment'].dr += inv.totalGross || 0;
+      else if (ledger === 'Bajaj / EMI Finance') accounts['Bajaj / EMI Finance'].dr += inv.totalGross || 0;
+      else if (ledger === 'Credit / Sundry Debtors') accounts['Sundry Debtors'].dr += inv.totalGross || 0;
+
+      accounts['Sales'].cr += inv.totalTaxable || 0;
+      accounts['GST Output'].cr += (inv.totalCGST || 0) + (inv.totalSGST || 0) + (inv.totalIGST || 0);
+    });
+
+    /* Credit notes */
+    (S.creditNotes || []).forEach((crn) => {
+      if (!inRange(crn.date)) return;
+      accounts['Sales Return'].dr += crn.refundTaxable || 0;
+      accounts['GST Output'].dr += crn.refundTax || 0;
+      /* Which account gave the refund? */
+      if (crn.refundMode === 'Cash-in-Hand') accounts['Cash-in-Hand'].cr += crn.refundTotal || 0;
+      else if (crn.refundMode === 'Bank / UPI') accounts['Bank / UPI'].cr += crn.refundTotal || 0;
+      else if (crn.refundMode === 'Store Credit' || crn.refundMode === 'Exchange') accounts['Sundry Debtors'].cr += crn.refundTotal || 0;
+    });
+
+    /* Purchases */
+    (S.purchases || []).forEach((p) => {
+      if (!inRange(p.date)) return;
+      accounts['Purchases'].dr += p.totalTaxable || 0;
+      accounts['GST Input'].dr  += p.totalGST || 0;
+
+      if (p.ledger === 'Cash-in-Hand') accounts['Cash-in-Hand'].cr += p.totalCost || 0;
+      else if (p.ledger === 'Bank / UPI') accounts['Bank / UPI'].cr += p.totalCost || 0;
+      else accounts['Sundry Creditors'].cr += p.totalCost || 0;
+    });
+
+    /* Vouchers */
+    (S.vouchers || []).forEach((v) => {
+      if (!inRange(v.date)) return;
+
+      if (v.type === 'EXPENSE') {
+        accounts['Expenses'].dr += v.amount;
+        if (v.account === 'Cash-in-Hand') accounts['Cash-in-Hand'].cr += v.amount;
+        else if (v.account === 'Bank / UPI') accounts['Bank / UPI'].cr += v.amount;
+        else if (v.account === 'Card Payment') accounts['Card Payment'].cr += v.amount;
+      } else if (v.type === 'RECEIPT') {
+        if (v.account === 'Cash-in-Hand') accounts['Cash-in-Hand'].dr += v.amount;
+        else if (v.account === 'Bank / UPI') accounts['Bank / UPI'].dr += v.amount;
+        else if (v.account === 'Card Payment') accounts['Card Payment'].dr += v.amount;
+        accounts['Sundry Debtors'].cr += v.amount;
+      } else if (v.type === 'CONTRA') {
+        if (v.fromAccount === 'Cash-in-Hand') accounts['Cash-in-Hand'].cr += v.amount;
+        else if (v.fromAccount === 'Bank / UPI') accounts['Bank / UPI'].cr += v.amount;
+        if (v.toAccount === 'Cash-in-Hand') accounts['Cash-in-Hand'].dr += v.amount;
+        else if (v.toAccount === 'Bank / UPI') accounts['Bank / UPI'].dr += v.amount;
+      } else if (v.type === 'JOURNAL') {
+        if (!accounts[v.drAccount]) accounts[v.drAccount] = { dr: 0, cr: 0 };
+        if (!accounts[v.crAccount]) accounts[v.crAccount] = { dr: 0, cr: 0 };
+        accounts[v.drAccount].dr += v.amount;
+        accounts[v.crAccount].cr += v.amount;
+      }
+    });
+
+    /* Render rows with net */
+    let totalDr = 0, totalCr = 0;
+    const rows = [];
+
+    Object.entries(accounts).forEach(([name, a]) => {
+      const net = a.dr - a.cr;
+      if (Math.abs(net) < 0.01 && a.dr < 0.01 && a.cr < 0.01) return;
+      const dr = net > 0 ? net : 0;
+      const cr = net < 0 ? -net : 0;
+      if (dr === 0 && cr === 0) return;
+      totalDr += dr;
+      totalCr += cr;
+      rows.push({ name, dr, cr });
+    });
+
+    if (rows.length === 0) {
+      body.innerHTML = `
+        <tr>
+          <td colspan="3" class="text-center py-8 text-slate-500 text-xs">
+            No transactions in this period.
+          </td>
+        </tr>`;
+    } else {
+      body.innerHTML = rows.map((r) => `
+        <tr class="hover:bg-slate-800/30">
+          <td class="p-3 border-b border-slate-800/60 font-semibold text-slate-200 text-[11.5px]">
+            ${C.escapeHTML(r.name)}
+          </td>
+          <td class="p-3 border-b border-slate-800/60 text-right font-mono text-sky-400 text-[11.5px]">
+            ${r.dr > 0 ? '₹' + fmt2(r.dr) : '—'}
+          </td>
+          <td class="p-3 border-b border-slate-800/60 text-right font-mono text-emerald-400 text-[11.5px]">
+            ${r.cr > 0 ? '₹' + fmt2(r.cr) : '—'}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    setText('bkTBTotalDr', '₹' + fmt2(totalDr));
+    setText('bkTBTotalCr', '₹' + fmt2(totalCr));
+
+    /* Balance status */
+    const statusEl = document.getElementById('bkTBStatus');
+    if (statusEl) {
+      const diff = Math.abs(totalDr - totalCr);
+      if (rows.length === 0) {
+        statusEl.textContent = '—';
+        statusEl.className = 'text-[10px] px-2 py-1 rounded font-bold bg-slate-800 text-slate-400';
+      } else if (diff < 0.5) {
+        statusEl.textContent = '✅ Balanced';
+        statusEl.className = 'text-[10px] px-2 py-1 rounded font-bold bg-emerald-950/60 text-emerald-400 border border-emerald-800/60';
+      } else {
+        statusEl.textContent = '⚠ Off by ₹' + fmt2(diff);
+        statusEl.className = 'text-[10px] px-2 py-1 rounded font-bold bg-amber-950/60 text-amber-400 border border-amber-800/60';
+      }
+    }
+  }
+
+
+  /* ============================================================
+     10. RENDER GST SUMMARY
+     ============================================================ */
+  function renderGSTSummary() {
+    let outTaxable = 0, outCGST = 0, outSGST = 0, outIGST = 0;
+    let retTax = 0;
+    let inTaxable = 0, inCGST = 0, inSGST = 0, inIGST = 0;
+
+    (S.invoices || []).forEach((inv) => {
+      if (!inRange(inv.date)) return;
+      outTaxable += inv.totalTaxable || 0;
+      outCGST += inv.totalCGST || 0;
+      outSGST += inv.totalSGST || 0;
+      outIGST += inv.totalIGST || 0;
+    });
+
+    (S.creditNotes || []).forEach((crn) => {
+      if (!inRange(crn.date)) return;
+      retTax += crn.refundTax || 0;
+    });
+
+    (S.purchases || []).forEach((p) => {
+      if (!inRange(p.date)) return;
+      inTaxable += p.totalTaxable || 0;
+      /* Split input GST: assume equal CGST/SGST for intra-state */
+      const gst = p.totalGST || 0;
+      inCGST += gst / 2;
+      inSGST += gst / 2;
+    });
+
+    const outTotal = outCGST + outSGST + outIGST;
+    const netOutput = outTotal - retTax;
+    const inTotal = inCGST + inSGST + inIGST;
+    const netPayable = netOutput - inTotal;
+
+    setText('bkGstOutTaxable', '₹' + fmt2(outTaxable));
+    setText('bkGstOutCGST', '₹' + fmt2(outCGST));
+    setText('bkGstOutSGST', '₹' + fmt2(outSGST));
+    setText('bkGstOutIGST', '₹' + fmt2(outIGST));
+    setText('bkGstOutReturns', '-₹' + fmt2(retTax));
+    setText('bkGstOutTotal', '₹' + fmt2(netOutput));
+
+    setText('bkGstInTaxable', '₹' + fmt2(inTaxable));
+    setText('bkGstInCGST', '₹' + fmt2(inCGST));
+    setText('bkGstInSGST', '₹' + fmt2(inSGST));
+    setText('bkGstInIGST', '₹' + fmt2(inIGST));
+    setText('bkGstInTotal', '₹' + fmt2(inTotal));
+
+    const netEl = document.getElementById('bkGstNetPayable');
+    if (netEl) {
+      netEl.textContent = (netPayable >= 0 ? '' : '-') + '₹' + fmt2(Math.abs(netPayable));
+      netEl.className = 'text-2xl sm:text-3xl font-black font-mono ' +
+        (netPayable >= 0 ? 'text-rose-300' : 'text-emerald-300');
+    }
+  }
+
+
+  /* ============================================================
+     11. HELPERS
+     ============================================================ */
+  function setText(id, text) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  }
+
+  function fmt0(n) {
+    const v = Number(n) || 0;
+    return v.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+  }
+
+  function fmt2(n) {
+    const v = Number(n) || 0;
+    return v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function shortAcc(name) {
+    if (!name) return '—';
+    if (name === 'Cash-in-Hand') return 'Cash';
+    if (name === 'Bank / UPI') return 'Bank';
+    if (name === 'Card Payment') return 'Card';
+    return name;
+  }
+
+
+  /* ============================================================
+     12. EXPOSE API
+     ============================================================ */
+  window.SF = window.SF || {};
+  window.SF.books = {
+    init: init_booksModule,
+    switch: switchTab,
+    setRange,
+    renderAll,
+    renderCashBook,
+    renderBankBook,
+    renderTrialBalance,
+    renderGSTSummary
+  };
+
+  /* Router expects this */
+  window.init_booksModule = init_booksModule;
+
+  /* Auto-init fallback */
+  if (document.getElementById('booksModule')) {
+    init_booksModule();
+  }
+})();
+</script>
