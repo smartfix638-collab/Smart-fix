@@ -1,0 +1,1091 @@
+<!-- ============================================================
+     SMARTFIX ERP — Parties Module
+     File: modules/parties.html
+     Version: 4.0.0
+     ============================================================ -->
+
+<section id="partiesModule" class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+
+  <!-- ============================================================
+       LEFT PANEL — PARTY FORM
+       ============================================================ -->
+  <div class="lg:col-span-4 space-y-3">
+
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <h2 class="font-bold text-xs uppercase tracking-wider text-white" id="prtFormTitle">
+          👥 New Party
+        </h2>
+        <button type="button" onclick="SF.parties.resetForm()" id="prtResetBtn"
+                class="text-[10px] text-slate-500 hover:text-slate-300 font-bold hidden">
+          ✕ Cancel Edit
+        </button>
+      </div>
+
+      <!-- Hidden edit ID -->
+      <input type="hidden" id="prtEditId" value="">
+
+      <!-- Type toggle -->
+      <div>
+        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Party Type</label>
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" id="prtTypeCustomer" onclick="SF.parties.setType('CUSTOMER')"
+                  class="py-2 rounded-lg text-xs font-bold transition bg-indigo-600 text-white">
+            🛍 Customer
+          </button>
+          <button type="button" id="prtTypeSupplier" onclick="SF.parties.setType('SUPPLIER')"
+                  class="py-2 rounded-lg text-xs font-bold transition bg-slate-950 border border-slate-700 text-slate-400">
+            📦 Supplier
+          </button>
+        </div>
+        <input type="hidden" id="prtType" value="CUSTOMER">
+      </div>
+
+      <!-- Name -->
+      <div>
+        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Name *</label>
+        <input type="text" id="prtName" placeholder="Full name / Firm name"
+               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs font-semibold">
+      </div>
+
+      <!-- Phone -->
+      <div>
+        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Phone</label>
+        <input type="tel" id="prtPhone" placeholder="10-digit" maxlength="10"
+               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs font-mono">
+      </div>
+
+      <!-- GSTIN -->
+      <div>
+        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">GSTIN</label>
+        <input type="text" id="prtGSTIN" placeholder="Optional" maxlength="15"
+               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs font-mono uppercase">
+      </div>
+
+      <!-- Address -->
+      <div>
+        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Address</label>
+        <textarea id="prtAddress" rows="2" placeholder="Address"
+                  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs resize-none"></textarea>
+      </div>
+
+      <!-- Opening balance -->
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Opening ₹</label>
+          <input type="number" id="prtOpening" value="0" step="0.01"
+                 class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs font-bold text-right">
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Dr / Cr</label>
+          <select id="prtDrCr"
+                  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs font-bold">
+            <option value="DR">Dr (Receivable)</option>
+            <option value="CR">Cr (Payable)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Save button -->
+      <button type="button" id="prtSaveBtn" onclick="SF.parties.save()"
+              class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-black py-3 rounded-xl text-sm shadow-lg shadow-indigo-600/30 transition">
+        💾 Save Party
+      </button>
+
+    </div>
+
+    <!-- Quick tips -->
+    <div class="bg-sky-950/30 border border-sky-800/40 rounded-2xl p-3">
+      <div class="text-[10px] font-bold uppercase text-sky-400 mb-1.5">💡 Quick Tips</div>
+      <ul class="text-[10.5px] text-slate-400 leading-relaxed space-y-0.5">
+        <li>• <strong class="text-slate-300">Customer</strong> — bill থেকে auto-create হয়</li>
+        <li>• <strong class="text-slate-300">Supplier</strong> — purchase থেকে auto-create হয়</li>
+        <li>• <strong class="text-slate-300">Opening</strong> — পুরোনো ব্যালেন্স</li>
+        <li>• Balance auto-calculate হয় live-এ</li>
+      </ul>
+    </div>
+
+  </div>
+
+
+  <!-- ============================================================
+       RIGHT PANEL — PARTY LIST
+       ============================================================ -->
+  <div class="lg:col-span-8 space-y-3">
+
+    <!-- Stats -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3">
+        <div class="text-[9px] font-bold uppercase text-slate-500">Total Parties</div>
+        <div id="prtStatTotal" class="text-lg font-black text-white mt-0.5">0</div>
+      </div>
+      <div class="bg-indigo-950/40 border border-indigo-800/40 rounded-xl p-3">
+        <div class="text-[9px] font-bold uppercase text-indigo-400">Customers</div>
+        <div id="prtStatCustomers" class="text-lg font-black text-indigo-300 mt-0.5">0</div>
+      </div>
+      <div class="bg-amber-950/40 border border-amber-800/40 rounded-xl p-3">
+        <div class="text-[9px] font-bold uppercase text-amber-400">Suppliers</div>
+        <div id="prtStatSuppliers" class="text-lg font-black text-amber-300 mt-0.5">0</div>
+      </div>
+      <div class="bg-rose-950/40 border border-rose-800/40 rounded-xl p-3">
+        <div class="text-[9px] font-bold uppercase text-rose-400">Total Receivable</div>
+        <div id="prtStatReceivable" class="text-lg font-black text-rose-300 mt-0.5">₹0</div>
+      </div>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-3 flex flex-wrap gap-2 items-center">
+      <input type="text" id="prtSearchInput" oninput="SF.parties.renderList()"
+             placeholder="🔍 Search name, phone, GSTIN..."
+             class="flex-1 min-w-[200px] bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200">
+      <select id="prtTypeFilter" onchange="SF.parties.renderList()"
+              class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200">
+        <option value="ALL">All Types</option>
+        <option value="CUSTOMER">Customers</option>
+        <option value="SUPPLIER">Suppliers</option>
+      </select>
+      <select id="prtBalFilter" onchange="SF.parties.renderList()"
+              class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200">
+        <option value="ALL">All Balances</option>
+        <option value="DUE">Only Due (Dr)</option>
+        <option value="PAYABLE">Only Payable (Cr)</option>
+        <option value="ZERO">Zero Balance</option>
+      </select>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse min-w-[800px]">
+          <thead class="bg-slate-950/70 text-slate-500 uppercase text-[10px]">
+            <tr>
+              <th class="p-2.5 border-b border-slate-800">Type</th>
+              <th class="p-2.5 border-b border-slate-800">Name</th>
+              <th class="p-2.5 border-b border-slate-800">Phone</th>
+              <th class="p-2.5 border-b border-slate-800">GSTIN</th>
+              <th class="p-2.5 border-b border-slate-800 text-right">Opening</th>
+              <th class="p-2.5 border-b border-slate-800 text-right">Balance</th>
+              <th class="p-2.5 border-b border-slate-800 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="prtListBody" class="divide-y divide-slate-800/60">
+            <tr>
+              <td colspan="7" class="text-center py-8 text-slate-500 text-xs">
+                No parties yet.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- ============================================================
+     PARTY LEDGER MODAL
+     ============================================================ -->
+<div id="prtLedgerModal"
+     class="fixed inset-0 z-[9999] hidden"
+     style="background:rgba(0,0,0,0.75); backdrop-filter:blur(6px);">
+  <div class="flex items-center justify-center h-full p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+
+      <!-- Modal header -->
+      <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950/70">
+        <div>
+          <h3 id="prtLedgerTitle" class="font-bold text-white text-base">Party Ledger</h3>
+          <p id="prtLedgerSubtitle" class="text-[11px] text-slate-400 mt-0.5">—</p>
+        </div>
+        <button type="button" onclick="SF.parties.closeLedger()"
+                class="text-slate-400 hover:text-white text-2xl font-bold w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-800">
+          ✕
+        </button>
+      </div>
+
+      <!-- Summary -->
+      <div class="p-4 border-b border-slate-800 grid grid-cols-3 gap-3 bg-slate-950/30">
+        <div>
+          <div class="text-[10px] uppercase font-bold text-slate-500">Opening</div>
+          <div id="prtLedgerOpening" class="text-sm font-black text-slate-200 mt-0.5 font-mono">₹0.00</div>
+        </div>
+        <div>
+          <div class="text-[10px] uppercase font-bold text-slate-500">Total Dr / Cr</div>
+          <div id="prtLedgerTotals" class="text-sm font-black text-slate-200 mt-0.5 font-mono">₹0 / ₹0</div>
+        </div>
+        <div>
+          <div class="text-[10px] uppercase font-bold text-slate-500">Closing Balance</div>
+          <div id="prtLedgerClosing" class="text-sm font-black text-sky-400 mt-0.5 font-mono">₹0.00</div>
+        </div>
+      </div>
+
+      <!-- Modal body — ledger table -->
+      <div class="overflow-y-auto" style="max-height: 55vh;">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead class="bg-slate-950 sticky top-0 z-10">
+            <tr>
+              <th class="p-2.5 text-[10px] uppercase text-slate-500 font-bold whitespace-nowrap">Date</th>
+              <th class="p-2.5 text-[10px] uppercase text-slate-500 font-bold whitespace-nowrap">Ref</th>
+              <th class="p-2.5 text-[10px] uppercase text-slate-500 font-bold">Particulars</th>
+              <th class="p-2.5 text-[10px] uppercase text-slate-500 font-bold text-right whitespace-nowrap">Dr ₹</th>
+              <th class="p-2.5 text-[10px] uppercase text-slate-500 font-bold text-right whitespace-nowrap">Cr ₹</th>
+              <th class="p-2.5 text-[10px] uppercase text-slate-500 font-bold text-right whitespace-nowrap">Balance ₹</th>
+            </tr>
+          </thead>
+          <tbody id="prtLedgerBody" class="divide-y divide-slate-800/60">
+            <tr>
+              <td colspan="6" class="text-center py-8 text-slate-500 text-xs">No entries.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Modal footer -->
+      <div class="p-3 border-t border-slate-800 bg-slate-950/50 flex justify-between items-center flex-wrap gap-2">
+        <div class="text-[10px] text-slate-500">
+          Auto-generated from invoices, purchases, receipts & returns
+        </div>
+        <div class="flex gap-2">
+          <button type="button" onclick="SF.parties.printLedger()"
+                  class="bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition">
+            🖨️ Print Ledger
+          </button>
+          <button type="button" onclick="SF.parties.closeLedger()"
+                  class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs px-3 py-1.5 rounded-lg transition">
+            Close
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     PARTIES MODULE LOGIC
+     ============================================================ -->
+<script>
+(function () {
+  'use strict';
+
+  const S  = window.SF?.state?.state;
+  const C  = window.SF?.common;
+  const Cl = window.SF?.cloud;
+
+  if (!S || !C) {
+    console.error('Parties module: SF globals not ready');
+    return;
+  }
+
+  /* ============================================================
+     MODULE STATE
+     ============================================================ */
+  const PM = {
+    editingId: null,
+    type: 'CUSTOMER',
+    ledgerPartyId: null
+  };
+
+
+  /* ============================================================
+     1. INIT
+     ============================================================ */
+  function init_partiesModule() {
+    console.log('%c👥 Parties module initialized', 'color:#8b5cf6;font-weight:bold');
+
+    /* Reset */
+    PM.editingId = null;
+    PM.type = 'CUSTOMER';
+
+    resetForm();
+    renderList();
+
+    /* Subscribe */
+    if (window.SF?.state?.on) {
+      window.SF.state.on('change:parties', () => renderList());
+      window.SF.state.on('change:invoices', () => renderList());
+      window.SF.state.on('change:purchases', () => renderList());
+      window.SF.state.on('change:creditNotes', () => renderList());
+      window.SF.state.on('change:vouchers', () => renderList());
+    }
+
+    /* Focus name */
+    setTimeout(() => {
+      const n = document.getElementById('prtName');
+      if (n && window.innerWidth > 640) n.focus();
+    }, 250);
+
+    return {
+      onUnload: () => {
+        closeLedger();
+        console.log('Parties module unloading');
+      }
+    };
+  }
+
+
+  /* ============================================================
+     2. FORM: TYPE TOGGLE
+     ============================================================ */
+  function setType(type) {
+    PM.type = type;
+    const typeEl = document.getElementById('prtType');
+    if (typeEl) typeEl.value = type;
+
+    const custBtn = document.getElementById('prtTypeCustomer');
+    const supBtn  = document.getElementById('prtTypeSupplier');
+
+    if (type === 'CUSTOMER') {
+      if (custBtn) custBtn.className = 'py-2 rounded-lg text-xs font-bold transition bg-indigo-600 text-white';
+      if (supBtn)  supBtn.className  = 'py-2 rounded-lg text-xs font-bold transition bg-slate-950 border border-slate-700 text-slate-400';
+    } else {
+      if (custBtn) custBtn.className = 'py-2 rounded-lg text-xs font-bold transition bg-slate-950 border border-slate-700 text-slate-400';
+      if (supBtn)  supBtn.className  = 'py-2 rounded-lg text-xs font-bold transition bg-amber-600 text-white';
+    }
+  }
+
+
+  /* ============================================================
+     3. SAVE PARTY
+     ============================================================ */
+  async function save() {
+    const name    = (document.getElementById('prtName')?.value || '').trim();
+    const phone   = (document.getElementById('prtPhone')?.value || '').trim();
+    const gstin   = (document.getElementById('prtGSTIN')?.value || '').trim().toUpperCase();
+    const address = (document.getElementById('prtAddress')?.value || '').trim();
+    const opening = parseFloat(document.getElementById('prtOpening')?.value) || 0;
+    const drCr    = document.getElementById('prtDrCr')?.value || 'DR';
+    const type    = PM.type;
+
+    if (!name || name.length < 2) {
+      C.toast('Enter party name (min 2 chars)', 'warning');
+      return;
+    }
+    if (phone && !/^\d{10}$/.test(phone)) {
+      C.toast('Phone must be 10 digits', 'warning');
+      return;
+    }
+    if (gstin && gstin.length !== 15) {
+      C.toast('GSTIN must be 15 characters', 'warning');
+      return;
+    }
+
+    /* Check duplicate (same type + name) */
+    const duplicate = (S.parties || []).find((p) =>
+      p.type === type &&
+      p.name.toLowerCase() === name.toLowerCase() &&
+      p.id !== PM.editingId
+    );
+    if (duplicate) {
+      C.toast('Party already exists: ' + name, 'warning');
+      return;
+    }
+
+    /* Build record */
+    const party = {
+      id: PM.editingId || ('party-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6)),
+      type,
+      name,
+      phone,
+      gstin,
+      address,
+      opening: +opening.toFixed(2),
+      drCr,
+      createdAt: new Date().toISOString()
+    };
+
+    if (!Array.isArray(S.parties)) S.parties = [];
+
+    if (PM.editingId) {
+      /* Update */
+      const idx = S.parties.findIndex((p) => p.id === PM.editingId);
+      if (idx === -1) {
+        C.toast('Party not found', 'error');
+        return;
+      }
+      S.parties[idx] = { ...S.parties[idx], ...party };
+      C.toast('Party updated: ' + name, 'success');
+      try {
+        window.SF.state.logAudit('PARTY_UPDATE', type + ' | ' + name);
+      } catch (e) {}
+    } else {
+      /* Create */
+      S.parties.push(party);
+      C.toast('Party saved: ' + name, 'success');
+      try {
+        window.SF.state.logAudit('PARTY_CREATE', type + ' | ' + name);
+      } catch (e) {}
+    }
+
+    C.safeSave('sfp_parties', S.parties);
+
+    /* Push to cloud */
+    try {
+      await Cl.pushOne('parties', party);
+    } catch (e) {
+      console.warn('Cloud push failed:', e);
+    }
+
+    C.playBeep();
+    resetForm();
+    renderList();
+  }
+
+
+  /* ============================================================
+     4. RESET FORM
+     ============================================================ */
+  function resetForm() {
+    PM.editingId = null;
+    const ids = ['prtName', 'prtPhone', 'prtGSTIN', 'prtAddress'];
+    ids.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    const opEl = document.getElementById('prtOpening');
+    if (opEl) opEl.value = '0';
+    const dcEl = document.getElementById('prtDrCr');
+    if (dcEl) dcEl.value = 'DR';
+    const idEl = document.getElementById('prtEditId');
+    if (idEl) idEl.value = '';
+
+    setType('CUSTOMER');
+
+    const titleEl = document.getElementById('prtFormTitle');
+    if (titleEl) titleEl.textContent = '👥 New Party';
+    const resetBtn = document.getElementById('prtResetBtn');
+    if (resetBtn) resetBtn.classList.add('hidden');
+    const saveBtn = document.getElementById('prtSaveBtn');
+    if (saveBtn) saveBtn.textContent = '💾 Save Party';
+
+    /* Focus */
+    setTimeout(() => {
+      const n = document.getElementById('prtName');
+      if (n) n.focus();
+    }, 100);
+  }
+
+
+  /* ============================================================
+     5. EDIT PARTY
+     ============================================================ */
+  function edit(id) {
+    const p = (S.parties || []).find((x) => x.id === id);
+    if (!p) { C.toast('Not found', 'error'); return; }
+
+    PM.editingId = id;
+    setType(p.type);
+
+    const setVal = (elId, v) => {
+      const el = document.getElementById(elId);
+      if (el) el.value = v ?? '';
+    };
+    setVal('prtName', p.name);
+    setVal('prtPhone', p.phone);
+    setVal('prtGSTIN', p.gstin);
+    setVal('prtAddress', p.address);
+    setVal('prtOpening', p.opening || 0);
+    setVal('prtDrCr', p.drCr || 'DR');
+    setVal('prtEditId', id);
+
+    const titleEl = document.getElementById('prtFormTitle');
+    if (titleEl) titleEl.textContent = '✏ Edit Party';
+    const resetBtn = document.getElementById('prtResetBtn');
+    if (resetBtn) resetBtn.classList.remove('hidden');
+    const saveBtn = document.getElementById('prtSaveBtn');
+    if (saveBtn) saveBtn.textContent = '💾 Update Party';
+
+    /* Scroll form into view */
+    document.querySelector('#partiesModule')?.scrollIntoView({ behavior: 'smooth' });
+    setTimeout(() => {
+      const n = document.getElementById('prtName');
+      if (n) n.focus();
+    }, 200);
+  }
+
+
+  /* ============================================================
+     6. DELETE PARTY
+     ============================================================ */
+  async function deleteParty(id) {
+    const p = (S.parties || []).find((x) => x.id === id);
+    if (!p) return;
+
+    const pin = prompt('🔒 Master PIN to delete this party:');
+    if (!pin) return;
+    if (pin !== (S.profile?.masterPin || '1234')) {
+      C.toast('Incorrect PIN', 'error');
+      C.playErrorBeep();
+      return;
+    }
+
+    const bal = computeBalance(p);
+    const ok = await C.confirmDialog(
+      'Delete Party?',
+      `${p.type}\n${p.name}\n\nBalance: ₹${Math.abs(bal).toFixed(2)} ${bal >= 0 ? 'Dr' : 'Cr'}\n\nThis will not delete historical transactions.`,
+      'Delete',
+      true
+    );
+    if (!ok) return;
+
+    S.parties = S.parties.filter((x) => x.id !== id);
+    C.safeSave('sfp_parties', S.parties);
+
+    try {
+      await Cl.deleteOne('parties', id);
+    } catch (e) {}
+
+    try {
+      window.SF.state.logAudit('PARTY_DELETE', p.type + ' | ' + p.name);
+    } catch (e) {}
+
+    C.toast('Party deleted', 'success');
+    renderList();
+  }
+
+
+  /* ============================================================
+     7. COMPUTE BALANCE
+     ============================================================ */
+  function computeBalance(p) {
+    let balance = p.opening || 0;
+
+    if (p.type === 'CUSTOMER') {
+      /* Credit sales increase Dr */
+      (S.invoices || []).forEach((inv) => {
+        if (inv.partyId === p.id && inv.ledger === 'Credit / Sundry Debtors') {
+          balance += inv.totalGross || 0;
+        }
+      });
+
+      /* Returns reduce Dr */
+      (S.creditNotes || []).forEach((crn) => {
+        if (crn.customerName && crn.customerName.toLowerCase() === p.name.toLowerCase()) {
+          balance -= crn.refundTotal || 0;
+        }
+      });
+
+      /* Receipts reduce Dr */
+      (S.vouchers || []).forEach((v) => {
+        if (v.type === 'RECEIPT' && v.partyId === p.id) {
+          balance -= v.amount || 0;
+        }
+      });
+    } else if (p.type === 'SUPPLIER') {
+      /* Credit purchases increase Cr (negative balance) */
+      (S.purchases || []).forEach((pur) => {
+        if (pur.supplierId === p.id && pur.ledger === 'Credit / Sundry Creditors') {
+          balance += pur.totalCost || 0;
+        }
+      });
+
+      /* Expenses paid reduce */
+      (S.vouchers || []).forEach((v) => {
+        if (v.type === 'EXPENSE' && v.category && v.category.toLowerCase() === p.name.toLowerCase()) {
+          balance -= v.amount || 0;
+        }
+      });
+    }
+
+    /* drCr flip for opening */
+    if (p.drCr === 'CR') balance = -balance;
+
+    return balance;
+  }
+
+
+  /* ============================================================
+     8. RENDER LIST
+     ============================================================ */
+  function renderList() {
+    const body = document.getElementById('prtListBody');
+    if (!body) return;
+
+    const searchQ = (document.getElementById('prtSearchInput')?.value || '').trim().toLowerCase();
+    const typeFilter = document.getElementById('prtTypeFilter')?.value || 'ALL';
+    const balFilter = document.getElementById('prtBalFilter')?.value || 'ALL';
+
+    const parties = S.parties || [];
+
+    /* Stats */
+    const customers = parties.filter((p) => p.type === 'CUSTOMER');
+    const suppliers = parties.filter((p) => p.type === 'SUPPLIER');
+    let totalReceivable = 0;
+    customers.forEach((p) => {
+      const b = computeBalance(p);
+      if (b > 0) totalReceivable += b;
+    });
+
+    setText('prtStatTotal', parties.length);
+    setText('prtStatCustomers', customers.length);
+    setText('prtStatSuppliers', suppliers.length);
+    setText('prtStatReceivable', '₹' + fmt0(totalReceivable));
+
+    /* Filter */
+    let filtered = parties;
+
+    if (typeFilter !== 'ALL') {
+      filtered = filtered.filter((p) => p.type === typeFilter);
+    }
+
+    if (searchQ) {
+      filtered = filtered.filter((p) => {
+        const blob = (
+          (p.name || '') + ' ' +
+          (p.phone || '') + ' ' +
+          (p.gstin || '') + ' ' +
+          (p.address || '')
+        ).toLowerCase();
+        return blob.includes(searchQ);
+      });
+    }
+
+    if (balFilter !== 'ALL') {
+      filtered = filtered.filter((p) => {
+        const b = computeBalance(p);
+        if (balFilter === 'DUE')     return b > 0.01;
+        if (balFilter === 'PAYABLE') return b < -0.01;
+        if (balFilter === 'ZERO')    return Math.abs(b) <= 0.01;
+        return true;
+      });
+    }
+
+    /* Sort: by name */
+    filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+    if (filtered.length === 0) {
+      body.innerHTML = `
+        <tr>
+          <td colspan="7" class="text-center py-8 text-slate-500 text-xs">
+            ${searchQ || typeFilter !== 'ALL' || balFilter !== 'ALL'
+              ? 'No matches.'
+              : 'No parties yet. Add your first customer or supplier.'}
+          </td>
+        </tr>`;
+      return;
+    }
+
+    body.innerHTML = filtered.map((p) => {
+      const bal = computeBalance(p);
+      const balAbs = Math.abs(bal);
+      const balLabel = bal > 0.01 ? 'Dr' : (bal < -0.01 ? 'Cr' : '');
+      const balColor = bal > 0.01 ? 'text-rose-400' : (bal < -0.01 ? 'text-emerald-400' : 'text-slate-500');
+
+      const typeBadge = p.type === 'CUSTOMER'
+        ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-950/60 text-indigo-300 border border-indigo-800/60">🛍 Customer</span>'
+        : '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-950/60 text-amber-300 border border-amber-800/60">📦 Supplier</span>';
+
+      return `
+        <tr class="hover:bg-slate-800/30 transition">
+          <td class="p-2.5 border-b border-slate-800/60">${typeBadge}</td>
+          <td class="p-2.5 border-b border-slate-800/60">
+            <div class="font-bold text-white text-[12px]">${C.escapeHTML(p.name)}</div>
+            ${p.address ? `<div class="text-[10px] text-slate-500 truncate max-w-[180px]">${C.escapeHTML(p.address)}</div>` : ''}
+          </td>
+          <td class="p-2.5 border-b border-slate-800/60 font-mono text-slate-400 text-[11px]">
+            ${C.escapeHTML(p.phone || '—')}
+          </td>
+          <td class="p-2.5 border-b border-slate-800/60 font-mono text-slate-500 text-[10px]">
+            ${C.escapeHTML(p.gstin || '—')}
+          </td>
+          <td class="p-2.5 border-b border-slate-800/60 text-right font-mono text-slate-400 text-[11px]">
+            ₹${fmt2(p.opening || 0)} <span class="text-[9px] text-slate-600">${p.drCr || ''}</span>
+          </td>
+          <td class="p-2.5 border-b border-slate-800/60 text-right font-mono font-bold ${balColor} text-[12px]">
+            ₹${fmt2(balAbs)} <span class="text-[10px]">${balLabel}</span>
+          </td>
+          <td class="p-2.5 border-b border-slate-800/60 text-center">
+            <div class="inline-flex gap-1">
+              <button type="button" onclick="SF.parties.viewLedger('${p.id}')"
+                      title="View Ledger"
+                      class="text-[10px] bg-sky-950/60 hover:bg-sky-900/60 text-sky-400 font-bold px-2 py-1 rounded">
+                📋
+              </button>
+              <button type="button" onclick="SF.parties.edit('${p.id}')"
+                      title="Edit"
+                      class="text-[10px] bg-amber-950/60 hover:bg-amber-900/60 text-amber-400 font-bold px-2 py-1 rounded">
+                ✏
+              </button>
+              <button type="button" onclick="SF.parties.deleteParty('${p.id}')"
+                      title="Delete"
+                      class="text-[10px] bg-rose-950/60 hover:bg-rose-900/60 text-rose-400 font-bold px-2 py-1 rounded">
+                🗑
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+
+  /* ============================================================
+     9. LEDGER VIEW
+     ============================================================ */
+  function viewLedger(id) {
+    const p = (S.parties || []).find((x) => x.id === id);
+    if (!p) { C.toast('Not found', 'error'); return; }
+
+    PM.ledgerPartyId = id;
+
+    const modal = document.getElementById('prtLedgerModal');
+    if (modal) modal.classList.remove('hidden');
+
+    setText('prtLedgerTitle', p.name);
+    setText('prtLedgerSubtitle', p.type + (p.phone ? ' • ' + p.phone : '') + (p.gstin ? ' • GSTIN: ' + p.gstin : ''));
+
+    /* Build entries */
+    const entries = [];
+
+    /* Opening */
+    const opening = p.opening || 0;
+    const openingDr = p.drCr === 'DR' ? opening : 0;
+    const openingCr = p.drCr === 'CR' ? opening : 0;
+
+    /* Customer transactions */
+    if (p.type === 'CUSTOMER') {
+      (S.invoices || []).forEach((inv) => {
+        if (inv.partyId === p.id && inv.ledger === 'Credit / Sundry Debtors') {
+          entries.push({
+            date: inv.date,
+            ref: inv.invoiceNo,
+            desc: 'Credit Sale',
+            dr: inv.totalGross || 0,
+            cr: 0
+          });
+        }
+      });
+
+      (S.creditNotes || []).forEach((crn) => {
+        if (crn.customerName && crn.customerName.toLowerCase() === p.name.toLowerCase()) {
+          entries.push({
+            date: crn.date,
+            ref: crn.crnNo,
+            desc: 'Sales Return (' + (crn.itemModel || '') + ')',
+            dr: 0,
+            cr: crn.refundTotal || 0
+          });
+        }
+      });
+
+      (S.vouchers || []).forEach((v) => {
+        if (v.type === 'RECEIPT' && v.partyId === p.id) {
+          entries.push({
+            date: v.date,
+            ref: 'VCH-' + String(v.id).slice(-6),
+            desc: 'Receipt (' + (v.account === 'Cash-in-Hand' ? 'Cash' : 'Bank') + ')',
+            dr: 0,
+            cr: v.amount || 0
+          });
+        }
+      });
+    }
+
+    /* Supplier transactions */
+    if (p.type === 'SUPPLIER') {
+      (S.purchases || []).forEach((pur) => {
+        if (pur.supplierId === p.id && pur.ledger === 'Credit / Sundry Creditors') {
+          entries.push({
+            date: pur.date,
+            ref: pur.purchaseNo,
+            desc: 'Credit Purchase',
+            dr: 0,
+            cr: pur.totalCost || 0
+          });
+        }
+      });
+
+      (S.vouchers || []).forEach((v) => {
+        if (v.type === 'EXPENSE' && v.category && v.category.toLowerCase() === p.name.toLowerCase()) {
+          entries.push({
+            date: v.date,
+            ref: 'VCH-' + String(v.id).slice(-6),
+            desc: 'Payment',
+            dr: v.amount || 0,
+            cr: 0
+          });
+        }
+      });
+    }
+
+    /* Sort */
+    entries.sort((a, b) => new Date(a.date + 'T12:00:00') - new Date(b.date + 'T12:00:00'));
+
+    /* Render */
+    const body = document.getElementById('prtLedgerBody');
+    if (!body) return;
+
+    let bal = openingDr - openingCr;
+    let totalDr = openingDr;
+    let totalCr = openingCr;
+
+    const openingRow = `
+      <tr class="bg-slate-950/60">
+        <td class="p-2.5 text-slate-500 font-mono text-[11px]">—</td>
+        <td class="p-2.5 text-slate-500 font-mono text-[10px]">OPENING</td>
+        <td class="p-2.5 text-slate-300 italic text-[11px]">Opening Balance</td>
+        <td class="p-2.5 text-right font-mono text-sky-400 text-[11px]">${openingDr > 0 ? '₹' + fmt2(openingDr) : '—'}</td>
+        <td class="p-2.5 text-right font-mono text-emerald-400 text-[11px]">${openingCr > 0 ? '₹' + fmt2(openingCr) : '—'}</td>
+        <td class="p-2.5 text-right font-mono font-bold text-indigo-300 text-[11px]">₹${fmt2(Math.abs(bal))} ${bal >= 0 ? 'Dr' : 'Cr'}</td>
+      </tr>`;
+
+    const rows = entries.map((e) => {
+      bal += (e.dr - e.cr);
+      totalDr += e.dr;
+      totalCr += e.cr;
+      const bc = bal >= 0 ? 'text-indigo-300' : 'text-rose-400';
+      return `
+        <tr class="hover:bg-slate-800/30">
+          <td class="p-2.5 border-b border-slate-800/40 font-mono text-slate-400 text-[11px] whitespace-nowrap">
+            ${C.escapeHTML(e.date)}
+          </td>
+          <td class="p-2.5 border-b border-slate-800/40 font-mono text-[10px] text-slate-500 whitespace-nowrap">
+            ${C.escapeHTML(e.ref)}
+          </td>
+          <td class="p-2.5 border-b border-slate-800/40 text-slate-200 text-[11px]">
+            ${C.escapeHTML(e.desc)}
+          </td>
+          <td class="p-2.5 border-b border-slate-800/40 text-right font-mono text-sky-400 text-[11px] whitespace-nowrap">
+            ${e.dr > 0 ? '₹' + fmt2(e.dr) : '—'}
+          </td>
+          <td class="p-2.5 border-b border-slate-800/40 text-right font-mono text-emerald-400 text-[11px] whitespace-nowrap">
+            ${e.cr > 0 ? '₹' + fmt2(e.cr) : '—'}
+          </td>
+          <td class="p-2.5 border-b border-slate-800/40 text-right font-mono font-bold ${bc} text-[11px] whitespace-nowrap">
+            ₹${fmt2(Math.abs(bal))} ${bal >= 0 ? 'Dr' : 'Cr'}
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    if (entries.length === 0) {
+      body.innerHTML = openingRow + `
+        <tr>
+          <td colspan="6" class="text-center py-8 text-slate-500 text-xs">
+            No transactions yet.
+          </td>
+        </tr>`;
+    } else {
+      body.innerHTML = openingRow + rows;
+    }
+
+    /* Summary */
+    setText('prtLedgerOpening', '₹' + fmt2(Math.abs(opening)) + ' ' + (p.drCr || ''));
+    setText('prtLedgerTotals', '₹' + fmt2(totalDr) + ' / ₹' + fmt2(totalCr));
+    const closeEl = document.getElementById('prtLedgerClosing');
+    if (closeEl) {
+      closeEl.textContent = '₹' + fmt2(Math.abs(bal)) + ' ' + (bal >= 0 ? 'Dr' : 'Cr');
+      closeEl.className = 'text-sm font-black mt-0.5 font-mono ' +
+        (bal >= 0 ? 'text-rose-400' : 'text-emerald-400');
+    }
+  }
+
+  function closeLedger() {
+    const modal = document.getElementById('prtLedgerModal');
+    if (modal) modal.classList.add('hidden');
+    PM.ledgerPartyId = null;
+  }
+
+
+  /* ============================================================
+     10. PRINT LEDGER
+     ============================================================ */
+  function printLedger() {
+    const id = PM.ledgerPartyId;
+    if (!id) return;
+    const p = (S.parties || []).find((x) => x.id === id);
+    if (!p) return;
+
+    const target = document.getElementById('isolatedPrintContainer');
+    if (!target) return;
+
+    /* Rebuild same content as modal, into printable HTML */
+    const prof = S.profile || {};
+    const entries = [];
+
+    if (p.type === 'CUSTOMER') {
+      (S.invoices || []).forEach((inv) => {
+        if (inv.partyId === p.id && inv.ledger === 'Credit / Sundry Debtors') {
+          entries.push({ date: inv.date, ref: inv.invoiceNo, desc: 'Credit Sale', dr: inv.totalGross || 0, cr: 0 });
+        }
+      });
+      (S.creditNotes || []).forEach((crn) => {
+        if (crn.customerName && crn.customerName.toLowerCase() === p.name.toLowerCase()) {
+          entries.push({ date: crn.date, ref: crn.crnNo, desc: 'Sales Return', dr: 0, cr: crn.refundTotal || 0 });
+        }
+      });
+      (S.vouchers || []).forEach((v) => {
+        if (v.type === 'RECEIPT' && v.partyId === p.id) {
+          entries.push({ date: v.date, ref: 'RCPT', desc: 'Receipt', dr: 0, cr: v.amount || 0 });
+        }
+      });
+    } else {
+      (S.purchases || []).forEach((pur) => {
+        if (pur.supplierId === p.id && pur.ledger === 'Credit / Sundry Creditors') {
+          entries.push({ date: pur.date, ref: pur.purchaseNo, desc: 'Credit Purchase', dr: 0, cr: pur.totalCost || 0 });
+        }
+      });
+      (S.vouchers || []).forEach((v) => {
+        if (v.type === 'EXPENSE' && v.category && v.category.toLowerCase() === p.name.toLowerCase()) {
+          entries.push({ date: v.date, ref: 'PAY', desc: 'Payment', dr: v.amount || 0, cr: 0 });
+        }
+      });
+    }
+
+    entries.sort((a, b) => new Date(a.date + 'T12:00:00') - new Date(b.date + 'T12:00:00'));
+
+    const opening = p.opening || 0;
+    const openingDr = p.drCr === 'DR' ? opening : 0;
+    const openingCr = p.drCr === 'CR' ? opening : 0;
+
+    let bal = openingDr - openingCr;
+    let totalDr = openingDr, totalCr = openingCr;
+
+    const rows = entries.map((e) => {
+      bal += (e.dr - e.cr);
+      totalDr += e.dr;
+      totalCr += e.cr;
+      return `
+        <tr>
+          <td style="border:1px solid #94a3b8;padding:5px;font-family:monospace;font-size:10px">${C.escapeHTML(e.date)}</td>
+          <td style="border:1px solid #94a3b8;padding:5px;font-family:monospace;font-size:10px">${C.escapeHTML(e.ref)}</td>
+          <td style="border:1px solid #94a3b8;padding:5px;font-size:10.5px">${C.escapeHTML(e.desc)}</td>
+          <td style="border:1px solid #94a3b8;padding:5px;text-align:right;font-family:monospace">${e.dr > 0 ? e.dr.toFixed(2) : '—'}</td>
+          <td style="border:1px solid #94a3b8;padding:5px;text-align:right;font-family:monospace">${e.cr > 0 ? e.cr.toFixed(2) : '—'}</td>
+          <td style="border:1px solid #94a3b8;padding:5px;text-align:right;font-family:monospace;font-weight:700">${Math.abs(bal).toFixed(2)} ${bal >= 0 ? 'Dr' : 'Cr'}</td>
+        </tr>`;
+    }).join('');
+
+    target.innerHTML = `
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:11px;color:#0f172a">
+        <div style="border-bottom:2px solid #0ea5e9;padding-bottom:8px;margin-bottom:10px">
+          <div style="font-size:20px;font-weight:900;color:#075985">${C.escapeHTML(prof.name || 'Store')}</div>
+          <div style="font-size:10px;color:#64748b;margin-top:2px">${C.escapeHTML(prof.address || '')}</div>
+          <div style="font-size:10px;color:#475569;margin-top:1px">${C.escapeHTML(prof.phone || '')} • GSTIN: ${C.escapeHTML(prof.gstin || '—')}</div>
+        </div>
+
+        <div style="background:#f0f9ff;border:1px solid #bae6fd;padding:8px;border-radius:6px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:8px;font-weight:700;text-transform:uppercase;color:#0369a1">Party Ledger</div>
+            <div style="font-size:15px;font-weight:900;color:#0c4a6e;margin-top:2px">${C.escapeHTML(p.name)}</div>
+            <div style="font-size:10px;color:#475569;margin-top:1px">
+              ${p.type} ${p.phone ? '• ' + C.escapeHTML(p.phone) : ''} ${p.gstin ? '• GSTIN: ' + C.escapeHTML(p.gstin) : ''}
+            </div>
+          </div>
+          <div style="text-align:right;font-size:10px">
+            <div style="color:#64748b">Printed: ${C.fmtDatePretty(new Date())}</div>
+          </div>
+        </div>
+
+        <table style="width:100%;border-collapse:collapse;font-size:10.5px">
+          <thead>
+            <tr style="background:#0ea5e9;color:white;font-size:9px;text-transform:uppercase;font-weight:700">
+              <th style="border:1px solid #94a3b8;padding:6px;text-align:left">Date</th>
+              <th style="border:1px solid #94a3b8;padding:6px;text-align:left">Ref</th>
+              <th style="border:1px solid #94a3b8;padding:6px;text-align:left">Particulars</th>
+              <th style="border:1px solid #94a3b8;padding:6px;text-align:right">Debit ₹</th>
+              <th style="border:1px solid #94a3b8;padding:6px;text-align:right">Credit ₹</th>
+              <th style="border:1px solid #94a3b8;padding:6px;text-align:right">Balance ₹</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="background:#f0f9ff">
+              <td style="border:1px solid #94a3b8;padding:5px;font-family:monospace;font-size:10px">—</td>
+              <td style="border:1px solid #94a3b8;padding:5px;font-family:monospace;font-size:10px">OPENING</td>
+              <td style="border:1px solid #94a3b8;padding:5px;font-style:italic">Opening Balance</td>
+              <td style="border:1px solid #94a3b8;padding:5px;text-align:right;font-family:monospace">${openingDr > 0 ? openingDr.toFixed(2) : '—'}</td>
+              <td style="border:1px solid #94a3b8;padding:5px;text-align:right;font-family:monospace">${openingCr > 0 ? openingCr.toFixed(2) : '—'}</td>
+              <td style="border:1px solid #94a3b8;padding:5px;text-align:right;font-family:monospace;font-weight:700">${Math.abs(bal).toFixed(2)} ${bal >= 0 ? 'Dr' : 'Cr'}</td>
+            </tr>
+            ${rows || '<tr><td colspan="6" style="border:1px solid #94a3b8;padding:8px;text-align:center;color:#94a3b8">No transactions</td></tr>'}
+          </tbody>
+          <tfoot>
+            <tr style="background:#0c4a6e;color:white;font-weight:900">
+              <td colspan="3" style="border:1px solid #94a3b8;padding:6px;text-align:right;text-transform:uppercase">Total / Closing</td>
+              <td style="border:1px solid #94a3b8;padding:6px;text-align:right;font-family:monospace">${totalDr.toFixed(2)}</td>
+              <td style="border:1px solid #94a3b8;padding:6px;text-align:right;font-family:monospace">${totalCr.toFixed(2)}</td>
+              <td style="border:1px solid #94a3b8;padding:6px;text-align:right;font-family:monospace">${Math.abs(bal).toFixed(2)} ${bal >= 0 ? 'Dr' : 'Cr'}</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <div style="margin-top:14px;font-size:9px;color:#94a3b8;text-align:center;font-family:monospace">
+          SmartFix ERP © 2026 • Party Ledger • ${C.escapeHTML(p.name)}
+        </div>
+      </div>
+    `;
+
+    target.style.cssText = `
+      display: flex !important;
+      flex-direction: column !important;
+      width: 100% !important;
+      max-width: 202mm !important;
+      min-height: 285mm !important;
+      padding: 4mm 5mm !important;
+      box-sizing: border-box !important;
+      margin: 0 auto !important;
+      background: white !important;
+      color: #000 !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    `;
+
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => {
+        target.innerHTML = '';
+        target.style.cssText = '';
+      }, 500);
+    }, 200);
+  }
+
+
+  /* ============================================================
+     11. HELPERS
+     ============================================================ */
+  function setText(id, text) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  }
+
+  function fmt0(n) {
+    const v = Number(n) || 0;
+    return v.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+  }
+
+  function fmt2(n) {
+    const v = Number(n) || 0;
+    return v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+
+  /* ============================================================
+     12. EXPOSE API
+     ============================================================ */
+  window.SF = window.SF || {};
+  window.SF.parties = {
+    init: init_partiesModule,
+    setType,
+    save,
+    edit,
+    resetForm,
+    deleteParty,
+    renderList,
+    viewLedger,
+    closeLedger,
+    printLedger,
+    computeBalance
+  };
+
+  /* Router expects this */
+  window.init_partiesModule = init_partiesModule;
+
+  /* Auto-init fallback */
+  if (document.getElementById('partiesModule')) {
+    init_partiesModule();
+  }
+})();
+</script>
