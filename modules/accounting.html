@@ -1,0 +1,1191 @@
+<!-- ============================================================
+     SMARTFIX ERP — Accounting / P&L / Audit Module
+     File: modules/accounting.html
+     Version: 4.0.0
+     ============================================================ -->
+
+<section id="accountingModule" class="space-y-4">
+
+  <!-- ============================================================
+       TOP BAR — Date Range + Filters
+       ============================================================ -->
+  <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
+
+    <div class="flex flex-wrap justify-between items-center gap-3">
+      <h2 class="text-lg font-black text-white">Tally Accounting, P&L & Audit</h2>
+      <div class="flex flex-wrap gap-1.5 text-[11px] font-bold">
+        <button type="button" onclick="SF.accounting.setRange('today')"
+                class="range-btn bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg transition">
+          Today
+        </button>
+        <button type="button" onclick="SF.accounting.setRange('month')"
+                class="range-btn bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg transition">
+          1M
+        </button>
+        <button type="button" onclick="SF.accounting.setRange('3months')"
+                class="range-btn bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg transition">
+          3M
+        </button>
+        <button type="button" onclick="SF.accounting.setRange('6months')"
+                class="range-btn bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg transition">
+          6M
+        </button>
+        <button type="button" onclick="SF.accounting.setRange('1year')"
+                class="range-btn bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg transition">
+          1Y
+        </button>
+        <button type="button" onclick="SF.accounting.setRange('fy')"
+                class="range-btn bg-indigo-900/70 hover:bg-indigo-800 text-indigo-200 border border-indigo-700/60 px-3 py-1.5 rounded-lg transition">
+          FY
+        </button>
+      </div>
+    </div>
+
+    <!-- Global search bar -->
+    <div class="bg-sky-950/40 border border-sky-800/60 rounded-xl p-3">
+      <label class="block text-[10px] font-bold uppercase text-sky-400 mb-1.5 tracking-wider">
+        🔎 Smart Search — Invoice No / Customer / Phone / IMEI
+      </label>
+      <div class="flex gap-2">
+        <input type="text" id="accSearchInput"
+               oninput="SF.accounting.onSearchChange()"
+               placeholder="Type invoice no, name, mobile, or IMEI... (instant results)"
+               class="flex-1 bg-slate-950 border-2 border-sky-700 rounded-lg px-3 py-2 text-sm font-mono text-sky-100 placeholder-sky-700 focus:outline-none focus:border-sky-500">
+        <button type="button" onclick="SF.accounting.clearSearch()"
+                class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-lg text-xs font-bold transition">
+          Clear
+        </button>
+      </div>
+      <div class="text-[10px] text-sky-600 mt-1.5">
+        Instant results — everything matches in real-time as you type
+      </div>
+    </div>
+
+    <!-- Date + Ledger filters -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+      <div>
+        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">From</label>
+        <input type="date" id="accFromDate" onchange="SF.accounting.apply()"
+               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200">
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">To</label>
+        <input type="date" id="accToDate" onchange="SF.accounting.apply()"
+               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200">
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Ledger</label>
+        <select id="accLedgerFilter" onchange="SF.accounting.apply()"
+                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200">
+          <option value="ALL">All Accounts</option>
+          <option value="Cash-in-Hand">Cash</option>
+          <option value="Bank / UPI">Bank / UPI</option>
+          <option value="Card Payment">Card</option>
+          <option value="Bajaj / EMI Finance">Bajaj EMI</option>
+          <option value="Credit / Sundry Debtors">Debtors (Udhar)</option>
+        </select>
+      </div>
+      <div class="flex items-end">
+        <button type="button" onclick="SF.accounting.apply()"
+                class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-1.5 rounded-lg text-xs transition">
+          ↻ Calculate
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ============================================================
+       STAT CARDS — Row 1
+       ============================================================ -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+
+    <div class="bg-gradient-to-br from-indigo-900 to-slate-900 border border-indigo-800/60 rounded-2xl p-4">
+      <div class="text-[10px] uppercase font-bold text-indigo-300 tracking-wider">Net Sales</div>
+      <div id="accStatNetTurnover" class="text-xl sm:text-2xl font-black mt-1 text-white">₹0</div>
+      <div id="accStatGrossVsReturn" class="text-[10px] text-indigo-300/70 mt-1">
+        Gross: ₹0 | Returns: ₹0
+      </div>
+    </div>
+
+    <div class="bg-gradient-to-br from-slate-900 to-blue-950 border border-blue-800/60 rounded-2xl p-4">
+      <div class="text-[10px] uppercase font-bold text-blue-300 tracking-wider">GST Net Output</div>
+      <div id="accStatNetGST" class="text-xl sm:text-2xl font-black mt-1 text-white">₹0</div>
+      <div class="text-[10px] text-blue-300/70 mt-1">Output − Returns − Input</div>
+    </div>
+
+    <div class="bg-gradient-to-br from-slate-900 to-rose-950 border border-rose-800/60 rounded-2xl p-4">
+      <div class="text-[10px] uppercase font-bold text-rose-300 tracking-wider">Total Expenses</div>
+      <div id="accStatTotalExpense" class="text-xl sm:text-2xl font-black mt-1 text-white">₹0</div>
+      <div class="text-[10px] text-rose-300/70 mt-1">From vouchers</div>
+    </div>
+
+    <div class="bg-gradient-to-br from-emerald-900 to-slate-900 border border-emerald-800/60 rounded-2xl p-4">
+      <div class="text-[10px] uppercase font-bold text-emerald-300 tracking-wider">Net Profit</div>
+      <div id="accStatNetProfit" class="text-xl sm:text-2xl font-black mt-1 text-white">₹0</div>
+      <div class="text-[10px] text-emerald-300/70 mt-1">Revenue − Cost − Expense</div>
+    </div>
+
+  </div>
+
+
+  <!-- ============================================================
+       STAT CARDS — Row 2
+       ============================================================ -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4">
+      <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Credit Sales (Udhar)</div>
+      <div id="accStatCreditSales" class="text-lg font-black mt-1 text-sky-400">₹0</div>
+    </div>
+
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4">
+      <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Total Receipts</div>
+      <div id="accStatReceipts" class="text-lg font-black mt-1 text-emerald-400">₹0</div>
+    </div>
+
+    <div class="bg-amber-950/40 border border-amber-800/50 rounded-2xl p-4">
+      <div class="text-[10px] uppercase font-bold text-amber-400 tracking-wider">Outstanding Debtors</div>
+      <div id="accStatDebtorsBalance" class="text-lg font-black mt-1 text-amber-300">₹0</div>
+    </div>
+
+  </div>
+
+
+  <!-- ============================================================
+       EXCEL EXPORT BANNER
+       ============================================================ -->
+  <div class="bg-gradient-to-r from-emerald-900 to-slate-900 border border-emerald-800/60 rounded-2xl p-4 flex flex-wrap justify-between items-center gap-3">
+    <div>
+      <div class="font-bold text-sm text-white">📊 CA Multi-Sheet Excel Export</div>
+      <div class="text-[11px] text-emerald-300/80 mt-0.5">
+        Sales + Returns + Purchases + Daybook + Parties + Staff + Stock — ৭টা sheet
+      </div>
+    </div>
+    <button type="button" onclick="SF.accounting.exportCAExcel()"
+            class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-lg shadow-lg shadow-emerald-600/30 transition flex items-center gap-2">
+      <span>⬇</span>
+      <span>Download CA Excel</span>
+    </button>
+  </div>
+
+
+  <!-- ============================================================
+       COMBINED TRANSACTION REGISTER
+       ============================================================ -->
+  <div class="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden">
+
+    <div class="p-4 border-b border-slate-800 flex justify-between items-center flex-wrap gap-2">
+      <h3 class="font-bold text-xs uppercase tracking-wider text-slate-300">
+        📋 Combined Transaction Register
+      </h3>
+      <span id="accRangeText" class="text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded font-mono">
+        Full View
+      </span>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs border-collapse min-w-[900px]">
+        <thead class="bg-slate-950/70 text-slate-500 uppercase text-[10px]">
+          <tr>
+            <th class="p-3 border-b border-slate-800">Date</th>
+            <th class="p-3 border-b border-slate-800">Type</th>
+            <th class="p-3 border-b border-slate-800">Voucher</th>
+            <th class="p-3 border-b border-slate-800">Customer</th>
+            <th class="p-3 border-b border-slate-800">Ledger</th>
+            <th class="p-3 border-b border-slate-800 text-right">Taxable</th>
+            <th class="p-3 border-b border-slate-800 text-right">GST</th>
+            <th class="p-3 border-b border-slate-800 text-right">Total</th>
+            <th class="p-3 border-b border-slate-800 text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="accRegisterBody" class="divide-y divide-slate-800/60">
+          <tr>
+            <td colspan="9" class="text-center py-10 text-slate-500 text-xs">
+              Loading...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Footer summary -->
+    <div id="accRegisterFooter" class="p-3 border-t border-slate-800 bg-slate-950/50 grid grid-cols-2 sm:grid-cols-4 gap-3 text-[11px]">
+      <div>
+        <span class="text-slate-500">Rows:</span>
+        <strong id="accFooterRows" class="text-slate-200 ml-1 font-mono">0</strong>
+      </div>
+      <div>
+        <span class="text-slate-500">Total Taxable:</span>
+        <strong id="accFooterTaxable" class="text-sky-400 ml-1 font-mono">₹0</strong>
+      </div>
+      <div>
+        <span class="text-slate-500">Total GST:</span>
+        <strong id="accFooterGST" class="text-blue-400 ml-1 font-mono">₹0</strong>
+      </div>
+      <div>
+        <span class="text-slate-500">Total Amount:</span>
+        <strong id="accFooterTotal" class="text-emerald-400 ml-1 font-mono">₹0</strong>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ============================================================
+       AUDIT TRAIL
+       ============================================================ -->
+  <div class="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden">
+
+    <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+      <h3 class="font-bold text-xs uppercase tracking-wider text-slate-300">
+        🔍 Audit Trail
+      </h3>
+      <div class="flex gap-2">
+        <span id="accAuditCount" class="text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded font-mono">0 entries</span>
+        <button type="button" onclick="SF.accounting.clearAudit()"
+                class="text-[10px] bg-rose-950/60 hover:bg-rose-900/60 text-rose-400 font-bold px-2.5 py-1 rounded transition">
+          Clear Log
+        </button>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto max-h-96">
+      <table class="w-full text-left text-xs border-collapse">
+        <thead class="bg-slate-950 sticky top-0 z-10">
+          <tr>
+            <th class="p-2.5 border-b border-slate-800 text-slate-500 uppercase text-[10px] w-40">Time</th>
+            <th class="p-2.5 border-b border-slate-800 text-slate-500 uppercase text-[10px] w-40">Action</th>
+            <th class="p-2.5 border-b border-slate-800 text-slate-500 uppercase text-[10px]">Details</th>
+          </tr>
+        </thead>
+        <tbody id="accAuditBody" class="divide-y divide-slate-800/60">
+          <tr>
+            <td colspan="3" class="text-center py-6 text-slate-500 text-xs">
+              No activity yet.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- ============================================================
+     ACCOUNTING MODULE LOGIC
+     ============================================================ -->
+<script>
+(function () {
+  'use strict';
+
+  const S  = window.SF?.state?.state;
+  const C  = window.SF?.common;
+  const Cl = window.SF?.cloud;
+
+  if (!S || !C) {
+    console.error('Accounting module: SF globals not ready');
+    return;
+  }
+
+
+  /* ============================================================
+     1. MODULE STATE
+     ============================================================ */
+  const A = {
+    fromDate: null,
+    toDate:   null,
+    ledger:   'ALL',
+    search:   '',
+    range:    'fy'
+  };
+
+
+  /* ============================================================
+     2. INIT
+     ============================================================ */
+  function init_accountingModule() {
+    console.log('%c📊 Accounting module initialized', 'color:#10b981;font-weight:bold');
+
+    /* Default to current FY */
+    const fy = C.getFY(new Date());
+    A.fromDate = C.fmtDate(fy.start);
+    A.toDate   = C.fmtDate(fy.end);
+    A.range    = 'fy';
+    A.search   = '';
+    A.ledger   = 'ALL';
+
+    /* Set inputs */
+    const fromEl = document.getElementById('accFromDate');
+    const toEl   = document.getElementById('accToDate');
+    const ledEl  = document.getElementById('accLedgerFilter');
+    const srchEl = document.getElementById('accSearchInput');
+    if (fromEl) fromEl.value = A.fromDate;
+    if (toEl)   toEl.value   = A.toDate;
+    if (ledEl)  ledEl.value  = 'ALL';
+    if (srchEl) srchEl.value = '';
+
+    /* Highlight FY button */
+    highlightRangeButton('fy');
+
+    /* Apply filter */
+    apply();
+
+    /* Subscribe to state changes */
+    if (window.SF?.state?.on) {
+      window.SF.state.on('change:invoices', () => apply());
+      window.SF.state.on('change:creditNotes', () => apply());
+      window.SF.state.on('change:vouchers', () => apply());
+      window.SF.state.on('change:purchases', () => apply());
+      window.SF.state.on('change:inventory', () => { /* silent */ });
+      window.SF.state.on('audit:new', () => renderAuditTrail());
+    }
+
+    /* Render audit */
+    renderAuditTrail();
+
+    return {
+      onUnload: () => {
+        console.log('Accounting module unloading');
+      }
+    };
+  }
+
+
+  /* ============================================================
+     3. RANGE BUTTONS
+     ============================================================ */
+  function setRange(period) {
+    const today = new Date();
+    let from = new Date();
+    let to   = new Date();
+
+    if (period === 'today') {
+      from = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      to   = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+    } else if (period === 'month') {
+      from = new Date(today.getFullYear(), today.getMonth(), 1);
+      to   = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59);
+    } else if (period === '3months') {
+      from = new Date(today);
+      from.setMonth(today.getMonth() - 3);
+      from.setDate(1);
+      to = new Date(today);
+    } else if (period === '6months') {
+      from = new Date(today);
+      from.setMonth(today.getMonth() - 6);
+      from.setDate(1);
+      to = new Date(today);
+    } else if (period === '1year') {
+      from = new Date(today);
+      from.setFullYear(today.getFullYear() - 1);
+      to = new Date(today);
+    } else if (period === 'fy') {
+      const fy = C.getFY(today);
+      from = fy.start;
+      to   = fy.end;
+    }
+
+    A.fromDate = C.fmtDate(from);
+    A.toDate   = C.fmtDate(to);
+    A.range    = period;
+
+    const fromEl = document.getElementById('accFromDate');
+    const toEl   = document.getElementById('accToDate');
+    if (fromEl) fromEl.value = A.fromDate;
+    if (toEl)   toEl.value   = A.toDate;
+
+    highlightRangeButton(period);
+    apply();
+  }
+
+  function highlightRangeButton(period) {
+    document.querySelectorAll('.range-btn').forEach((btn) => {
+      btn.classList.remove('bg-indigo-900/70', 'text-indigo-200', 'border', 'border-indigo-700/60');
+      btn.classList.add('bg-slate-800', 'text-slate-300');
+    });
+    /* Find matching button by onclick */
+    document.querySelectorAll('.range-btn').forEach((btn) => {
+      const oc = btn.getAttribute('onclick') || '';
+      if (oc.includes("'" + period + "'")) {
+        btn.classList.remove('bg-slate-800', 'text-slate-300');
+        btn.classList.add('bg-indigo-900/70', 'text-indigo-200', 'border', 'border-indigo-700/60');
+      }
+    });
+  }
+
+
+  /* ============================================================
+     4. SEARCH + FILTER
+     ============================================================ */
+  function onSearchChange() {
+    const el = document.getElementById('accSearchInput');
+    A.search = (el?.value || '').trim().toLowerCase();
+    apply();
+  }
+
+  function clearSearch() {
+    const el = document.getElementById('accSearchInput');
+    if (el) el.value = '';
+    A.search = '';
+    apply();
+  }
+
+
+  /* ============================================================
+     5. APPLY FILTER + RENDER
+     ============================================================ */
+  function apply() {
+    /* Read inputs */
+    const fromEl = document.getElementById('accFromDate');
+    const toEl   = document.getElementById('accToDate');
+    const ledEl  = document.getElementById('accLedgerFilter');
+    const srchEl = document.getElementById('accSearchInput');
+
+    const fromStr = fromEl?.value || C.fmtDate(new Date());
+    const toStr   = toEl?.value   || C.fmtDate(new Date());
+    const ledger  = ledEl?.value  || 'ALL';
+    const searchQ = (srchEl?.value || '').trim().toLowerCase();
+
+    A.fromDate = fromStr;
+    A.toDate   = toStr;
+    A.ledger   = ledger;
+    A.search   = searchQ;
+
+    const fromDate = new Date(fromStr + 'T00:00:00');
+    const toDate   = new Date(toStr   + 'T23:59:59');
+
+    /* -------- Filter invoices -------- */
+    const fInv = (S.invoices || []).filter((i) => {
+      const d = new Date((i.date || '') + 'T12:00:00');
+      if (d < fromDate || d > toDate) return false;
+      if (ledger !== 'ALL' && i.ledger !== ledger) return false;
+      return true;
+    });
+
+    /* -------- Filter credit notes -------- */
+    const fCRN = (S.creditNotes || []).filter((c) => {
+      const d = new Date((c.date || '') + 'T12:00:00');
+      return d >= fromDate && d <= toDate;
+    });
+
+    /* -------- Filter vouchers -------- */
+    const fVch = (S.vouchers || []).filter((v) => {
+      const d = new Date((v.date || '') + 'T12:00:00');
+      return d >= fromDate && d <= toDate;
+    });
+
+    /* -------- Filter purchases -------- */
+    const fPur = (S.purchases || []).filter((p) => {
+      const d = new Date((p.date || '') + 'T12:00:00');
+      return d >= fromDate && d <= toDate;
+    });
+
+    /* ============================================================
+       CALCULATE STATS
+       ============================================================ */
+    let gSales = 0, sTax = 0, tPC = 0;
+    fInv.forEach((i) => {
+      gSales += i.totalGross || 0;
+      sTax += ((i.totalCGST || 0) + (i.totalSGST || 0) + (i.totalIGST || 0));
+      tPC  += (i.totalPurchaseCost || 0);
+    });
+
+    let tReturns = 0, rTax = 0;
+    fCRN.forEach((c) => {
+      tReturns += c.refundTotal || 0;
+      rTax += c.refundTax || 0;
+    });
+
+    let tExpense = 0;
+    fVch.forEach((v) => { if (v.type === 'EXPENSE') tExpense += v.amount || 0; });
+
+    let tPurchases = 0, pTax = 0;
+    fPur.forEach((p) => {
+      tPurchases += p.totalCost || 0;
+      pTax += p.totalGST || 0;
+    });
+
+    const netTurnover = gSales - tReturns;
+    const netGST = sTax - rTax - pTax;
+    const netProfit = netTurnover - tPC - tExpense;
+
+    /* Credit sales + receipts */
+    let creditSales = 0;
+    fInv.forEach((i) => { if (i.ledger === 'Credit / Sundry Debtors') creditSales += i.totalGross || 0; });
+
+    let receipts = 0;
+    fVch.forEach((v) => { if (v.type === 'RECEIPT') receipts += v.amount || 0; });
+
+    /* Update cards */
+    setText('accStatNetTurnover', C.money(netTurnover).replace(/\.\d+$/, ''));
+    setText('accStatGrossVsReturn', 'Gross: ₹' + fmt0(gSales) + ' | Returns: ₹' + fmt0(tReturns));
+    setText('accStatNetGST', C.money(netGST).replace(/\.\d+$/, ''));
+    setText('accStatTotalExpense', C.money(tExpense).replace(/\.\d+$/, ''));
+    setText('accStatNetProfit', C.money(netProfit).replace(/\.\d+$/, ''));
+    setText('accStatCreditSales', C.money(creditSales).replace(/\.\d+$/, ''));
+    setText('accStatReceipts', C.money(receipts).replace(/\.\d+$/, ''));
+    setText('accStatDebtorsBalance', C.money(creditSales - receipts).replace(/\.\d+$/, ''));
+
+    /* Range label */
+    const rangeTextEl = document.getElementById('accRangeText');
+    if (rangeTextEl) {
+      rangeTextEl.textContent = 'Period: ' + fromStr + ' → ' + toStr +
+        (searchQ ? ' | 🔎 "' + searchQ + '"' : '');
+    }
+
+    /* ============================================================
+       BUILD COMBINED REGISTER
+       ============================================================ */
+    const combined = [];
+
+    /* Invoices */
+    fInv.forEach((inv) => {
+      const itemDesc = (inv.items || []).map((x) => x.model || '').join(', ');
+      const imeiDesc = (inv.items || []).map((x) => x.imei || '').filter(Boolean).join(' ');
+      combined.push({
+        date: inv.date,
+        docType: 'SALES',
+        docNo: inv.invoiceNo,
+        customer: inv.customerName || 'Cash Customer',
+        phone: inv.customerPhone || '',
+        itemDesc,
+        imeiDesc,
+        ledger: inv.ledger,
+        taxable: inv.totalTaxable || 0,
+        tax: (inv.totalCGST || 0) + (inv.totalSGST || 0) + (inv.totalIGST || 0),
+        total: inv.totalGross || 0,
+        raw: inv
+      });
+    });
+
+    /* Credit notes */
+    fCRN.forEach((crn) => {
+      combined.push({
+        date: crn.date,
+        docType: 'CRN',
+        docNo: crn.crnNo,
+        customer: crn.customerName || 'Cash Customer',
+        phone: crn.customerPhone || '',
+        itemDesc: 'RETURN: ' + (crn.itemModel || ''),
+        imeiDesc: crn.imei || '',
+        ledger: 'Sales Return',
+        taxable: -(crn.refundTaxable || 0),
+        tax: -(crn.refundTax || 0),
+        total: -(crn.refundTotal || 0),
+        raw: crn
+      });
+    });
+
+    /* Apply search */
+    let filtered = combined;
+    if (searchQ) {
+      filtered = combined.filter((r) => {
+        const blob = (
+          (r.docNo || '') + ' ' +
+          (r.customer || '') + ' ' +
+          (r.phone || '') + ' ' +
+          (r.itemDesc || '') + ' ' +
+          (r.imeiDesc || '')
+        ).toLowerCase();
+        return blob.includes(searchQ);
+      });
+    }
+
+    /* Sort by date desc */
+    filtered.sort((a, b) => {
+      const da = new Date((a.date || '') + 'T12:00:00');
+      const db = new Date((b.date || '') + 'T12:00:00');
+      return db - da;
+    });
+
+    /* Render */
+    renderRegister(filtered, { searchQ });
+  }
+
+
+  /* ============================================================
+     6. RENDER REGISTER
+     ============================================================ */
+  function renderRegister(rows, meta) {
+    const body = document.getElementById('accRegisterBody');
+    if (!body) return;
+
+    if (!rows || rows.length === 0) {
+      body.innerHTML = `
+        <tr>
+          <td colspan="9" class="text-center py-10 text-slate-500 text-xs">
+            ${meta?.searchQ ? 'No matches for "' + C.escapeHTML(meta.searchQ) + '"' : 'No transactions in this period.'}
+          </td>
+        </tr>`;
+      updateFooter([]);
+      return;
+    }
+
+    body.innerHTML = rows.map((r) => {
+      const isCRN = r.docType === 'CRN';
+      const typeColor = isCRN
+        ? 'text-rose-400 bg-rose-950/40 border-rose-800/60'
+        : 'text-indigo-400 bg-indigo-950/40 border-indigo-800/60';
+
+      const totalColor = isCRN ? 'text-rose-400' : 'text-slate-100';
+
+      const actionsHtml = isCRN
+        ? '<span class="text-slate-700 text-[10px]">—</span>'
+        : `
+            <div class="inline-flex gap-1">
+              <button type="button" onclick="SF.accounting.viewInvoice('${C.escapeHTML(r.docNo)}')"
+                      title="View" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-sky-300 font-bold px-2 py-1 rounded">👁</button>
+              <button type="button" onclick="SF.accounting.editInvoice('${C.escapeHTML(r.docNo)}')"
+                      title="Edit" class="text-[10px] bg-amber-950/60 hover:bg-amber-900/60 text-amber-400 font-bold px-2 py-1 rounded">✏</button>
+              <button type="button" onclick="SF.accounting.deleteInvoice('${C.escapeHTML(r.docNo)}')"
+                      title="Delete" class="text-[10px] bg-rose-950/60 hover:bg-rose-900/60 text-rose-400 font-bold px-2 py-1 rounded">🗑</button>
+            </div>
+          `;
+
+      return `
+        <tr class="hover:bg-slate-800/30 transition ${isCRN ? 'bg-rose-950/10' : ''}">
+          <td class="p-3 border-b border-slate-800/60 font-mono text-slate-400 text-[11px] whitespace-nowrap">
+            ${C.escapeHTML(r.date)}
+          </td>
+          <td class="p-3 border-b border-slate-800/60">
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded border ${typeColor}">
+              ${r.docType}
+            </span>
+          </td>
+          <td class="p-3 border-b border-slate-800/60 font-mono font-bold text-[11px] text-slate-200">
+            ${C.escapeHTML(r.docNo)}
+          </td>
+          <td class="p-3 border-b border-slate-800/60">
+            <div class="font-bold text-white text-[11.5px]">${C.escapeHTML(r.customer)}</div>
+            ${r.phone ? `<div class="text-[10px] font-mono text-sky-500">📞 ${C.escapeHTML(r.phone)}</div>` : ''}
+            <div class="text-[10px] text-slate-500 truncate max-w-[200px]">${C.escapeHTML(r.itemDesc || '')}</div>
+          </td>
+          <td class="p-3 border-b border-slate-800/60">
+            <span class="text-[10.5px] text-slate-400">${C.escapeHTML(shortLedger(r.ledger))}</span>
+          </td>
+          <td class="p-3 border-b border-slate-800/60 text-right font-mono text-slate-300 text-[11px]">
+            ₹${fmt2(r.taxable)}
+          </td>
+          <td class="p-3 border-b border-slate-800/60 text-right font-mono text-slate-500 text-[11px]">
+            ₹${fmt2(r.tax)}
+          </td>
+          <td class="p-3 border-b border-slate-800/60 text-right font-mono font-bold text-[11.5px] ${totalColor}">
+            ₹${fmt2(r.total)}
+          </td>
+          <td class="p-3 border-b border-slate-800/60 text-center whitespace-nowrap">
+            ${actionsHtml}
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    updateFooter(rows);
+  }
+
+
+  function updateFooter(rows) {
+    let tTaxable = 0, tTax = 0, tTotal = 0;
+    rows.forEach((r) => {
+      tTaxable += r.taxable || 0;
+      tTax += r.tax || 0;
+      tTotal += r.total || 0;
+    });
+
+    setText('accFooterRows', rows.length);
+    setText('accFooterTaxable', '₹' + fmt2(tTaxable));
+    setText('accFooterGST', '₹' + fmt2(tTax));
+    setText('accFooterTotal', '₹' + fmt2(tTotal));
+  }
+
+
+  /* ============================================================
+     7. INVOICE ACTIONS
+     ============================================================ */
+  function viewInvoice(invNo) {
+    const inv = (S.invoices || []).find((i) => i.invoiceNo === invNo);
+    if (!inv) { C.toast('Invoice not found', 'error'); return; }
+
+    /* Fill billing module state for reprint */
+    try {
+      const dateEl = document.getElementById('billInvDate');
+      const invEl  = document.getElementById('billInvNo');
+      const nameEl = document.getElementById('billCustName');
+      const phEl   = document.getElementById('billCustPhone');
+      const gstEl  = document.getElementById('billCustGSTIN');
+      const ledEl  = document.getElementById('billLedger');
+      const taxEl  = document.getElementById('billGstType');
+      const discEl = document.getElementById('billDiscount');
+
+      /* If billing not loaded, navigate first */
+      if (!document.getElementById('billingModule')) {
+        if (window.SF?.router) {
+          window.SF.router.go('billing');
+          setTimeout(() => viewInvoice(invNo), 500);
+        }
+        return;
+      }
+
+      if (dateEl) dateEl.value = inv.date;
+      if (invEl)  invEl.value  = inv.invoiceNo;
+      if (nameEl) nameEl.value = inv.customerName || '';
+      if (phEl)   phEl.value   = inv.customerPhone || '';
+      if (gstEl)  gstEl.value  = inv.customerGSTIN || '';
+      if (ledEl)  ledEl.value  = inv.ledger || 'Cash-in-Hand';
+      if (taxEl)  taxEl.value  = inv.taxType || 'INTRA';
+      if (discEl) discEl.value = inv.discount || 0;
+
+      /* Set cart */
+      S.activeCart = JSON.parse(JSON.stringify(inv.items || []));
+      C.safeSave('sfp_active_cart', S.activeCart);
+
+      /* Render */
+      try { window.SF.billing.renderCart(); } catch (e) {}
+      try { window.SF.billing.renderPreview(); } catch (e) {}
+
+      C.toast('Loaded in billing. Review and print.', 'success', 2500);
+    } catch (e) {
+      console.error(e);
+      C.toast('Cannot load invoice', 'error');
+    }
+  }
+
+  async function editInvoice(invNo) {
+    const pin = prompt('🔒 Master PIN to EDIT invoice:');
+    if (!pin) return;
+    if (pin !== (S.profile?.masterPin || '1234')) {
+      C.toast('Incorrect PIN', 'error');
+      C.playErrorBeep();
+      return;
+    }
+
+    const inv = (S.invoices || []).find((i) => i.invoiceNo === invNo);
+    if (!inv) { C.toast('Invoice not found', 'error'); return; }
+
+    const newName = prompt('Customer Name:', inv.customerName || '');
+    if (newName === null) return;
+    const newPhone = prompt('Phone:', inv.customerPhone || '');
+    if (newPhone === null) return;
+    const newGSTIN = prompt('GSTIN:', inv.customerGSTIN || '');
+    if (newGSTIN === null) return;
+    const newLedger = prompt('Ledger (Cash-in-Hand / Bank / UPI / Card Payment / Bajaj / EMI Finance / Credit / Sundry Debtors):', inv.ledger || 'Cash-in-Hand');
+    if (newLedger === null) return;
+    const newDiscount = prompt('Discount ₹:', inv.discount || 0);
+    if (newDiscount === null) return;
+
+    const before = inv.invoiceNo + ' | ' + inv.customerName + ' | ' + C.money(inv.totalGross);
+
+    inv.customerName = newName.trim() || inv.customerName;
+    inv.customerPhone = newPhone.trim();
+    inv.customerGSTIN = newGSTIN.trim().toUpperCase();
+    inv.ledger = newLedger.trim() || inv.ledger;
+    inv.discount = Math.max(0, parseFloat(newDiscount) || 0);
+
+    /* Recalc totals if discount changed */
+    const items = inv.items || [];
+    let tGross = 0, tTaxable = 0, tTax = 0, tCGST = 0, tSGST = 0, tIGST = 0, tPC = 0;
+    items.forEach((it) => {
+      const lineTotal = (it.rate || 0) * (it.qty || 1);
+      const lineTaxable = lineTotal / (1 + (it.gst || 0) / 100);
+      const lineTax = lineTotal - lineTaxable;
+      tGross += lineTotal;
+      tTaxable += lineTaxable;
+      tTax += lineTax;
+      tPC += (it.purchaseCost || 0) * (it.qty || 1);
+      if (inv.taxType === 'INTRA') { tCGST += lineTax / 2; tSGST += lineTax / 2; }
+      else { tIGST += lineTax; }
+    });
+
+    const finalPayable = Math.max(0, tGross - inv.discount);
+    const factor = tGross > 0 ? finalPayable / tGross : 1;
+
+    inv.totalTaxable = +(tTaxable * factor).toFixed(2);
+    inv.totalCGST = +(tCGST * factor).toFixed(2);
+    inv.totalSGST = +(tSGST * factor).toFixed(2);
+    inv.totalIGST = +(tIGST * factor).toFixed(2);
+    inv.totalGross = +finalPayable.toFixed(2);
+    inv.totalPurchaseCost = +tPC.toFixed(2);
+
+    C.safeSave('sfp_invoices', S.invoices);
+
+    /* Cloud push */
+    try { await Cl.pushOne('invoices', inv); } catch (e) {}
+
+    try {
+      window.SF.state.logAudit('INVOICE_EDIT', 'Before: ' + before + ' → After: ' + inv.invoiceNo + ' | ' + inv.customerName);
+    } catch (e) {}
+
+    C.toast('Invoice updated', 'success');
+    apply();
+  }
+
+  async function deleteInvoice(invNo) {
+    const pin = prompt('🔒 Master PIN to DELETE invoice:');
+    if (!pin) return;
+    if (pin !== (S.profile?.masterPin || '1234')) {
+      C.toast('Incorrect PIN', 'error');
+      C.playErrorBeep();
+      return;
+    }
+
+    const inv = (S.invoices || []).find((i) => i.invoiceNo === invNo);
+    if (!inv) { C.toast('Invoice not found', 'error'); return; }
+
+    const ok = await C.confirmDialog(
+      'Delete Invoice?',
+      invNo + '\n' + inv.customerName + '\n' + C.money(inv.totalGross) +
+      '\n\nStock items will be restored. This cannot be undone.',
+      'Delete',
+      true
+    );
+    if (!ok) return;
+
+    /* Restore stock */
+    (inv.items || []).forEach((it) => {
+      let stk = null;
+      if (it.stockId) stk = S.inventory.find((x) => x.id === it.stockId);
+      else if (it.imei) {
+        const norm = C.normalizeIMEI(it.imei);
+        stk = S.inventory.find((x) => x.imei && C.normalizeIMEI(x.imei) === norm);
+      }
+      if (stk && stk.soldInvoice === invNo) {
+        stk.status = 'Available';
+        delete stk.soldInvoice;
+        delete stk.soldDate;
+      }
+    });
+    C.safeSave('sfp_stock', S.inventory);
+
+    /* Remove from state */
+    S.invoices = S.invoices.filter((i) => i.invoiceNo !== invNo);
+    C.safeSave('sfp_invoices', S.invoices);
+
+    /* Cloud delete */
+    try {
+      await Cl.deleteOne('invoices', invNo);
+      /* Also update cloud stock for restored items */
+      for (const it of (inv.items || [])) {
+        if (it.stockId) {
+          const stk = S.inventory.find((x) => x.id === it.stockId);
+          if (stk) await Cl.pushOne('inventory', stk);
+        }
+      }
+    } catch (e) {}
+
+    try {
+      window.SF.state.logAudit('INVOICE_DELETE',
+        invNo + ' | ' + inv.customerName + ' | ' + C.money(inv.totalGross) + ' (stock restored)');
+    } catch (e) {}
+
+    C.toast('Invoice deleted. Stock restored.', 'success');
+    apply();
+  }
+
+
+  /* ============================================================
+     8. AUDIT TRAIL
+     ============================================================ */
+  function renderAuditTrail() {
+    const body = document.getElementById('accAuditBody');
+    const countEl = document.getElementById('accAuditCount');
+    if (!body) return;
+
+    const log = S.auditLog || [];
+    if (countEl) countEl.textContent = log.length + ' entries';
+
+    if (log.length === 0) {
+      body.innerHTML = `
+        <tr>
+          <td colspan="3" class="text-center py-6 text-slate-500 text-xs">
+            No activity yet.
+          </td>
+        </tr>`;
+      return;
+    }
+
+    body.innerHTML = log.slice(0, 100).map((a) => {
+      const dt = new Date(a.ts);
+      const timeStr = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString();
+      const actColor = a.action.includes('DELETE')
+        ? 'text-rose-400'
+        : a.action.includes('EDIT')
+          ? 'text-amber-400'
+          : a.action.includes('CREATE') || a.action.includes('ISSUE')
+            ? 'text-indigo-400'
+            : 'text-slate-400';
+
+      return `
+        <tr class="hover:bg-slate-800/30">
+          <td class="p-2.5 border-b border-slate-800/60 font-mono text-[10.5px] text-slate-500 whitespace-nowrap">
+            ${C.escapeHTML(timeStr)}
+          </td>
+          <td class="p-2.5 border-b border-slate-800/60">
+            <span class="text-[10.5px] font-bold ${actColor}">${C.escapeHTML(a.action)}</span>
+          </td>
+          <td class="p-2.5 border-b border-slate-800/60 text-slate-300 text-[11px]">
+            ${C.escapeHTML(a.details || '')}
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  async function clearAudit() {
+    const pin = prompt('🔒 Master PIN to clear audit log:');
+    if (!pin) return;
+    if (pin !== (S.profile?.masterPin || '1234')) {
+      C.toast('Incorrect PIN', 'error');
+      return;
+    }
+    const ok = await C.confirmDialog(
+      'Clear Audit Log?',
+      'All ' + (S.auditLog || []).length + ' entries will be permanently deleted.',
+      'Clear',
+      true
+    );
+    if (!ok) return;
+
+    S.auditLog = [];
+    C.safeSave('sfp_audit', S.auditLog);
+    try {
+      window.SF.state.logAudit('AUDIT_CLEAR', 'Manually cleared audit log');
+    } catch (e) {}
+    renderAuditTrail();
+    C.toast('Audit log cleared', 'success');
+  }
+
+
+  /* ============================================================
+     9. CA EXCEL EXPORT
+     ============================================================ */
+  async function exportCAExcel() {
+    /* Load XLSX dynamically if not present */
+    if (typeof XLSX === 'undefined') {
+      try {
+        await new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+          s.onload = resolve;
+          s.onerror = reject;
+          document.head.appendChild(s);
+        });
+      } catch (e) {
+        C.toast('Excel library failed to load', 'error');
+        return;
+      }
+    }
+
+    C.toast('Building Excel workbook...', 'info', 2000);
+
+    const fromStr = document.getElementById('accFromDate')?.value || '1970-01-01';
+    const toStr   = document.getElementById('accToDate')?.value || C.fmtDate(new Date());
+
+    const fromDate = new Date(fromStr + 'T00:00:00');
+    const toDate   = new Date(toStr + 'T23:59:59');
+
+    const inRange = (d) => {
+      const dd = new Date((d || '') + 'T12:00:00');
+      return dd >= fromDate && dd <= toDate;
+    };
+
+    const wb = XLSX.utils.book_new();
+
+    /* Sheet 1: Sales */
+    const salesRows = (S.invoices || []).filter((i) => inRange(i.date)).map((inv) => ({
+      'Date': inv.date,
+      'FY': inv.financialYear || '',
+      'Invoice No': inv.invoiceNo,
+      'Customer': inv.customerName,
+      'Phone': inv.customerPhone,
+      'GSTIN': inv.customerGSTIN || 'B2C',
+      'Tax Type': inv.taxType || 'INTRA',
+      'Ledger': inv.ledger || '',
+      'Items': (inv.items || []).map((x) => x.model).join(' | '),
+      'IMEIs': (inv.items || []).map((x) => x.imei || '').filter(Boolean).join(' | '),
+      'Taxable': inv.totalTaxable || 0,
+      'CGST': inv.totalCGST || 0,
+      'SGST': inv.totalSGST || 0,
+      'IGST': inv.totalIGST || 0,
+      'Total': inv.totalGross || 0
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(salesRows.length ? salesRows : [{ Note: 'No sales in period' }]), 'Sales');
+
+    /* Sheet 2: Credit Notes */
+    const crnRows = (S.creditNotes || []).filter((c) => inRange(c.date)).map((c) => ({
+      'CRN No': c.crnNo,
+      'Date': c.date,
+      'Original Invoice': c.origInvoiceNo,
+      'Customer': c.customerName,
+      'Phone': c.customerPhone || '',
+      'Item': c.itemModel || '',
+      'IMEI': c.imei || '',
+      'Reason': c.reason || '',
+      'Refund Mode': c.refundMode || '',
+      'Taxable': c.refundTaxable || 0,
+      'GST': c.refundTax || 0,
+      'Total Refund': c.refundTotal || 0
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(crnRows.length ? crnRows : [{ Note: 'No returns in period' }]), 'Returns');
+
+    /* Sheet 3: Purchases */
+    const purRows = (S.purchases || []).filter((p) => inRange(p.date)).map((p) => ({
+      'Purchase No': p.purchaseNo,
+      'Bill No': p.billNo,
+      'Date': p.date,
+      'Supplier': p.supplierName,
+      'Phone': p.supplierPhone || '',
+      'GSTIN': p.supplierGSTIN || '',
+      'Ledger': p.ledger || '',
+      'Items': (p.lines || []).map((l) => '[' + l.category + '] ' + l.model).join(' | '),
+      'IMEIs': (p.lines || []).map((l) => l.imei || '').filter(Boolean).join(' | '),
+      'Taxable': p.totalTaxable || 0,
+      'GST': p.totalGST || 0,
+      'Total': p.totalCost || 0
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(purRows.length ? purRows : [{ Note: 'No purchases in period' }]), 'Purchases');
+
+    /* Sheet 4: Daybook */
+    const vchRows = (S.vouchers || []).filter((v) => inRange(v.date)).map((v) => ({
+      'Date': v.date,
+      'Type': v.type,
+      'Category': v.category || '',
+      'Account': v.account || v.fromAccount || v.drAccount || '',
+      'From': v.fromAccount || '',
+      'To': v.toAccount || '',
+      'Dr Account': v.drAccount || '',
+      'Cr Account': v.crAccount || '',
+      'Amount': v.amount,
+      'Narration': v.narration || ''
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(vchRows.length ? vchRows : [{ Note: 'No vouchers in period' }]), 'Daybook');
+
+    /* Sheet 5: Parties */
+    const partyRows = (S.parties || []).map((p) => ({
+      'Type': p.type,
+      'Name': p.name,
+      'Phone': p.phone || '',
+      'GSTIN': p.gstin || '',
+      'Address': p.address || '',
+      'Opening': p.opening || 0,
+      'Dr/Cr': p.drCr || ''
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(partyRows.length ? partyRows : [{ Note: 'No parties' }]), 'Parties');
+
+    /* Sheet 6: Stock */
+    const stockRows = (S.inventory || []).map((it) => ({
+      'Category': it.category || '',
+      'Model': it.model || '',
+      'IMEI': it.imei || '',
+      'Purchase Cost': it.purchaseCost || 0,
+      'Selling Price': it.cost || 0,
+      'GST %': it.gst || 18,
+      'Status': it.status || 'Available',
+      'Supplier': it.supplierName || '',
+      'Purchase Bill': it.purchaseBillNo || '',
+      'Sold Invoice': it.soldInvoice || '',
+      'Sold Date': it.soldDate || ''
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(stockRows.length ? stockRows : [{ Note: 'No stock' }]), 'Stock');
+
+    /* Sheet 7: GST Summary */
+    let outTaxable = 0, outCGST = 0, outSGST = 0, outIGST = 0;
+    let retTaxable = 0, retTax = 0;
+    let inTaxable = 0, inTax = 0;
+
+    (S.invoices || []).filter((i) => inRange(i.date)).forEach((i) => {
+      outTaxable += i.totalTaxable || 0;
+      outCGST += i.totalCGST || 0;
+      outSGST += i.totalSGST || 0;
+      outIGST += i.totalIGST || 0;
+    });
+    (S.creditNotes || []).filter((c) => inRange(c.date)).forEach((c) => {
+      retTaxable += c.refundTaxable || 0;
+      retTax += c.refundTax || 0;
+    });
+    (S.purchases || []).filter((p) => inRange(p.date)).forEach((p) => {
+      inTaxable += p.totalTaxable || 0;
+      inTax += p.totalGST || 0;
+    });
+
+    const gstRows = [
+      { 'Particulars': 'Output GST (Sales)', 'Taxable': outTaxable, 'CGST': outCGST, 'SGST': outSGST, 'IGST': outIGST, 'Total': outCGST + outSGST + outIGST },
+      { 'Particulars': 'Less: Sales Returns', 'Taxable': -retTaxable, 'CGST': 0, 'SGST': 0, 'IGST': 0, 'Total': -retTax },
+      { 'Particulars': 'Net Output', 'Taxable': outTaxable - retTaxable, 'CGST': 0, 'SGST': 0, 'IGST': 0, 'Total': (outCGST + outSGST + outIGST) - retTax },
+      { 'Particulars': 'Input GST (Purchases)', 'Taxable': inTaxable, 'CGST': 0, 'SGST': 0, 'IGST': 0, 'Total': inTax },
+      { 'Particulars': 'Net GST Payable', 'Taxable': 0, 'CGST': 0, 'SGST': 0, 'IGST': 0, 'Total': ((outCGST + outSGST + outIGST) - retTax) - inTax }
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(gstRows), 'GST_Summary');
+
+    /* Save */
+    const fname = 'SmartFix_CA_Export_' + fromStr + '_to_' + toStr + '.xlsx';
+    try {
+      XLSX.writeFile(wb, fname);
+      C.toast('Excel downloaded: ' + fname, 'success', 3500);
+      try { window.SF.state.logAudit('EXCEL_EXPORT', 'Period: ' + fromStr + ' → ' + toStr); } catch (e) {}
+    } catch (e) {
+      console.error(e);
+      C.toast('Excel export failed', 'error');
+    }
+  }
+
+
+  /* ============================================================
+     10. HELPERS
+     ============================================================ */
+  function setText(id, text) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  }
+
+  function fmt0(n) {
+    const v = Number(n) || 0;
+    return v.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+  }
+
+  function fmt2(n) {
+    const v = Number(n) || 0;
+    return v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function shortLedger(name) {
+    if (!name) return '—';
+    if (name === 'Cash-in-Hand') return 'Cash';
+    if (name === 'Bank / UPI') return 'Bank/UPI';
+    if (name === 'Card Payment') return 'Card';
+    if (name === 'Bajaj / EMI Finance') return 'Bajaj EMI';
+    if (name === 'Credit / Sundry Debtors') return 'Udhar';
+    if (name === 'Sales Return') return 'Return';
+    return name;
+  }
+
+
+  /* ============================================================
+     11. EXPOSE API
+     ============================================================ */
+  window.SF = window.SF || {};
+  window.SF.accounting = {
+    init: init_accountingModule,
+    setRange,
+    apply,
+    onSearchChange,
+    clearSearch,
+    viewInvoice,
+    editInvoice,
+    deleteInvoice,
+    renderAuditTrail,
+    clearAudit,
+    exportCAExcel
+  };
+
+  /* Router expects this */
+  window.init_accountingModule = init_accountingModule;
+
+  /* Auto-init fallback */
+  if (document.getElementById('accountingModule')) {
+    init_accountingModule();
+  }
+})();
+</script>
