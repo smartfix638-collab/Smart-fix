@@ -1,0 +1,766 @@
+<!-- ============================================================
+     SMARTFIX ERP — Returns / Credit Notes Module
+     File: modules/returns.html
+     Version: 4.0.0
+     ============================================================ -->
+
+<section id="returnsModule" class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+
+  <!-- ============================================================
+       LEFT PANEL — SEARCH + ISSUE CREDIT NOTE
+       ============================================================ -->
+  <div class="lg:col-span-5 space-y-3">
+
+    <!-- Search card -->
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <h2 class="font-bold text-xs uppercase tracking-wider text-rose-400">↩️ Issue Credit Note</h2>
+        <span class="text-[10px] bg-rose-950 text-rose-300 font-mono px-2 py-0.5 rounded border border-rose-800">
+          CRN
+        </span>
+      </div>
+
+      <p class="text-[11px] text-slate-400 leading-relaxed">
+        Enter the <strong class="text-white">invoice number</strong> or <strong class="text-white">device IMEI</strong> to find the sale.
+      </p>
+
+      <div class="flex gap-2">
+        <input type="text" id="retSearchInput"
+               onkeydown="if(event.key==='Enter')SF.returns.search()"
+               placeholder="Invoice No or IMEI..."
+               class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-sky-100 uppercase">
+        <button type="button" onclick="SF.returns.search()"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition">
+          🔍 Search
+        </button>
+      </div>
+    </div>
+
+    <!-- Result card (hidden until search) -->
+    <div id="retResultCard" style="display:none" class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
+
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <h3 class="text-[11px] font-bold uppercase tracking-wider text-sky-400">📄 Found Invoice</h3>
+        <button type="button" onclick="SF.returns.clearResult()"
+                class="text-[10px] text-slate-500 hover:text-slate-300 font-bold">
+          ✕ Clear
+        </button>
+      </div>
+
+      <!-- Invoice summary -->
+      <div class="bg-slate-950/70 rounded-lg p-3 space-y-1.5 text-xs">
+        <div class="flex justify-between"><span class="text-slate-500">Invoice:</span>
+          <strong id="retInvNo" class="font-mono text-sky-300">—</strong></div>
+        <div class="flex justify-between"><span class="text-slate-500">Date:</span>
+          <span id="retInvDate" class="font-mono text-slate-300">—</span></div>
+        <div class="flex justify-between"><span class="text-slate-500">Customer:</span>
+          <strong id="retCustName" class="text-slate-200">—</strong></div>
+        <div class="flex justify-between"><span class="text-slate-500">Phone:</span>
+          <span id="retCustPhone" class="font-mono text-slate-300">—</span></div>
+        <div class="flex justify-between"><span class="text-slate-500">Total:</span>
+          <strong id="retInvTotal" class="font-mono text-emerald-400">—</strong></div>
+      </div>
+
+      <!-- Item selector -->
+      <div>
+        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Select Item to Return</label>
+        <select id="retItemSelect" onchange="SF.returns.onItemChange()"
+                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-100 font-semibold">
+        </select>
+      </div>
+
+      <!-- Selected item details -->
+      <div class="bg-slate-950/70 rounded-lg p-3 space-y-1.5 text-xs">
+        <div class="flex justify-between"><span class="text-slate-500">Model:</span>
+          <strong id="retItemModel" class="text-slate-200">—</strong></div>
+        <div class="flex justify-between"><span class="text-slate-500">IMEI:</span>
+          <span id="retItemIMEI" class="font-mono text-slate-300 text-[10px]">—</span></div>
+        <div class="flex justify-between"><span class="text-slate-500">GST Rate:</span>
+          <span id="retItemGST" class="font-mono text-slate-300">—</span></div>
+        <div class="flex justify-between border-t border-slate-800 pt-1.5 mt-1.5">
+          <span class="text-rose-400 font-bold">Refund Amount:</span>
+          <strong id="retItemRefund" class="font-mono text-rose-400 text-base">—</strong>
+        </div>
+      </div>
+
+      <!-- Reason -->
+      <div>
+        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Reason for Return</label>
+        <select id="retReason"
+                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-100">
+          <option value="Defective / Factory Fault">Defective / Factory Fault</option>
+          <option value="Customer Dissatisfaction">Customer Dissatisfaction</option>
+          <option value="Wrong Model Delivered">Wrong Model Delivered</option>
+          <option value="Size / Color Mismatch">Size / Color Mismatch</option>
+          <option value="Damaged in Transit">Damaged in Transit</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <!-- Refund mode -->
+      <div>
+        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Refund Mode</label>
+        <select id="retRefundMode"
+                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-100">
+          <option value="Cash-in-Hand">Cash Refund</option>
+          <option value="Bank / UPI">UPI / Bank Transfer</option>
+          <option value="Store Credit">Store Credit (No Refund)</option>
+          <option value="Exchange">Exchange (No Refund)</option>
+        </select>
+      </div>
+
+      <!-- Restock checkbox -->
+      <label class="flex items-center gap-2 bg-emerald-950/30 border border-emerald-800/50 rounded-lg p-2.5 cursor-pointer">
+        <input type="checkbox" id="retRestock" checked
+               class="w-4 h-4 accent-emerald-500">
+        <span class="text-xs text-emerald-200 font-semibold">
+          ✅ Restock item as Available
+        </span>
+      </label>
+
+      <!-- Note -->
+      <div>
+        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Note (Optional)</label>
+        <input type="text" id="retNote" placeholder="e.g. Sent to service center"
+               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-100">
+      </div>
+
+      <!-- Issue button -->
+      <button type="button" onclick="SF.returns.issueCreditNote()"
+              class="w-full bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-black py-3 rounded-2xl text-sm shadow-lg shadow-rose-600/30 transition flex items-center justify-center gap-2">
+        <span>📄</span>
+        <span>Issue Credit Note (CRN)</span>
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- ============================================================
+       RIGHT PANEL — CRN REGISTER
+       ============================================================ -->
+  <div class="lg:col-span-7 space-y-3">
+
+    <!-- Stats row -->
+    <div class="grid grid-cols-3 gap-2">
+      <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3">
+        <div class="text-[9px] font-bold uppercase text-slate-500">Total CRNs</div>
+        <div id="retStatCount" class="text-lg font-black text-white mt-0.5">0</div>
+      </div>
+      <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3">
+        <div class="text-[9px] font-bold uppercase text-slate-500">Total Refunded</div>
+        <div id="retStatRefund" class="text-lg font-black text-rose-400 mt-0.5">₹0</div>
+      </div>
+      <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3">
+        <div class="text-[9px] font-bold uppercase text-slate-500">This Month</div>
+        <div id="retStatMonth" class="text-lg font-black text-sky-400 mt-0.5">0</div>
+      </div>
+    </div>
+
+    <!-- Register table -->
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden">
+      <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+        <h3 class="font-bold text-xs uppercase tracking-wider text-slate-300">📋 Credit Notes Register</h3>
+        <input type="text" id="retFilterInput"
+               oninput="SF.returns.renderRegister()"
+               placeholder="🔍 Filter..."
+               class="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1 text-[11px] text-slate-200 w-40">
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead class="bg-slate-950/70 text-slate-500 uppercase text-[10px]">
+            <tr>
+              <th class="p-2.5 border-b border-slate-800">CRN No</th>
+              <th class="p-2.5 border-b border-slate-800">Date</th>
+              <th class="p-2.5 border-b border-slate-800">Customer</th>
+              <th class="p-2.5 border-b border-slate-800 text-right">Refund</th>
+              <th class="p-2.5 border-b border-slate-800 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="retRegisterBody" class="divide-y divide-slate-800/60">
+            <tr>
+              <td colspan="5" class="text-center py-8 text-slate-500 text-xs">
+                No credit notes issued yet.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- ============================================================
+     RETURNS MODULE LOGIC
+     ============================================================ -->
+<script>
+(function () {
+  'use strict';
+
+  const S  = window.SF?.state?.state;
+  const C  = window.SF?.common;
+  const Cl = window.SF?.cloud;
+
+  if (!S || !C) {
+    console.error('Returns module: SF globals not ready');
+    return;
+  }
+
+  /* ============================================================
+     MODULE STATE
+     ============================================================ */
+  const R = {
+    foundInvoice: null,
+    selectedItem: null,
+    selectedItemIndex: -1
+  };
+
+
+  /* ============================================================
+     1. SEARCH INVOICE
+     ============================================================ */
+  function search() {
+    const q = (document.getElementById('retSearchInput')?.value || '').trim();
+    if (!q) {
+      C.toast('Enter invoice number or IMEI', 'warning');
+      return;
+    }
+    const normQ = C.normalizeIMEI(q);
+
+    const invoices = S.invoices || [];
+    let found = null;
+    let foundItemIdx = -1;
+
+    /* Try exact invoice number match first */
+    found = invoices.find((inv) =>
+      (inv.invoiceNo || '').toLowerCase() === q.toLowerCase()
+    );
+
+    /* Try IMEI match */
+    if (!found) {
+      for (const inv of invoices) {
+        const idx = (inv.items || []).findIndex((it) =>
+          it.imei && C.normalizeIMEI(it.imei) === normQ
+        );
+        if (idx !== -1) {
+          found = inv;
+          foundItemIdx = idx;
+          break;
+        }
+      }
+    }
+
+    if (!found) {
+      C.toast('No invoice found for: ' + q, 'error');
+      C.playErrorBeep();
+      return;
+    }
+
+    R.foundInvoice = found;
+    C.playBeep();
+    showResult(found, foundItemIdx);
+  }
+
+
+  function showResult(inv, preselectIdx) {
+    const card = document.getElementById('retResultCard');
+    if (!card) return;
+    card.style.display = 'block';
+
+    /* Summary */
+    document.getElementById('retInvNo').textContent    = inv.invoiceNo || '—';
+    document.getElementById('retInvDate').textContent  = inv.date || '—';
+    document.getElementById('retCustName').textContent = inv.customerName || 'Cash Customer';
+    document.getElementById('retCustPhone').textContent = inv.customerPhone || '—';
+    document.getElementById('retInvTotal').textContent = C.money(inv.totalGross || 0);
+
+    /* Item dropdown */
+    const sel = document.getElementById('retItemSelect');
+    const items = inv.items || [];
+
+    sel.innerHTML = items.map((it, idx) => {
+      const returnedTag = it.returned ? '  [ALREADY RETURNED]' : '';
+      const label = `${idx + 1}. ${it.model}${it.imei ? ' — ' + it.imei : ''}${returnedTag}`;
+      const disabled = it.returned ? 'disabled' : '';
+      return `<option value="${idx}" ${disabled}>${C.escapeHTML(label)}</option>`;
+    }).join('');
+
+    if (preselectIdx >= 0 && items[preselectIdx] && !items[preselectIdx].returned) {
+      sel.value = String(preselectIdx);
+    } else {
+      /* Auto-select first non-returned */
+      const firstAvailable = items.findIndex((x) => !x.returned);
+      if (firstAvailable !== -1) sel.value = String(firstAvailable);
+    }
+
+    onItemChange();
+  }
+
+
+  function clearResult() {
+    R.foundInvoice = null;
+    R.selectedItem = null;
+    R.selectedItemIndex = -1;
+    document.getElementById('retResultCard').style.display = 'none';
+    document.getElementById('retSearchInput').value = '';
+  }
+
+
+  /* ============================================================
+     2. ITEM SELECTION
+     ============================================================ */
+  function onItemChange() {
+    if (!R.foundInvoice) return;
+    const idx = parseInt(document.getElementById('retItemSelect')?.value, 10);
+    const items = R.foundInvoice.items || [];
+    const it = items[idx];
+    if (!it) return;
+
+    R.selectedItem = it;
+    R.selectedItemIndex = idx;
+
+    /* Refund amount: item's paid value after discount */
+    const rawSubtotal = items.reduce((a, x) => a + (x.rate || 0) * (x.qty || 1), 0);
+    const discountRatio = rawSubtotal > 0 ? (R.foundInvoice.totalGross || 0) / rawSubtotal : 1;
+    const refund = ((it.rate || 0) * (it.qty || 1)) * discountRatio;
+
+    document.getElementById('retItemModel').textContent = it.model || '—';
+    document.getElementById('retItemIMEI').textContent  = it.imei || 'N/A';
+    document.getElementById('retItemGST').textContent   = (it.gst || 0) + '%';
+    document.getElementById('retItemRefund').textContent = C.money(refund);
+
+    R.selectedItem._refundAmount = +refund.toFixed(2);
+  }
+
+
+  /* ============================================================
+     3. ISSUE CREDIT NOTE
+     ============================================================ */
+  async function issueCreditNote() {
+    if (!R.foundInvoice || !R.selectedItem) {
+      C.toast('Search and select an invoice first', 'warning');
+      return;
+    }
+
+    const it = R.selectedItem;
+    if (it.returned) {
+      C.toast('This item has already been returned', 'error');
+      C.playErrorBeep();
+      return;
+    }
+
+    const reason       = document.getElementById('retReason')?.value || 'Other';
+    const refundMode   = document.getElementById('retRefundMode')?.value || 'Cash-in-Hand';
+    const restock      = document.getElementById('retRestock')?.checked ?? true;
+    const note         = (document.getElementById('retNote')?.value || '').trim();
+
+    /* Refund amount calc */
+    const items = R.foundInvoice.items || [];
+    const rawSubtotal = items.reduce((a, x) => a + (x.rate || 0) * (x.qty || 1), 0);
+    const discountRatio = rawSubtotal > 0 ? (R.foundInvoice.totalGross || 0) / rawSubtotal : 1;
+    const refundTotal = ((it.rate || 0) * (it.qty || 1)) * discountRatio;
+
+    const refundTaxable = refundTotal / (1 + (it.gst || 0) / 100);
+    const refundTax     = refundTotal - refundTaxable;
+
+    /* Get atomic CRN number */
+    let crnNo = '';
+    try {
+      const fy = C.getFY(new Date()).short;
+      crnNo = await Cl.nextAtomicNumber('crn', fy);
+    } catch (e) {
+      crnNo = 'CRN-' + C.getFY(new Date()).short + '-TMP' + Date.now().toString().slice(-4);
+    }
+    if (!crnNo) crnNo = 'CRN-TMP-' + Date.now();
+
+    /* Build CRN record */
+    const crnRecord = {
+      id: crnNo,
+      crnNo,
+      date: C.fmtDate(new Date()),
+      origInvoiceNo: R.foundInvoice.invoiceNo,
+      origInvoiceDate: R.foundInvoice.date,
+      customerName: R.foundInvoice.customerName || 'Cash Customer',
+      customerPhone: R.foundInvoice.customerPhone || '',
+      customerGSTIN: R.foundInvoice.customerGSTIN || '',
+      itemModel: it.model || '',
+      imei: it.imei || '',
+      gst: it.gst || 18,
+      reason,
+      refundMode,
+      refundTaxable: +refundTaxable.toFixed(2),
+      refundTax:     +refundTax.toFixed(2),
+      refundTotal:   +refundTotal.toFixed(2),
+      restocked:     restock,
+      note,
+      taxType: R.foundInvoice.taxType || 'INTRA',
+      createdAt: new Date().toISOString()
+    };
+
+    /* Save CRN */
+    if (!Array.isArray(S.creditNotes)) S.creditNotes = [];
+    S.creditNotes.unshift(crnRecord);
+    C.safeSave('sfp_credit_notes', S.creditNotes);
+
+    /* Mark item as returned in the invoice */
+    it.returned = true;
+    it.returnedAt = crnRecord.date;
+    it.returnedCrn = crnNo;
+    C.safeSave('sfp_invoices', S.invoices);
+
+    /* Restock if requested */
+    if (restock && it.imei) {
+      const normImei = C.normalizeIMEI(it.imei);
+      const stk = S.inventory.find((x) => x.imei && C.normalizeIMEI(x.imei) === normImei);
+      if (stk) {
+        stk.status = 'Available';
+        delete stk.soldInvoice;
+        delete stk.soldDate;
+      } else {
+        /* Item wasn't in stock — add it now */
+        S.inventory.push({
+          id: 'ret-' + Date.now(),
+          model: it.model || 'Returned Item',
+          imei: it.imei || '',
+          category: it.category || 'Mobile Phone',
+          purchaseCost: it.purchaseCost || 0,
+          cost: it.rate || 0,
+          status: 'Available',
+          gst: it.gst || 18,
+          restoredFromCRN: crnNo
+        });
+      }
+      C.safeSave('sfp_stock', S.inventory);
+    }
+
+    /* Push to cloud */
+    try {
+      await Cl.pushOne('creditNotes', crnRecord);
+      await Cl.pushOne('invoices', R.foundInvoice);
+      if (restock && it.imei) {
+        const normImei = C.normalizeIMEI(it.imei);
+        const stk = S.inventory.find((x) => x.imei && C.normalizeIMEI(x.imei) === normImei);
+        if (stk) await Cl.pushOne('inventory', stk);
+      }
+    } catch (e) {
+      console.warn('Cloud push failed:', e);
+      C.toast('Saved locally. Will sync when online.', 'warning', 4000);
+    }
+
+    /* Audit log */
+    try {
+      window.SF.state.logAudit(
+        'CRN_ISSUE',
+        crnNo + ' | ' + (it.model || '') + ' | ' + C.money(refundTotal)
+      );
+    } catch (e) {}
+
+    C.toast('Credit Note ' + crnNo + ' issued', 'success', 3000);
+    C.playBeep();
+
+    /* Print CRN slip */
+    printCRN(crnRecord);
+
+    /* Refresh UI */
+    clearResult();
+    renderRegister();
+
+    /* Refresh invoice list in cache (item marked returned) */
+    try { window.SF.state.emit('change:invoices', S.invoices); } catch (e) {}
+  }
+
+
+  /* ============================================================
+     4. RENDER REGISTER
+     ============================================================ */
+  function renderRegister() {
+    const body = document.getElementById('retRegisterBody');
+    if (!body) return;
+
+    const filterQ = (document.getElementById('retFilterInput')?.value || '').trim().toLowerCase();
+    const crns = S.creditNotes || [];
+
+    /* Update stats */
+    const totalRefund = crns.reduce((a, c) => a + (c.refundTotal || 0), 0);
+    const thisMonth = C.fmtDate(new Date()).slice(0, 7);
+    const monthCount = crns.filter((c) => (c.date || '').startsWith(thisMonth)).length;
+
+    document.getElementById('retStatCount').textContent  = crns.length;
+    document.getElementById('retStatRefund').textContent = C.money(totalRefund);
+    document.getElementById('retStatMonth').textContent  = monthCount;
+
+    /* Filter */
+    const filtered = filterQ
+      ? crns.filter((c) => {
+          const blob = (
+            (c.crnNo || '') + ' ' +
+            (c.customerName || '') + ' ' +
+            (c.customerPhone || '') + ' ' +
+            (c.itemModel || '') + ' ' +
+            (c.imei || '') + ' ' +
+            (c.origInvoiceNo || '')
+          ).toLowerCase();
+          return blob.includes(filterQ);
+        })
+      : crns;
+
+    if (filtered.length === 0) {
+      body.innerHTML = `
+        <tr>
+          <td colspan="5" class="text-center py-8 text-slate-500 text-xs">
+            ${filterQ ? 'No matches.' : 'No credit notes issued yet.'}
+          </td>
+        </tr>`;
+      return;
+    }
+
+    body.innerHTML = filtered.map((c) => {
+      const idx = crns.indexOf(c);
+      return `
+        <tr class="hover:bg-slate-800/30 transition">
+          <td class="p-2.5 border-b border-slate-800/60">
+            <div class="font-mono font-bold text-rose-400 text-[11px]">${C.escapeHTML(c.crnNo)}</div>
+            <div class="text-[9px] text-slate-500 font-mono">↳ ${C.escapeHTML(c.origInvoiceNo || '')}</div>
+          </td>
+          <td class="p-2.5 border-b border-slate-800/60 font-mono text-slate-400 text-[11px]">${C.escapeHTML(c.date)}</td>
+          <td class="p-2.5 border-b border-slate-800/60">
+            <div class="font-semibold text-slate-200 text-[11px]">${C.escapeHTML(c.customerName)}</div>
+            <div class="text-[10px] text-slate-500 truncate max-w-[150px]">${C.escapeHTML(c.itemModel || '')}</div>
+          </td>
+          <td class="p-2.5 border-b border-slate-800/60 text-right font-mono font-bold text-rose-400 text-[11px]">
+            ${C.money(c.refundTotal || 0)}
+          </td>
+          <td class="p-2.5 border-b border-slate-800/60 text-center">
+            <button type="button" onclick="SF.returns.printByIndex(${idx})"
+                    class="text-[10px] bg-slate-800 hover:bg-slate-700 text-sky-300 font-bold px-2 py-1 rounded">
+              🖨️ Print
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+
+  /* ============================================================
+     5. PRINT CRN SLIP
+     ============================================================ */
+  function printByIndex(idx) {
+    const crns = S.creditNotes || [];
+    const c = crns[idx];
+    if (!c) { C.toast('CRN not found', 'error'); return; }
+    printCRN(c);
+  }
+
+  function printCRN(crn) {
+    const target = document.getElementById('isolatedPrintContainer');
+    if (!target) return;
+
+    const p = S.profile || {};
+    const datePretty = C.fmtDatePretty(new Date(crn.date + 'T12:00:00'));
+
+    target.innerHTML = `
+      <div style="display:flex;flex-direction:column;justify-content:space-between;height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:11px;color:#0f172a">
+
+        <div>
+          <!-- HEADER -->
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #e11d48;padding-bottom:8px;margin-bottom:10px">
+            <div style="display:flex;gap:10px">
+              ${p.logo
+                ? `<img src="${p.logo}" style="height:44px;object-fit:contain">`
+                : `<div style="width:40px;height:40px;background:linear-gradient(135deg,#e11d48,#9f1239);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:20px">🔧</div>`}
+              <div>
+                <div style="font-size:18px;font-weight:900;color:#9f1239;line-height:1">${C.escapeHTML(p.name || 'My Store')}</div>
+                <div style="font-size:9px;color:#475569;margin-top:3px;max-width:250px;line-height:1.3">${C.escapeHTML(p.address || '')}</div>
+                <div style="font-size:9px;font-weight:700;color:#1e293b;margin-top:2px">${C.escapeHTML(p.phone || '')}</div>
+                <div style="font-size:9px;color:#475569;margin-top:1px">GSTIN: <span style="font-family:monospace;color:#0369a1">${C.escapeHTML(p.gstin || '—')}</span></div>
+              </div>
+            </div>
+            <div style="text-align:right">
+              <div style="display:inline-block;background:#e11d48;color:white;font-size:10px;font-weight:900;padding:3px 10px;border-radius:4px;letter-spacing:1px">
+                CREDIT NOTE
+              </div>
+              <div style="font-size:14px;font-weight:900;font-family:monospace;color:#9f1239;margin-top:6px">${C.escapeHTML(crn.crnNo)}</div>
+              <div style="font-size:10px;color:#64748b;font-family:monospace">Date: ${datePretty}</div>
+            </div>
+          </div>
+
+          <!-- CUSTOMER -->
+          <div style="background:#fff1f2;border:1px solid #fecdd3;padding:8px;border-radius:6px;margin-bottom:10px;font-size:11px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+              <div><strong style="color:#9f1239">Customer:</strong> ${C.escapeHTML(crn.customerName)}</div>
+              <div><strong style="color:#9f1239">Phone:</strong> <span style="font-family:monospace">${C.escapeHTML(crn.customerPhone || '—')}</span></div>
+              <div><strong style="color:#9f1239">Against Invoice:</strong> <span style="font-family:monospace">${C.escapeHTML(crn.origInvoiceNo)}</span></div>
+              <div><strong style="color:#9f1239">Original Date:</strong> <span style="font-family:monospace">${C.escapeHTML(crn.origInvoiceDate || '—')}</span></div>
+            </div>
+          </div>
+
+          <!-- ITEM TABLE -->
+          <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:10px">
+            <thead>
+              <tr style="background:#1e293b;color:white;font-size:10px;text-transform:uppercase">
+                <th style="padding:6px;text-align:left">Item Description</th>
+                <th style="padding:6px;text-align:center;width:80px">GST %</th>
+                <th style="padding:6px;text-align:right;width:110px">Taxable</th>
+                <th style="padding:6px;text-align:right;width:90px">Tax</th>
+                <th style="padding:6px;text-align:right;width:110px">Refund</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid #e2e8f0">
+                <td style="padding:8px">
+                  <div style="font-weight:700">${C.escapeHTML(crn.itemModel || '')}</div>
+                  ${crn.imei ? `<div style="font-size:10px;color:#64748b;font-family:monospace">IMEI: ${C.escapeHTML(crn.imei)}</div>` : ''}
+                  <div style="font-size:10px;color:#64748b;margin-top:2px">
+                    <strong>Reason:</strong> ${C.escapeHTML(crn.reason)}
+                  </div>
+                </td>
+                <td style="padding:8px;text-align:center;font-family:monospace">${crn.gst || 0}%</td>
+                <td style="padding:8px;text-align:right;font-family:monospace">${C.money(crn.refundTaxable || 0).replace('₹','')}</td>
+                <td style="padding:8px;text-align:right;font-family:monospace">${C.money(crn.refundTax || 0).replace('₹','')}</td>
+                <td style="padding:8px;text-align:right;font-family:monospace;font-weight:900;color:#9f1239">${C.money(crn.refundTotal || 0).replace('₹','')}</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr style="background:#fff1f2;font-weight:900;font-size:13px">
+                <td colspan="4" style="padding:8px;text-align:right;color:#9f1239;text-transform:uppercase">Total Refund</td>
+                <td style="padding:8px;text-align:right;font-family:monospace;color:#9f1239">₹${(crn.refundTotal || 0).toFixed(2)}</td>
+              </tr>
+            </tfoot>
+          </table>
+
+          <!-- AMOUNT IN WORDS -->
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:8px;border-radius:6px;font-size:11px;margin-bottom:10px">
+            <strong style="color:#64748b;font-size:9px;text-transform:uppercase">Amount in Words:</strong>
+            <div style="font-weight:800;text-transform:uppercase;margin-top:2px">${C.numberToWords(crn.refundTotal || 0)}</div>
+          </div>
+
+          <!-- REFUND DETAILS -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:10px">
+            <div style="border:1px solid #e2e8f0;padding:8px;border-radius:6px">
+              <div style="font-weight:700;color:#9f1239;text-transform:uppercase;font-size:9px;margin-bottom:4px">Refund Details</div>
+              <div><strong>Mode:</strong> ${C.escapeHTML(crn.refundMode)}</div>
+              <div><strong>Restocked:</strong> ${crn.restocked ? '✅ Yes' : '❌ No'}</div>
+              ${crn.note ? `<div style="margin-top:4px"><strong>Note:</strong> ${C.escapeHTML(crn.note)}</div>` : ''}
+            </div>
+            <div style="border:1px solid #e2e8f0;padding:8px;border-radius:6px">
+              <div style="font-weight:700;color:#9f1239;text-transform:uppercase;font-size:9px;margin-bottom:4px">Declaration</div>
+              <div style="line-height:1.4;color:#475569">
+                This credit note is issued against the original invoice. Please retain for your records.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div style="border-top:1px solid #cbd5e1;padding-top:6px;display:flex;justify-content:space-between;align-items:flex-end;margin-top:12px">
+            <div style="font-size:8px;color:#94a3b8;font-family:monospace">
+              SmartFix ERP © 2026 • Credit Note ${C.escapeHTML(crn.crnNo)}
+            </div>
+            <div style="text-align:center">
+              <div style="height:40px"></div>
+              <div style="border-top:1px solid #94a3b8;font-size:9px;font-weight:700;padding-top:3px;width:180px;color:#475569">
+                For ${C.escapeHTML(p.name || 'Store')}
+              </div>
+              <div style="font-size:8px;color:#64748b;margin-top:2px">Authorised Signatory</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    target.style.cssText = `
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: space-between !important;
+      width: 100% !important;
+      max-width: 202mm !important;
+      min-height: 285mm !important;
+      padding: 2mm 3mm !important;
+      box-sizing: border-box !important;
+      margin: 0 auto !important;
+      background: white !important;
+      color: #000 !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    `;
+
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => {
+        target.innerHTML = '';
+        target.style.cssText = '';
+      }, 500);
+    }, 200);
+  }
+
+
+  /* ============================================================
+     6. INIT
+     ============================================================ */
+  function init_returnsModule() {
+    console.log('%c↩️ Returns module initialized', 'color:#f43f5e;font-weight:bold');
+
+    R.foundInvoice = null;
+    R.selectedItem = null;
+    R.selectedItemIndex = -1;
+
+    /* Hide result initially */
+    const card = document.getElementById('retResultCard');
+    if (card) card.style.display = 'none';
+
+    /* Clear search */
+    const s = document.getElementById('retSearchInput');
+    if (s) s.value = '';
+    const f = document.getElementById('retFilterInput');
+    if (f) f.value = '';
+
+    renderRegister();
+
+    /* Subscribe to state changes */
+    if (window.SF?.state?.on) {
+      window.SF.state.on('change:creditNotes', () => renderRegister());
+    }
+
+    /* Auto-focus search */
+    setTimeout(() => {
+      if (s && window.innerWidth > 640) s.focus();
+    }, 300);
+
+    return {
+      onUnload: () => {
+        console.log('Returns module unloading');
+      }
+    };
+  }
+
+
+  /* ============================================================
+     7. EXPOSE API
+     ============================================================ */
+  window.SF = window.SF || {};
+  window.SF.returns = {
+    search,
+    clearResult,
+    onItemChange,
+    issueCreditNote,
+    renderRegister,
+    printByIndex,
+    printCRN,
+    init: init_returnsModule
+  };
+
+  /* Router expects this */
+  window.init_returnsModule = init_returnsModule;
+
+  /* Auto-init fallback */
+  if (document.getElementById('returnsModule')) {
+    init_returnsModule();
+  }
+})();
+</script>
