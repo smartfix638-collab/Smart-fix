@@ -1,0 +1,696 @@
+<!-- ============================================================
+     SMARTFIX ERP — Vouchers / Daybook Module
+     File: modules/vouchers.html
+     Version: 4.0.0
+     ============================================================ -->
+
+<section id="vouchersModule" class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+
+  <!-- ============================================================
+       LEFT PANEL — VOUCHER ENTRY
+       ============================================================ -->
+  <div class="lg:col-span-5 space-y-3">
+
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <h2 class="font-bold text-xs uppercase tracking-wider text-white">📒 New Voucher</h2>
+        <span id="vchTypeBadge" class="text-[10px] bg-indigo-950 text-indigo-300 font-mono px-2 py-0.5 rounded border border-indigo-800">
+          EXPENSE
+        </span>
+      </div>
+
+      <!-- Voucher type -->
+      <div>
+        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Voucher Type</label>
+        <select id="vchType" onchange="SF.vouchers.onTypeChange()"
+                class="w-full bg-slate-950 border border-indigo-700/60 rounded-lg px-2.5 py-2 text-xs font-bold text-indigo-100">
+          <option value="EXPENSE">💸 Payment / Expense</option>
+          <option value="RECEIPT">💰 Receipt (Due Cleared)</option>
+          <option value="CONTRA">🔄 Contra (Cash ↔ Bank)</option>
+          <option value="JOURNAL">📝 Journal (Double Entry)</option>
+        </select>
+      </div>
+
+      <!-- Date + Amount -->
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Date</label>
+          <input type="date" id="vchDate"
+                 class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs">
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Amount ₹ *</label>
+          <input type="number" id="vchAmount" placeholder="0" min="0" step="0.01"
+                 class="w-full bg-slate-950 border border-emerald-700/60 rounded-lg px-2.5 py-2 text-xs font-bold text-emerald-200 text-right">
+        </div>
+      </div>
+
+      <!-- ============ NORMAL (EXPENSE / RECEIPT) ============ -->
+      <div id="vchNormalFields" class="space-y-2">
+        <div>
+          <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">
+            <span id="vchCategoryLabel">Category / Particulars</span> *
+          </label>
+          <input type="text" id="vchCategory" list="vchPartyList"
+                 placeholder="e.g. Electricity Bill or Customer name"
+                 class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs font-semibold">
+          <datalist id="vchPartyList"></datalist>
+        </div>
+
+        <div>
+          <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Account</label>
+          <select id="vchAccount"
+                  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs">
+            <option value="Cash-in-Hand">💵 Cash</option>
+            <option value="Bank / UPI">🏦 Bank / UPI</option>
+            <option value="Card Payment">💳 Card</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- ============ CONTRA ============ -->
+      <div id="vchContraFields" class="space-y-2" style="display:none">
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">From</label>
+            <select id="vchFrom"
+                    class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs">
+              <option value="Cash-in-Hand">💵 Cash</option>
+              <option value="Bank / UPI">🏦 Bank</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">To</label>
+            <select id="vchTo"
+                    class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs">
+              <option value="Bank / UPI">🏦 Bank</option>
+              <option value="Cash-in-Hand">💵 Cash</option>
+            </select>
+          </div>
+        </div>
+        <p class="text-[10px] text-slate-500 italic">
+          💡 Use this to transfer money between Cash and Bank
+        </p>
+      </div>
+
+      <!-- ============ JOURNAL ============ -->
+      <div id="vchJournalFields" class="space-y-2" style="display:none">
+        <div>
+          <label class="block text-[10px] font-bold uppercase mb-1 text-rose-400">Debit Account *</label>
+          <input type="text" id="vchDrAccount" placeholder="e.g. Rent Expense"
+                 class="w-full bg-slate-950 border border-rose-800/60 rounded-lg px-2.5 py-2 text-xs">
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold uppercase mb-1 text-emerald-400">Credit Account *</label>
+          <input type="text" id="vchCrAccount" placeholder="e.g. Cash-in-Hand"
+                 class="w-full bg-slate-950 border border-emerald-800/60 rounded-lg px-2.5 py-2 text-xs">
+        </div>
+        <p class="text-[10px] text-slate-500 italic">
+          💡 For double-entry bookkeeping (debit = credit)
+        </p>
+      </div>
+
+      <!-- Narration -->
+      <div>
+        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Narration</label>
+        <input type="text" id="vchNarration" placeholder="Optional note"
+               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs">
+      </div>
+
+      <!-- Save -->
+      <button type="button" onclick="SF.vouchers.save()"
+              class="w-full bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 text-white font-black py-3 rounded-xl text-sm shadow-lg transition flex items-center justify-center gap-2">
+        <span>📒</span>
+        <span>Record Voucher</span>
+      </button>
+
+    </div>
+
+    <!-- Quick tips -->
+    <div class="bg-sky-950/30 border border-sky-800/40 rounded-2xl p-3">
+      <div class="text-[10px] font-bold uppercase text-sky-400 mb-1.5">💡 Quick Tips</div>
+      <ul class="text-[10.5px] text-slate-400 leading-relaxed space-y-0.5">
+        <li>• <strong class="text-slate-300">Expense</strong> — দোকান ভাড়া, বিদ্যুৎ বিল, চা-নাস্তা</li>
+        <li>• <strong class="text-slate-300">Receipt</strong> — কাস্টমারের পুরোনো udhar আদায়</li>
+        <li>• <strong class="text-slate-300">Contra</strong> — Cash থেকে Bank-এ বা উল্টো</li>
+        <li>• <strong class="text-slate-300">Journal</strong> — depreciation, opening adjustment</li>
+      </ul>
+    </div>
+
+  </div>
+
+
+  <!-- ============================================================
+       RIGHT PANEL — DAYBOOK REGISTER
+       ============================================================ -->
+  <div class="lg:col-span-7 space-y-3">
+
+    <!-- Stats -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <div class="bg-rose-950/40 border border-rose-800/40 rounded-xl p-3">
+        <div class="text-[9px] font-bold uppercase text-rose-400">Expense</div>
+        <div id="vchStatExpense" class="text-base font-black text-rose-300 mt-0.5">₹0</div>
+      </div>
+      <div class="bg-emerald-950/40 border border-emerald-800/40 rounded-xl p-3">
+        <div class="text-[9px] font-bold uppercase text-emerald-400">Receipt</div>
+        <div id="vchStatReceipt" class="text-base font-black text-emerald-300 mt-0.5">₹0</div>
+      </div>
+      <div class="bg-indigo-950/40 border border-indigo-800/40 rounded-xl p-3">
+        <div class="text-[9px] font-bold uppercase text-indigo-400">Contra</div>
+        <div id="vchStatContra" class="text-base font-black text-indigo-300 mt-0.5">₹0</div>
+      </div>
+      <div class="bg-purple-950/40 border border-purple-800/40 rounded-xl p-3">
+        <div class="text-[9px] font-bold uppercase text-purple-400">Journal</div>
+        <div id="vchStatJournal" class="text-base font-black text-purple-300 mt-0.5">₹0</div>
+      </div>
+    </div>
+
+    <!-- Register -->
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden">
+      <div class="p-4 border-b border-slate-800 flex justify-between items-center gap-2 flex-wrap">
+        <h3 class="font-bold text-xs uppercase tracking-wider text-slate-300">📋 Daybook Register</h3>
+        <div class="flex gap-2 flex-wrap">
+          <select id="vchFilterType" onchange="SF.vouchers.renderRegister()"
+                  class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-slate-200">
+            <option value="ALL">All Types</option>
+            <option value="EXPENSE">Expense</option>
+            <option value="RECEIPT">Receipt</option>
+            <option value="CONTRA">Contra</option>
+            <option value="JOURNAL">Journal</option>
+          </select>
+          <input type="text" id="vchFilterInput"
+                 oninput="SF.vouchers.renderRegister()"
+                 placeholder="🔍 Filter..."
+                 class="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1 text-[11px] text-slate-200 w-36">
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead class="bg-slate-950/70 text-slate-500 uppercase text-[10px]">
+            <tr>
+              <th class="p-2.5 border-b border-slate-800">Date</th>
+              <th class="p-2.5 border-b border-slate-800">Type</th>
+              <th class="p-2.5 border-b border-slate-800">Particulars</th>
+              <th class="p-2.5 border-b border-slate-800">Account</th>
+              <th class="p-2.5 border-b border-slate-800 text-right">Amount</th>
+              <th class="p-2.5 border-b border-slate-800 text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody id="vchRegisterBody" class="divide-y divide-slate-800/60">
+            <tr>
+              <td colspan="6" class="text-center py-8 text-slate-500 text-xs">
+                No vouchers recorded yet.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- ============================================================
+     VOUCHERS MODULE LOGIC
+     ============================================================ -->
+<script>
+(function () {
+  'use strict';
+
+  const S  = window.SF?.state?.state;
+  const C  = window.SF?.common;
+  const Cl = window.SF?.cloud;
+
+  if (!S || !C) {
+    console.error('Vouchers module: SF globals not ready');
+    return;
+  }
+
+
+  /* ============================================================
+     1. INIT
+     ============================================================ */
+  function init_vouchersModule() {
+    console.log('%c📒 Vouchers module initialized', 'color:#818cf8;font-weight:bold');
+
+    /* Default date */
+    const dEl = document.getElementById('vchDate');
+    if (dEl && !dEl.value) dEl.value = C.fmtDate(new Date());
+
+    /* Populate party datalist */
+    populateParties();
+
+    /* Reset form */
+    resetForm();
+
+    /* Render register */
+    renderRegister();
+
+    /* Subscribe */
+    if (window.SF?.state?.on) {
+      window.SF.state.on('change:vouchers', () => renderRegister());
+      window.SF.state.on('change:parties', () => populateParties());
+    }
+
+    /* Focus amount field */
+    setTimeout(() => {
+      const el = document.getElementById('vchAmount');
+      if (el && window.innerWidth > 640) el.focus();
+    }, 300);
+
+    return {
+      onUnload: () => {
+        console.log('Vouchers module unloading');
+      }
+    };
+  }
+
+
+  /* ============================================================
+     2. TYPE CHANGE
+     ============================================================ */
+  function onTypeChange() {
+    const type = document.getElementById('vchType')?.value || 'EXPENSE';
+
+    const normal = document.getElementById('vchNormalFields');
+    const contra = document.getElementById('vchContraFields');
+    const journal = document.getElementById('vchJournalFields');
+    const badge = document.getElementById('vchTypeBadge');
+    const catLabel = document.getElementById('vchCategoryLabel');
+
+    /* Hide all */
+    if (normal) normal.style.display = 'none';
+    if (contra) contra.style.display = 'none';
+    if (journal) journal.style.display = 'none';
+
+    /* Show + label */
+    if (type === 'EXPENSE') {
+      if (normal) normal.style.display = 'block';
+      if (catLabel) catLabel.textContent = 'Expense Category';
+      if (badge) {
+        badge.textContent = 'EXPENSE';
+        badge.className = 'text-[10px] bg-rose-950 text-rose-300 font-mono px-2 py-0.5 rounded border border-rose-800';
+      }
+    } else if (type === 'RECEIPT') {
+      if (normal) normal.style.display = 'block';
+      if (catLabel) catLabel.textContent = 'Customer Name (paying due)';
+      if (badge) {
+        badge.textContent = 'RECEIPT';
+        badge.className = 'text-[10px] bg-emerald-950 text-emerald-300 font-mono px-2 py-0.5 rounded border border-emerald-800';
+      }
+    } else if (type === 'CONTRA') {
+      if (contra) contra.style.display = 'block';
+      if (badge) {
+        badge.textContent = 'CONTRA';
+        badge.className = 'text-[10px] bg-indigo-950 text-indigo-300 font-mono px-2 py-0.5 rounded border border-indigo-800';
+      }
+    } else if (type === 'JOURNAL') {
+      if (journal) journal.style.display = 'block';
+      if (badge) {
+        badge.textContent = 'JOURNAL';
+        badge.className = 'text-[10px] bg-purple-950 text-purple-300 font-mono px-2 py-0.5 rounded border border-purple-800';
+      }
+    }
+  }
+
+
+  /* ============================================================
+     3. POPULATE PARTIES
+     ============================================================ */
+  function populateParties() {
+    const dl = document.getElementById('vchPartyList');
+    if (!dl) return;
+    const parties = S.parties || [];
+    dl.innerHTML = parties.map((p) =>
+      `<option value="${C.escapeHTML(p.name)}">${C.escapeHTML(p.type)} • ${C.escapeHTML(p.phone || '')}</option>`
+    ).join('');
+  }
+
+
+  /* ============================================================
+     4. SAVE VOUCHER
+     ============================================================ */
+  async function save() {
+    const type   = document.getElementById('vchType')?.value || 'EXPENSE';
+    const date   = document.getElementById('vchDate')?.value || C.fmtDate(new Date());
+    const amount = parseFloat(document.getElementById('vchAmount')?.value) || 0;
+    const narration = (document.getElementById('vchNarration')?.value || '').trim();
+
+    if (amount <= 0) {
+      C.toast('Enter valid amount', 'warning');
+      C.playErrorBeep();
+      return;
+    }
+
+    const base = {
+      id: 'vch-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+      type,
+      date,
+      amount: +amount.toFixed(2),
+      narration,
+      createdAt: new Date().toISOString()
+    };
+
+    /* ---------- EXPENSE / RECEIPT ---------- */
+    if (type === 'EXPENSE' || type === 'RECEIPT') {
+      const category = (document.getElementById('vchCategory')?.value || '').trim();
+      const account  = document.getElementById('vchAccount')?.value || 'Cash-in-Hand';
+
+      if (!category) {
+        C.toast('Enter category / party name', 'warning');
+        return;
+      }
+
+      base.category = category;
+      base.account = account;
+
+      /* RECEIPT — link to customer party */
+      if (type === 'RECEIPT') {
+        let party = (S.parties || []).find(
+          (p) => p.type === 'CUSTOMER' && p.name.toLowerCase() === category.toLowerCase()
+        );
+        if (!party) {
+          party = {
+            id: 'cust-' + Date.now(),
+            type: 'CUSTOMER',
+            name: category,
+            phone: '',
+            gstin: '',
+            address: '',
+            opening: 0,
+            drCr: 'DR'
+          };
+          if (!Array.isArray(S.parties)) S.parties = [];
+          S.parties.push(party);
+          C.safeSave('sfp_parties', S.parties);
+          try { await Cl.pushOne('parties', party); } catch (e) {}
+        }
+        base.partyId = party.id;
+      }
+    }
+
+    /* ---------- CONTRA ---------- */
+    else if (type === 'CONTRA') {
+      const from = document.getElementById('vchFrom')?.value || 'Cash-in-Hand';
+      const to   = document.getElementById('vchTo')?.value || 'Bank / UPI';
+
+      if (from === to) {
+        C.toast('From and To must be different', 'warning');
+        C.playErrorBeep();
+        return;
+      }
+
+      base.fromAccount = from;
+      base.toAccount = to;
+      base.category = 'Contra: ' + shortAccount(from) + ' → ' + shortAccount(to);
+      base.account = from;
+    }
+
+    /* ---------- JOURNAL ---------- */
+    else if (type === 'JOURNAL') {
+      const dr = (document.getElementById('vchDrAccount')?.value || '').trim();
+      const cr = (document.getElementById('vchCrAccount')?.value || '').trim();
+
+      if (!dr || !cr) {
+        C.toast('Enter both Debit and Credit accounts', 'warning');
+        return;
+      }
+      if (dr.toLowerCase() === cr.toLowerCase()) {
+        C.toast('Debit and Credit must be different', 'warning');
+        return;
+      }
+
+      base.drAccount = dr;
+      base.crAccount = cr;
+      base.category = 'Jrnl: Dr ' + dr + ' / Cr ' + cr;
+      base.account = dr;
+    }
+
+    /* Save */
+    if (!Array.isArray(S.vouchers)) S.vouchers = [];
+    S.vouchers.unshift(base);
+    C.safeSave('sfp_vouchers', S.vouchers);
+
+    /* Push to cloud */
+    try {
+      await Cl.pushOne('vouchers', base);
+    } catch (e) {
+      console.warn('Cloud push failed:', e);
+      C.toast('Saved locally. Will sync when online.', 'warning', 3500);
+    }
+
+    /* Audit */
+    try {
+      window.SF.state.logAudit(
+        'VOUCHER_' + type,
+        C.money(amount) + ' | ' + (base.category || narration || '')
+      );
+    } catch (e) {}
+
+    C.toast(type + ' recorded: ' + C.money(amount), 'success', 2500);
+    C.playBeep();
+
+    /* Reset form */
+    resetForm();
+    renderRegister();
+
+    /* Refocus amount */
+    setTimeout(() => {
+      const el = document.getElementById('vchAmount');
+      if (el) el.focus();
+    }, 150);
+  }
+
+
+  /* ============================================================
+     5. RESET FORM
+     ============================================================ */
+  function resetForm() {
+    const amountEl = document.getElementById('vchAmount');
+    if (amountEl) amountEl.value = '';
+
+    const catEl = document.getElementById('vchCategory');
+    if (catEl) catEl.value = '';
+
+    const narrEl = document.getElementById('vchNarration');
+    if (narrEl) narrEl.value = '';
+
+    const drEl = document.getElementById('vchDrAccount');
+    if (drEl) drEl.value = '';
+
+    const crEl = document.getElementById('vchCrAccount');
+    if (crEl) crEl.value = '';
+
+    /* Reset date to today */
+    const dateEl = document.getElementById('vchDate');
+    if (dateEl) dateEl.value = C.fmtDate(new Date());
+
+    /* Reset type to EXPENSE and show normal fields */
+    const typeEl = document.getElementById('vchType');
+    if (typeEl) typeEl.value = 'EXPENSE';
+    onTypeChange();
+  }
+
+
+  /* ============================================================
+     6. RENDER REGISTER
+     ============================================================ */
+  function renderRegister() {
+    const body = document.getElementById('vchRegisterBody');
+    if (!body) return;
+
+    const filterType = document.getElementById('vchFilterType')?.value || 'ALL';
+    const filterQ    = (document.getElementById('vchFilterInput')?.value || '').trim().toLowerCase();
+    const vouchers   = S.vouchers || [];
+
+    /* Stats — this FY */
+    const fy = C.getFY(new Date());
+    let tExpense = 0, tReceipt = 0, tContra = 0, tJournal = 0;
+    vouchers.forEach((v) => {
+      const d = new Date(v.date + 'T12:00:00');
+      if (d < fy.start || d > fy.end) return;
+      if (v.type === 'EXPENSE') tExpense += v.amount;
+      else if (v.type === 'RECEIPT') tReceipt += v.amount;
+      else if (v.type === 'CONTRA') tContra += v.amount;
+      else if (v.type === 'JOURNAL') tJournal += v.amount;
+    });
+
+    const sE = document.getElementById('vchStatExpense');
+    const sR = document.getElementById('vchStatReceipt');
+    const sC = document.getElementById('vchStatContra');
+    const sJ = document.getElementById('vchStatJournal');
+    if (sE) sE.textContent = C.money(tExpense).replace(/\.\d+$/, '');
+    if (sR) sR.textContent = C.money(tReceipt).replace(/\.\d+$/, '');
+    if (sC) sC.textContent = C.money(tContra).replace(/\.\d+$/, '');
+    if (sJ) sJ.textContent = C.money(tJournal).replace(/\.\d+$/, '');
+
+    /* Filter */
+    let filtered = vouchers;
+    if (filterType !== 'ALL') {
+      filtered = filtered.filter((v) => v.type === filterType);
+    }
+    if (filterQ) {
+      filtered = filtered.filter((v) => {
+        const blob = (
+          (v.category || '') + ' ' +
+          (v.account || '') + ' ' +
+          (v.fromAccount || '') + ' ' +
+          (v.toAccount || '') + ' ' +
+          (v.drAccount || '') + ' ' +
+          (v.crAccount || '') + ' ' +
+          (v.narration || '') + ' ' +
+          (v.date || '')
+        ).toLowerCase();
+        return blob.includes(filterQ);
+      });
+    }
+
+    if (filtered.length === 0) {
+      body.innerHTML = `
+        <tr>
+          <td colspan="6" class="text-center py-8 text-slate-500 text-xs">
+            ${filterQ || filterType !== 'ALL' ? 'No matches.' : 'No vouchers recorded yet.'}
+          </td>
+        </tr>`;
+      return;
+    }
+
+    body.innerHTML = filtered.map((v) => {
+      const idx = vouchers.indexOf(v);
+      const t = v.type;
+      const typeColor = {
+        EXPENSE: 'text-rose-400 bg-rose-950/40 border-rose-800/60',
+        RECEIPT: 'text-emerald-400 bg-emerald-950/40 border-emerald-800/60',
+        CONTRA:  'text-indigo-400 bg-indigo-950/40 border-indigo-800/60',
+        JOURNAL: 'text-purple-400 bg-purple-950/40 border-purple-800/60'
+      }[t] || 'text-slate-400 bg-slate-950/40 border-slate-800/60';
+
+      const amtColor = {
+        EXPENSE: 'text-rose-400',
+        RECEIPT: 'text-emerald-400',
+        CONTRA:  'text-indigo-300',
+        JOURNAL: 'text-purple-300'
+      }[t] || 'text-slate-300';
+
+      const particulars = v.category || v.narration || '—';
+      const account = v.account || v.fromAccount || v.drAccount || '—';
+
+      return `
+        <tr class="hover:bg-slate-800/30 transition">
+          <td class="p-2.5 border-b border-slate-800/60 font-mono text-slate-400 text-[11px]">
+            ${C.escapeHTML(v.date)}
+          </td>
+          <td class="p-2.5 border-b border-slate-800/60">
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded border ${typeColor}">
+              ${C.escapeHTML(t)}
+            </span>
+          </td>
+          <td class="p-2.5 border-b border-slate-800/60">
+            <div class="font-semibold text-slate-200 text-[11px] truncate max-w-[200px]">
+              ${C.escapeHTML(particulars)}
+            </div>
+            ${v.narration && v.category ? `<div class="text-[9.5px] text-slate-500 truncate max-w-[200px]">${C.escapeHTML(v.narration)}</div>` : ''}
+          </td>
+          <td class="p-2.5 border-b border-slate-800/60">
+            <span class="text-[10.5px] text-slate-400">${C.escapeHTML(shortAccount(account))}</span>
+          </td>
+          <td class="p-2.5 border-b border-slate-800/60 text-right font-mono font-bold ${amtColor} text-[11px]">
+            ${C.money(v.amount)}
+          </td>
+          <td class="p-2.5 border-b border-slate-800/60 text-center">
+            <button type="button" onclick="SF.vouchers.deleteByIndex(${idx})"
+                    class="text-[10px] bg-rose-950/60 hover:bg-rose-900/60 text-rose-400 font-bold px-2 py-1 rounded"
+                    title="Delete">🗑</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+
+  /* ============================================================
+     7. DELETE
+     ============================================================ */
+  async function deleteByIndex(idx) {
+    const vouchers = S.vouchers || [];
+    const v = vouchers[idx];
+    if (!v) { C.toast('Not found', 'error'); return; }
+
+    const pin = prompt('🔒 Master PIN to delete this voucher:');
+    if (!pin) return;
+    if (pin !== (S.profile?.masterPin || '1234')) {
+      C.toast('Incorrect PIN', 'error');
+      C.playErrorBeep();
+      return;
+    }
+
+    const ok = await C.confirmDialog(
+      'Delete Voucher?',
+      `${v.type} — ${C.money(v.amount)}\n${v.category || v.narration || ''}\n\nThis action cannot be undone.`,
+      'Delete',
+      true
+    );
+    if (!ok) return;
+
+    vouchers.splice(idx, 1);
+    C.safeSave('sfp_vouchers', S.vouchers);
+
+    /* Delete from cloud */
+    try {
+      await Cl.deleteOne('vouchers', v.id);
+    } catch (e) {
+      console.warn('Cloud delete failed:', e);
+    }
+
+    /* Audit */
+    try {
+      window.SF.state.logAudit(
+        'VOUCHER_DELETE',
+        v.type + ' ' + C.money(v.amount) + ' | ' + (v.category || '')
+      );
+    } catch (e) {}
+
+    C.toast('Voucher deleted', 'success');
+    renderRegister();
+  }
+
+
+  /* ============================================================
+     8. HELPERS
+     ============================================================ */
+  function shortAccount(name) {
+    if (!name) return '—';
+    if (name === 'Cash-in-Hand') return 'Cash';
+    if (name === 'Bank / UPI') return 'Bank/UPI';
+    if (name === 'Card Payment') return 'Card';
+    if (name === 'Credit / Sundry Debtors') return 'Debtors';
+    if (name === 'Credit / Sundry Creditors') return 'Creditors';
+    return name;
+  }
+
+
+  /* ============================================================
+     9. EXPOSE API
+     ============================================================ */
+  window.SF = window.SF || {};
+  window.SF.vouchers = {
+    init: init_vouchersModule,
+    onTypeChange,
+    save,
+    renderRegister,
+    deleteByIndex,
+    resetForm
+  };
+
+  /* Router expects this */
+  window.init_vouchersModule = init_vouchersModule;
+
+  /* Auto-init fallback */
+  if (document.getElementById('vouchersModule')) {
+    init_vouchersModule();
+  }
+})();
+</script>
