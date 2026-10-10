@@ -1,20 +1,16 @@
 /* ============================================================
-   SMARTFIX ERP — Authentication Engine
+   SMARTFIX ERP — Authentication Engine (v4.0.1)
    File: js/auth.js
-   Version: 4.0.0
    Purpose:
      • Owner registration (creates store + unique Shop Code)
-     • Owner login (Firebase Auth)
+     • Owner login (Firebase Auth + Firestore verification)
      • Password reset via email
      • Customer portal lookup (phone + IMEI/Invoice)
      • Auto-redirect logged-in owners to app.html
    ============================================================ */
 
 // ---------- Firebase Core ----------
-import {
-  auth, db,
-  PATHS, storePath
-} from './firebase-config.js';
+import { auth, db, PATHS } from './firebase-config.js';
 
 // ---------- Firebase Auth ----------
 import {
@@ -35,7 +31,7 @@ import {
 
 
 /* ============================================================
-   1. HELPER — UI State Management
+   1. UI HELPERS
    ============================================================ */
 function setBtnLoading(btnId, busy, label) {
   const btn = document.getElementById(btnId);
@@ -43,7 +39,7 @@ function setBtnLoading(btnId, busy, label) {
   if (busy) {
     btn.disabled = true;
     btn.dataset.originalText = btn.textContent;
-    btn.innerHTML = '<span class="spinner"></span>' + label;
+    btn.innerHTML = '<span class="spinner"></span>' + (label || 'Please wait...');
   } else {
     btn.disabled = false;
     btn.textContent = label || btn.dataset.originalText || 'Submit';
@@ -61,49 +57,51 @@ function clearAllErrors() {
 
 
 /* ============================================================
-   2. HELPER — Friendly Firebase Error Messages
+   2. FRIENDLY ERROR MESSAGES
    ============================================================ */
 function friendlyError(code) {
   const map = {
-    'auth/user-not-found':            'No account found with this email.',
-    'auth/wrong-password':            'Incorrect password. Try again.',
-    'auth/invalid-credential':        'Invalid email or password.',
-    'auth/invalid-email':             'Please enter a valid email address.',
-    'auth/email-already-in-use':      'This email is already registered. Try signing in.',
-    'auth/weak-password':             'Password must be at least 6 characters.',
-    'auth/network-request-failed':    'No internet connection. Please check your network.',
-    'auth/too-many-requests':         'Too many failed attempts. Please wait a minute.',
-    'auth/operation-not-allowed':     'Email/Password sign-in is not enabled. Contact support.',
-    'permission-denied':              'Access denied. Please check your account.',
-    'unavailable':                    'Firebase is temporarily unavailable. Try again.',
-    'resource-exhausted':             'Daily free limit reached. Please try again tomorrow.'
+    'auth/user-not-found':          'No account found with this email.',
+    'auth/wrong-password':          'Incorrect password. Try again.',
+    'auth/invalid-credential':      'Invalid email or password.',
+    'auth/invalid-email':           'Please enter a valid email address.',
+    'auth/email-already-in-use':    'This email is already registered. Try signing in.',
+    'auth/weak-password':           'Password must be at least 6 characters.',
+    'auth/network-request-failed':  'No internet connection.',
+    'auth/too-many-requests':       'Too many failed attempts. Wait a minute.',
+    'auth/operation-not-allowed':   'Email/Password sign-in not enabled in Firebase Console.',
+    'auth/api-key-not-valid':       'Firebase API key invalid. Check config file.',
+    'permission-denied':            'Access denied. Firestore Rules not published.',
+    'unavailable':                  'Firebase is temporarily unavailable. Try again.',
+    'resource-exhausted':           'Daily free limit reached. Try again tomorrow.'
   };
   return map[code] || ('Something went wrong. (' + code + ')');
 }
 
 
 /* ============================================================
-   3. HELPER — Generate Unique Shop Code
+   3. SHOP CODE GENERATOR
    ============================================================ */
 function slugifyShopCode(shopName) {
-  /* Convert "Shree Mobile Shop" → "shreemobileshop" */
   const base = (shopName || 'shop')
     .toLowerCase()
     .replace(/[^a-z0-9]/g, '')
-    .slice(0, 16);
-  /* Add 3 random digits to ensure uniqueness */
+    .slice(0, 16) || 'shop';
   const rand = Math.floor(100 + Math.random() * 900);
   return base + rand;
 }
 
+
 /* ============================================================
-   4. OWNER LOGIN (Fixed version)
+   4. OWNER LOGIN (bullet-proof version)
    ============================================================ */
 window.ownerLogin = async function () {
   clearAllErrors();
 
-  const email = (document.getElementById('ownerEmail')?.value || '').trim();
-  const pass  = document.getElementById('ownerPass')?.value || '';
+  const emailEl = document.getElementById('ownerEmail');
+  const passEl  = document.getElementById('ownerPass');
+  const email   = (emailEl?.value || '').trim();
+  const pass    = passEl?.value || '';
 
   if (!email || !pass) {
     setError('ownerError', 'Please enter both email and password.');
@@ -113,65 +111,83 @@ window.ownerLogin = async function () {
   setBtnLoading('ownerLoginBtn', true, 'Signing in...');
 
   try {
-    // ---- Step 1: Firebase Auth sign-in ----
-    console.log('🔐 Attempting login for:', email);
-    const cred = await signInWithEmailAndPassword(auth, email, pass);
-    console.log('✅ Auth success. UID:', cred.user.uid);
+    console.log('%c🔐 Login attempt: ' + email, 'color:#38bdf8');
 
-    // ---- Step 2: Verify store document exists ----
+    /* --- Step 1: Firebase Auth sign-in --- */
+    const cred = await signInWithEmailAndPassword(auth, email, pass);
+    const uid  = cred.user.uid;
+    console.log('%c✅ Auth OK. UID: ' + uid, 'color:#10b981');
+
+    /* --- Step 2: Verify store exists (with timeout) --- */
+    let storeData = null;
     try {
-      const storeRef  = doc(db, PATHS.stores, cred.user.uid);
-      const storeSnap = await getDoc(storeRef);
-      console.log('📦 Store document exists?', storeSnap.exists());
+      const storeRef  = doc(db, PATHS.stores, uid);
+      const timeout   = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000));
+      const storeSnap = await Promise.race([getDoc(storeRef), timeout]);
 
       if (!storeSnap.exists()) {
-        setError('ownerError',
-          'Your store setup is incomplete. Please register again with a different email.');
+        setError('ownerError', 'Store setup incomplete. Please register again.');
         setBtnLoading('ownerLoginBtn', false, 'Sign In →');
         await signOut(auth);
         return;
       }
 
-      const storeData = storeSnap.data();
-      console.log('🏪 Store:', storeData.shopName, '| Code:', storeData.shopCode);
+      storeData = storeSnap.data();
+      console.log('%c🏪 Store: ' + storeData.shopName + ' | Code: ' + storeData.shopCode, 'color:#38bdf8');
 
-      // Cache store info for app.html to use
+      /* Cache for app.html */
       try {
         localStorage.setItem('sfp_current_store', JSON.stringify({
-          uid:      cred.user.uid,
+          uid:      uid,
           shopName: storeData.shopName,
           shopCode: storeData.shopCode,
           email:    storeData.ownerEmail
         }));
-      } catch (e) { /* ignore quota errors */ }
+      } catch (e) { /* quota ignored */ }
 
     } catch (storeErr) {
       console.error('❌ Firestore read failed:', storeErr);
-      setError('ownerError',
-        'Cannot read store data. Check Firestore Rules. (' + (storeErr.code || 'unknown') + ')');
+
+      /* Still allow login — user is authenticated, just store profile missing */
+      setError('ownerError', '');
       setBtnLoading('ownerLoginBtn', false, 'Sign In →');
+
+      const msg = (storeErr.message === 'timeout')
+        ? 'Firestore is slow. Check internet.'
+        : 'Cannot read store data.\n\n⚠ Most likely cause: Firestore Rules not published.\n\nPlease check Firebase Console → Firestore → Rules.';
+
+      alert('✅ You are signed in!\n\nBut: ' + msg);
       return;
     }
 
-    // ---- Step 3: Success! Redirect ----
+    /* --- Step 3: Success → try to go to app.html --- */
     setError('ownerError', '');
     setBtnLoading('ownerLoginBtn', false, 'Sign In →');
 
-    // Check if app.html exists first
-    const appCheck = await fetch('./app.html', { method: 'HEAD' }).catch(() => null);
-    if (!appCheck || !appCheck.ok) {
-      // app.html not yet created — show friendly message
+    console.log('%c➡️ Checking for app.html...', 'color:#38bdf8');
+
+    /* Check if app.html exists */
+    let appExists = false;
+    try {
+      const res = await fetch('./app.html', { method: 'HEAD' });
+      appExists = res.ok;
+    } catch (e) {
+      appExists = false;
+    }
+
+    if (!appExists) {
       alert(
-        '✅ Login successful!\n\n' +
-        'Your store "' + (JSON.parse(localStorage.getItem('sfp_current_store') || '{}').shopName || '') + '" is ready.\n\n' +
-        '⚠ app.html is not created yet — please wait for the next file from your developer.\n\n' +
-        'You are signed in. Session will stay active.'
+        '✅ LOGIN SUCCESSFUL!\n\n' +
+        'Store: ' + (storeData.shopName || '') + '\n' +
+        'Shop Code: ' + (storeData.shopCode || '') + '\n\n' +
+        '⚠ app.html does not exist yet.\n' +
+        'Please create it and try again.\n\n' +
+        'You are signed in — session active.'
       );
       return;
     }
 
-    // app.html exists — go there
-    console.log('➡️ Redirecting to app.html...');
+    console.log('%c🚀 Redirecting to app.html...', 'color:#10b981');
     location.href = './app.html';
 
   } catch (err) {
@@ -182,9 +198,8 @@ window.ownerLogin = async function () {
 };
 
 
-
 /* ============================================================
-   5. OWNER REGISTER
+   5. OWNER REGISTER (bullet-proof version)
    ============================================================ */
 window.ownerRegister = async function () {
   clearAllErrors();
@@ -194,107 +209,118 @@ window.ownerRegister = async function () {
   const email = (document.getElementById('regEmail')?.value || '').trim();
   const pass  = document.getElementById('regPass')?.value || '';
 
-  /* ---------- Validate ---------- */
-  if (!shop)  { setError('regError', 'Shop name is required.'); return; }
-  if (shop.length < 3) { setError('regError', 'Shop name must be at least 3 characters.'); return; }
-  if (!email) { setError('regError', 'Email is required.'); return; }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    setError('regError', 'Please enter a valid email address.'); return;
-  }
-  if (!pass || pass.length < 6) {
-    setError('regError', 'Password must be at least 6 characters.'); return;
-  }
-  if (phone && !/^\d{10}$/.test(phone)) {
-    setError('regError', 'Phone must be exactly 10 digits.'); return;
-  }
+  /* Validate */
+  if (!shop || shop.length < 3)  { setError('regError', 'Shop name must be at least 3 characters.'); return; }
+  if (!email)                    { setError('regError', 'Email is required.'); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError('regError', 'Invalid email format.'); return; }
+  if (!pass || pass.length < 6)  { setError('regError', 'Password must be at least 6 characters.'); return; }
+  if (phone && !/^\d{10}$/.test(phone)) { setError('regError', 'Phone must be 10 digits.'); return; }
 
   setBtnLoading('regBtn', true, 'Creating store...');
 
   try {
-    /* ---- Step 1: Create Firebase Auth user ---- */
+    console.log('%c📝 Registration start: ' + shop, 'color:#38bdf8');
+
+    /* --- Step 1: Create Auth user --- */
     const cred = await createUserWithEmailAndPassword(auth, email, pass);
     const uid  = cred.user.uid;
+    console.log('%c✅ Auth user created. UID: ' + uid, 'color:#10b981');
 
-    /* ---- Step 2: Update auth displayName ---- */
     await updateProfile(cred.user, { displayName: shop });
 
-    /* ---- Step 3: Generate unique Shop Code ---- */
+    /* --- Step 2: Unique Shop Code --- */
     let shopCode = slugifyShopCode(shop);
-    /* Try up to 5 times if collision */
-    for (let attempt = 0; attempt < 5; attempt++) {
-      const codeRef = doc(db, PATHS.publicCodes, shopCode);
-      const codeSnap = await getDoc(codeRef);
+    for (let i = 0; i < 5; i++) {
+      const codeSnap = await getDoc(doc(db, PATHS.publicCodes, shopCode));
       if (!codeSnap.exists()) break;
       shopCode = slugifyShopCode(shop);
     }
+    console.log('%c🏷️  Shop Code: ' + shopCode, 'color:#38bdf8');
 
-    /* ---- Step 4: Create store profile document ---- */
+    /* --- Step 3: Store profile --- */
     await setDoc(doc(db, PATHS.stores, uid), {
       uid,
       ownerEmail: email.toLowerCase(),
       ownerPhone: phone || '',
-      shopName: shop,
-      shopCode: shopCode,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-      plan: 'trial',
-      version: '4.0.0'
+      shopName:   shop,
+      shopCode:   shopCode,
+      createdAt:  serverTimestamp(),
+      updatedAt:  serverTimestamp(),
+      plan:       'trial',
+      version:    '4.0.1'
     });
 
-    /* ---- Step 5: Create counters document (atomic invoice numbering) ---- */
+    /* --- Step 4: Counters --- */
     await setDoc(doc(db, PATHS.stores, uid, PATHS.counters, 'main'), {
-      invSeq: 0,
-      crnSeq: 0,
-      purSeq: 0,
+      invSeq: 0, crnSeq: 0, purSeq: 0,
       updatedAt: serverTimestamp()
     });
 
-    /* ---- Step 6: Default store profile (for settings module) ---- */
+    /* --- Step 5: Default profile --- */
     await setDoc(doc(db, PATHS.stores, uid, PATHS.profile, 'main'), {
-      name: shop,
-      phone: phone ? `Ph: ${phone}` : '',
-      gstin: '',
-      address: '',
-      logo: '',
-      bankName: '',
+      name:       shop,
+      phone:      phone ? `Ph: ${phone}` : '',
+      gstin:      '',
+      address:    '',
+      logo:       '',
+      bankName:   '',
       bankBranch: '',
-      bankAcc: '',
-      bankIFSC: '',
-      upiId: '',
-      terms: '1. Subject to Local Jurisdiction.\n2. Warranty covered by Brand Authorized Service Centers.\n3. Goods once sold will not be taken back without original invoice.',
-      masterPin: '',
-      updatedAt: serverTimestamp()
+      bankAcc:    '',
+      bankIFSC:   '',
+      upiId:      '',
+      terms:      '1. Subject to Local Jurisdiction.\n2. Warranty covered by Brand Authorized Service Centers.\n3. Goods once sold will not be taken back without original invoice.',
+      masterPin:  '',
+      updatedAt:  serverTimestamp()
     });
 
-    /* ---- Step 7: Default categories ---- */
+    /* --- Step 6: Default categories --- */
     await setDoc(doc(db, PATHS.stores, uid, PATHS.categories, 'main'), {
       list: [
-        'Mobile Phone',
-        'Mobile Cover',
-        'Tempered Glass',
-        'Cable',
-        'Charger',
-        'Earphone',
-        'Power Bank',
-        'Memory Card',
-        'Other'
+        'Mobile Phone', 'Mobile Cover', 'Tempered Glass', 'Cable',
+        'Charger', 'Earphone', 'Power Bank', 'Memory Card', 'Other'
       ],
       updatedAt: serverTimestamp()
     });
 
-    /* ---- Step 8: Create public store code mapping ---- */
-    /* This allows customers to search by shop code without auth */
+    /* --- Step 7: Public shop code mapping --- */
     await setDoc(doc(db, PATHS.publicCodes, shopCode), {
-      uid: uid,
-      shopName: shop,
-      shopCode: shopCode,
+      uid, shopName: shop, shopCode,
       createdAt: serverTimestamp()
     });
 
-    /* onAuthStateChanged will redirect to app.html */
+    /* Cache */
+    try {
+      localStorage.setItem('sfp_current_store', JSON.stringify({
+        uid, shopName: shop, shopCode, email: email.toLowerCase()
+      }));
+    } catch (e) {}
+
+    console.log('%c✅ Registration complete!', 'color:#10b981');
+
+    setBtnLoading('regBtn', false, 'Create Store →');
+
+    alert(
+      '🎉 STORE CREATED SUCCESSFULLY!\n\n' +
+      'Shop Name: ' + shop + '\n' +
+      'Shop Code: ' + shopCode + '\n' +
+      'Email: ' + email + '\n\n' +
+      '⚠ IMPORTANT — Save your Shop Code!\n' +
+      'Customers will use it to look up their bills.\n\n' +
+      'You are now signed in.'
+    );
+
+    /* Try to redirect to app.html if it exists */
+    let appExists = false;
+    try {
+      const res = await fetch('./app.html', { method: 'HEAD' });
+      appExists = res.ok;
+    } catch (e) {}
+    if (appExists) {
+      location.href = './app.html';
+    }
 
   } catch (err) {
-    console.error('Register error:', err);
+    console.error('❌ Register error:', err);
     setError('regError', friendlyError(err.code));
     setBtnLoading('regBtn', false, 'Create Store →');
   }
@@ -308,7 +334,6 @@ window.ownerForgotPassword = async function () {
   clearAllErrors();
 
   const email = (document.getElementById('ownerEmail')?.value || '').trim();
-
   if (!email) {
     setError('ownerError', 'Enter your email first, then click Forgot Password.');
     document.getElementById('ownerEmail')?.focus();
@@ -317,31 +342,23 @@ window.ownerForgotPassword = async function () {
 
   try {
     await sendPasswordResetEmail(auth, email);
-    setError('ownerError', '');
-    alert(
-      '✅ Password reset link sent!\n\n' +
-      'Email: ' + email + '\n\n' +
-      'Please check your inbox (and spam folder).'
-    );
+    alert('✅ Password reset link sent to:\n\n' + email + '\n\nCheck inbox + spam folder.');
   } catch (err) {
-    console.error('Reset error:', err);
     setError('ownerError', friendlyError(err.code));
   }
 };
 
 
 /* ============================================================
-   7. OWNER LOGOUT (called from app.html)
+   7. LOGOUT (used in app.html)
    ============================================================ */
 window.ownerLogout = async function () {
-  if (!confirm('Sign out from SmartFix ERP?\n\nAll changes are synced automatically.')) {
-    return;
-  }
+  if (!confirm('Sign out from SmartFix ERP?')) return;
   try {
     await signOut(auth);
+    localStorage.removeItem('sfp_current_store');
     location.href = './index.html';
   } catch (err) {
-    console.error('Logout error:', err);
     alert('Logout failed. Try again.');
   }
 };
@@ -357,35 +374,24 @@ window.customerLookup = async function () {
   const phone    = (document.getElementById('custPhone')?.value || '').trim();
   const code     = (document.getElementById('custCode')?.value || '').trim().toUpperCase();
 
-  /* ---------- Validate ---------- */
-  if (!shopCode) {
-    setError('custError', 'Please enter the Shop Code.');
-    return;
-  }
-  if (!/^\d{10}$/.test(phone)) {
-    setError('custError', 'Please enter a valid 10-digit mobile number.');
-    return;
-  }
-  if (!code || code.length < 4) {
-    setError('custError', 'Enter last 6 digits of IMEI or your invoice number.');
-    return;
-  }
+  if (!shopCode)                     { setError('custError', 'Enter Shop Code.'); return; }
+  if (!/^\d{10}$/.test(phone))       { setError('custError', 'Enter valid 10-digit mobile number.'); return; }
+  if (!code || code.length < 4)      { setError('custError', 'Enter last 6 IMEI digits or invoice no.'); return; }
 
   setBtnLoading('custBtn', true, 'Searching...');
 
   try {
-    /* ---- Step 1: Look up shop by code ---- */
+    /* --- Shop lookup --- */
     const shopSnap = await getDoc(doc(db, PATHS.publicCodes, shopCode));
     if (!shopSnap.exists()) {
-      setError('custError', 'Shop Code not found. Verify with your dealer.');
+      setError('custError', 'Shop Code not found. Ask your dealer for the correct code.');
       setBtnLoading('custBtn', false, 'Find My Bill →');
       return;
     }
 
-    const shopData = shopSnap.data();
-    const storeId  = shopData.uid;
+    const storeId = shopSnap.data().uid;
 
-    /* ---- Step 2: Query invoices by phone ---- */
+    /* --- Invoice query --- */
     const invQ = query(
       collection(db, PATHS.stores, storeId, PATHS.invoices),
       where('customerPhone', '==', phone)
@@ -398,44 +404,35 @@ window.customerLookup = async function () {
       return;
     }
 
-    /* ---- Step 3: Match code against invoiceNo OR any item IMEI ---- */
+    /* --- Match by code --- */
     const matches = [];
-    snap.forEach((docSnap) => {
-      const inv = docSnap.data();
-      const invNo  = (inv.invoiceNo || '').toUpperCase();
-      const items  = inv.items || [];
+    snap.forEach((d) => {
+      const inv  = d.data();
+      const invNo = (inv.invoiceNo || '').toUpperCase();
+      const items = inv.items || [];
 
       const invNoMatch = invNo.includes(code);
-      const imeiMatch  = items.some((it) => {
+      const imeiMatch  = items.some(it => {
         const imei = (it.imei || '').toUpperCase();
         return imei.endsWith(code) || imei.includes(code);
       });
 
-      if (invNoMatch || imeiMatch) {
-        matches.push({ id: docSnap.id, ...inv });
-      }
+      if (invNoMatch || imeiMatch) matches.push({ id: d.id, ...inv });
     });
 
     if (matches.length === 0) {
-      setError('custError', 'Phone matched, but code did not. Check IMEI last 6 digits or invoice number.');
+      setError('custError', 'Phone matched, but code did not. Check IMEI last 6 or invoice no.');
       setBtnLoading('custBtn', false, 'Find My Bill →');
       return;
     }
 
-    /* ---- Step 4: Save session and redirect to portal ---- */
-    const session = {
-      storeId:   storeId,
-      shopCode:  shopCode,
-      shopName:  shopData.shopName || 'Store',
-      phone:     phone,
-      code:      code,
-      invoices:  matches,
+    sessionStorage.setItem('sfp_customer_session', JSON.stringify({
+      storeId, shopCode,
+      shopName: shopSnap.data().shopName || 'Store',
+      phone, code, invoices: matches,
       searchedAt: new Date().toISOString()
-    };
+    }));
 
-    sessionStorage.setItem('sfp_customer_session', JSON.stringify(session));
-
-    /* Redirect to customer portal */
     location.href = './customer.html';
 
   } catch (err) {
@@ -447,34 +444,40 @@ window.customerLookup = async function () {
 
 
 /* ============================================================
-   9. AUTO-REDIRECT — Logged-in owners skip login page
+   9. AUTO-REDIRECT — Logged-in owners skip index.html
    ============================================================ */
-onAuthStateChanged(auth, (user) => {
-  /* Only auto-redirect if we're on index.html (login page) */
-  const onLoginPage = window.location.pathname.endsWith('index.html')
-                   || window.location.pathname === '/'
-                   || window.location.pathname.endsWith('/');
+onAuthStateChanged(auth, async (user) => {
+  const path = window.location.pathname;
+  const isLoginPage = path.endsWith('index.html')
+                   || path === '/'
+                   || path.endsWith('/');
 
-  if (user && onLoginPage) {
-    /* Check if user has a store document (i.e., completed registration) */
-    getDoc(doc(db, PATHS.stores, user.uid))
-      .then((snap) => {
-        if (snap.exists()) {
-          console.log('✅ Owner already signed in — redirecting to app.html');
-          location.href = './app.html';
-        }
-      })
-      .catch((err) => {
-        console.warn('Store check failed:', err);
-      });
+  if (!user || !isLoginPage) return;
+
+  try {
+    const snap = await getDoc(doc(db, PATHS.stores, user.uid));
+    if (!snap.exists()) return;
+
+    /* Check app.html exists first */
+    let appExists = false;
+    try {
+      const res = await fetch('./app.html', { method: 'HEAD' });
+      appExists = res.ok;
+    } catch (e) {}
+
+    if (appExists) {
+      console.log('%c✅ Session active — redirecting to app.html', 'color:#10b981');
+      location.href = './app.html';
+    } else {
+      console.log('%c✅ Session active (app.html not found)', 'color:#f59e0b');
+    }
+  } catch (e) {
+    console.warn('Auto-redirect check failed:', e);
   }
 });
 
 
 /* ============================================================
-   10. GLOBAL UTILITY — Show version in console
+   10. BOOT LOG
    ============================================================ */
-console.log(
-  '%c🔐 Auth module ready',
-  'color:#10b981;font-weight:bold;font-size:11px'
-);
+console.log('%c🔐 Auth module ready (v4.0.1)', 'color:#10b981;font-weight:bold');
