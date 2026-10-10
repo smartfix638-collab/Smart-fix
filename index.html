@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SmartFix ERP — Cloud Login</title>
+
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%230ea5e9'/%3E%3Cstop offset='1' stop-color='%230369a1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='100' fill='url(%23g)'/%3E%3Ctext x='50%25' y='65%25' font-size='300' text-anchor='middle' fill='white'%3E%F0%9F%94%A7%3C/text%3E%3C/svg%3E">
+
+<meta name="theme-color" content="#0284c7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SmartFix ERP">
+<meta name="mobile-web-app-capable" content="yes">
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+  * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    background: #020617;
+    color: #e2e8f0;
+    overflow-x: hidden;
+  }
+
+  /* ---------- Ambient Background Blobs ---------- */
+  .bg-blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(90px);
+    opacity: 0.4;
+    pointer-events: none;
+    z-index: 0;
+    will-change: transform;
+  }
+  .blob-1 {
+    width: 420px; height: 420px;
+    top: -140px; left: -140px;
+    background: radial-gradient(circle, #0ea5e9 0%, transparent 70%);
+    animation: float1 18s ease-in-out infinite;
+  }
+  .blob-2 {
+    width: 380px; height: 380px;
+    bottom: -120px; right: -120px;
+    background: radial-gradient(circle, #6366f1 0%, transparent 70%);
+    animation: float2 22s ease-in-out infinite;
+  }
+  .blob-3 {
+    width: 300px; height: 300px;
+    top: 45%; left: 55%;
+    background: radial-gradient(circle, #06b6d4 0%, transparent 70%);
+    opacity: 0.25;
+    animation: float1 15s ease-in-out infinite reverse;
+  }
+  @keyframes float1 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50%      { transform: translate(40px, 30px) scale(1.1); }
+  }
+  @keyframes float2 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50%      { transform: translate(-40px, -30px) scale(1.05); }
+  }
+
+  /* ---------- Glass Card ---------- */
+  .glass {
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(56, 189, 248, 0.15);
+    box-shadow:
+      0 24px 80px rgba(0, 0, 0, 0.5),
+      0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+  }
+
+  /* ---------- Logo Pulse ---------- */
+  .logo-pulse {
+    animation: pulseGlow 3s ease-in-out infinite;
+  }
+  @keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.6); }
+    50%      { box-shadow: 0 0 0 20px rgba(14, 165, 233, 0); }
+  }
+
+  /* ---------- Tabs ---------- */
+  .tab-active {
+    background: linear-gradient(135deg, #0ea5e9, #0369a1);
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(14, 165, 233, 0.35);
+  }
+
+  /* ---------- Inputs ---------- */
+  .input-field {
+    width: 100%;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: #e2e8f0;
+    font-size: 14px;
+    font-family: inherit;
+    transition: all 0.15s ease;
+  }
+  .input-field::placeholder { color: #64748b; }
+  .input-field:focus {
+    outline: none;
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+    background: rgba(15, 23, 42, 0.9);
+  }
+
+  /* ---------- Buttons ---------- */
+  .btn-primary {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    font-weight: 700;
+    font-size: 14px;
+    color: white;
+    cursor: pointer;
+    background: linear-gradient(135deg, #0ea5e9, #0369a1);
+    transition: all 0.2s ease;
+    font-family: inherit;
+  }
+  .btn-primary:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 30px rgba(14, 165, 233, 0.45);
+  }
+  .btn-primary:active:not(:disabled) { transform: translateY(0); }
+  .btn-primary:disabled { opacity: 0.55; cursor: wait; }
+
+  /* ---------- Fade In ---------- */
+  .fade-in {
+    animation: fadeInUp 0.4s ease-out;
+  }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ---------- Error text ---------- */
+  .err-text {
+    color: #f87171;
+    font-size: 12px;
+    text-align: center;
+    min-height: 16px;
+    padding-top: 4px;
+    font-weight: 500;
+  }
+
+  /* ---------- Loading Spinner ---------- */
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin-right: 8px;
+    vertical-align: -2px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---------- Mobile tweaks ---------- */
+  @media (max-width: 420px) {
+    .glass { padding: 20px 18px !important; }
+    .logo-pulse { animation: none; }
+  }
+
+  /* ---------- Utility ---------- */
+  .hidden { display: none !important; }
+</style>
+</head>
+
+<body>
+
+<!-- ============================================================
+     AMBIENT BACKGROUND
+     ============================================================ -->
+<div class="bg-blob blob-1"></div>
+<div class="bg-blob blob-2"></div>
+<div class="bg-blob blob-3"></div>
+
+
+<!-- ============================================================
+     MAIN CONTAINER
+     ============================================================ -->
+<main class="relative z-10 min-h-screen flex items-center justify-center p-4 py-8">
+  <div class="w-full max-w-md fade-in">
+
+    <!-- ---------------- LOGO ---------------- -->
+    <div class="text-center mb-6">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-500 to-sky-800 logo-pulse shadow-2xl shadow-sky-500/40">
+        <span class="text-3xl">🔧</span>
+      </div>
+      <h1 class="mt-3 text-2xl font-black tracking-tight text-white leading-none">
+        SMARTFIX<span class="text-sky-400">ERP</span>
+      </h1>
+      <p class="text-[11px] text-slate-400 mt-1.5 tracking-wide">
+        Cloud Edition • Multi-Device Sync • v4.0
+      </p>
+    </div>
+
+    <!-- ---------------- TABS ---------------- -->
+    <div class="grid grid-cols-3 gap-1 p-1 rounded-xl bg-slate-900/60 border border-slate-800 mb-4 backdrop-blur-sm">
+      <button type="button" onclick="switchAuthTab('login')" id="tab-login"
+              class="py-2.5 rounded-lg text-xs font-bold tab-active transition">
+        Owner Login
+      </button>
+      <button type="button" onclick="switchAuthTab('register')" id="tab-register"
+              class="py-2.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition">
+        Register
+      </button>
+      <button type="button" onclick="switchAuthTab('customer')" id="tab-customer"
+              class="py-2.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition">
+        Customer
+      </button>
+    </div>
+
+    <!-- ---------------- CARD ---------------- -->
+    <div class="glass rounded-2xl p-6 sm:p-7">
+
+      <!-- ============================================================
+           PANEL 1: OWNER LOGIN
+           ============================================================ -->
+      <section id="panel-login" class="space-y-3">
+        <header class="mb-3">
+          <h2 class="text-base font-bold text-white">Sign in to your store</h2>
+          <p class="text-[11px] text-slate-400 mt-0.5">
+            Use the email and password you registered with.
+          </p>
+        </header>
+
+        <input id="ownerEmail" type="email" placeholder="owner@shop.com"
+               autocomplete="email" autocapitalize="none" spellcheck="false"
+               class="input-field">
+
+        <input id="ownerPass" type="password" placeholder="Password"
+               autocomplete="current-password"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();ownerLogin();}"
+               class="input-field">
+
+        <button id="ownerLoginBtn" type="button" onclick="ownerLogin()"
+                class="btn-primary">
+          Sign In →
+        </button>
+
+        <div class="flex justify-between items-center pt-1">
+          <button type="button" onclick="ownerForgotPassword()"
+                  class="text-[11px] text-sky-400 hover:text-sky-300 font-semibold bg-transparent border-0 cursor-pointer">
+            Forgot password?
+          </button>
+          <button type="button" onclick="switchAuthTab('customer')"
+                  class="text-[11px] text-slate-400 hover:text-white font-semibold bg-transparent border-0 cursor-pointer">
+            Are you a customer? →
+          </button>
+        </div>
+
+        <div id="ownerError" class="err-text"></div>
+      </section>
+
+      <!-- ============================================================
+           PANEL 2: OWNER REGISTER
+           ============================================================ -->
+      <section id="panel-register" class="space-y-3 hidden">
+        <header class="mb-3">
+          <h2 class="text-base font-bold text-white">Create your store</h2>
+          <p class="text-[11px] text-slate-400 mt-0.5">
+            Takes 30 seconds. No credit card required.
+          </p>
+        </header>
+
+        <input id="regShop" type="text" placeholder="Shop / Trade Name"
+               autocomplete="organization"
+               class="input-field">
+
+        <input id="regPhone" type="tel" placeholder="Shop Phone (10 digits, optional)"
+               inputmode="numeric" autocomplete="tel"
+               class="input-field">
+
+        <input id="regEmail" type="email" placeholder="Email"
+               autocomplete="email" autocapitalize="none" spellcheck="false"
+               class="input-field">
+
+        <input id="regPass" type="password" placeholder="Password (min 6 characters)"
+               autocomplete="new-password"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();ownerRegister();}"
+               class="input-field">
+
+        <button id="regBtn" type="button" onclick="ownerRegister()"
+                class="btn-primary">
+          Create Store →
+        </button>
+
+        <div id="regError" class="err-text"></div>
+
+        <p class="text-[10px] text-slate-500 text-center leading-relaxed pt-1">
+          By registering, you agree to our Terms of Service.
+          Your data is encrypted and stored securely in the cloud.
+        </p>
+      </section>
+
+      <!-- ============================================================
+           PANEL 3: CUSTOMER PORTAL
+           ============================================================ -->
+      <section id="panel-customer" class="space-y-3 hidden">
+        <header class="mb-3">
+          <h2 class="text-base font-bold text-white">Find your bill or warranty</h2>
+          <p class="text-[11px] text-slate-400 mt-0.5">
+            Enter your mobile number plus the last 6 digits of your device IMEI
+            or your invoice number.
+          </p>
+        </header>
+
+        <div>
+          <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1.5 tracking-wider">
+            Shop Code <span class="text-slate-600 font-normal normal-case">(ask your dealer)</span>
+          </label>
+          <input id="custShop" type="text" placeholder="e.g. shreemobile"
+                 autocapitalize="none" spellcheck="false"
+                 class="input-field" style="font-family: ui-monospace, monospace;">
+        </div>
+
+        <div>
+          <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1.5 tracking-wider">
+            Your Mobile Number
+          </label>
+          <input id="custPhone" type="tel" placeholder="9876543210"
+                 inputmode="numeric" maxlength="10"
+                 class="input-field" style="font-family: ui-monospace, monospace;">
+        </div>
+
+        <div>
+          <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1.5 tracking-wider">
+            IMEI (last 6) <span class="text-slate-600 font-normal">or</span> Invoice No
+          </label>
+          <input id="custCode" type="text" placeholder="e.g. 345678  OR  SFP-2425-0001"
+                 onkeydown="if(event.key==='Enter'){event.preventDefault();customerLookup();}"
+                 class="input-field" style="font-family: ui-monospace, monospace; text-transform: uppercase;">
+        </div>
+
+        <button id="custBtn" type="button" onclick="customerLookup()"
+                class="btn-primary mt-1">
+          Find My Bill →
+        </button>
+
+        <div id="custError" class="err-text"></div>
+
+        <div class="border-t border-slate-800 pt-3 mt-3">
+          <p class="text-[10px] text-slate-500 text-center leading-relaxed">
+            💡 The Shop Code is a short nickname the shopkeeper chose during
+            registration. It appears on your printed invoice.
+          </p>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ---------------- FOOTER ---------------- -->
+    <footer class="text-center mt-5 text-[10px] text-slate-500 space-y-1">
+      <div>
+        SmartFix ERP © 2026 • Developed by Debapriya Sarkar
+      </div>
+      <div class="flex items-center justify-center gap-2">
+        <span>Powered by Firebase 🔥</span>
+        <span>•</span>
+        <span id="onlineStatus" class="text-emerald-400">● Online</span>
+      </div>
+    </footer>
+
+  </div>
+</main>
+
+
+<!-- ============================================================
+     TAB SWITCHER SCRIPT (inline, runs before module)
+     ============================================================ -->
+<script>
+  function switchAuthTab(name) {
+    // Panels
+    ['login', 'register', 'customer'].forEach(k => {
+      const panel = document.getElementById('panel-' + k);
+      const tab   = document.getElementById('tab-' + k);
+      if (!panel || !tab) return;
+
+      if (k === name) {
+        panel.classList.remove('hidden');
+        panel.classList.add('fade-in');
+        tab.className = 'py-2.5 rounded-lg text-xs font-bold tab-active transition';
+      } else {
+        panel.classList.add('hidden');
+        panel.classList.remove('fade-in');
+        tab.className = 'py-2.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition';
+      }
+    });
+
+    // Clear errors when switching
+    ['ownerError', 'regError', 'custError'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = '';
+    });
+
+    // Auto-focus first field of the active panel
+    setTimeout(() => {
+      const firstInput = document.querySelector('#panel-' + name + ' input');
+      if (firstInput) firstInput.focus();
+    }, 100);
+  }
+
+  // Network status indicator
+  function updateNetStatus() {
+    const s = document.getElementById('onlineStatus');
+    if (!s) return;
+    if (navigator.onLine) {
+      s.innerHTML = '<span class="text-emerald-400">● Online</span>';
+    } else {
+      s.innerHTML = '<span class="text-amber-400">● Offline</span>';
+    }
+  }
+  window.addEventListener('online',  updateNetStatus);
+  window.addEventListener('offline', updateNetStatus);
+  updateNetStatus();
+
+  // Focus email field on load
+  window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+      const el = document.getElementById('ownerEmail');
+      if (el) el.focus();
+    }, 300);
+  });
+</script>
+
+
+<!-- ============================================================
+     AUTH MODULE (loads js/auth.js — will be FILE 3)
+     ============================================================ -->
+<script type="module" src="./js/auth.js"></script>
+
+</body>
+</html>
