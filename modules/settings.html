@@ -1,0 +1,1258 @@
+<!-- ============================================================
+     SMARTFIX ERP — Settings Module
+     File: modules/settings.html
+     Version: 4.0.0
+     ============================================================ -->
+
+<section id="settingsModule" class="space-y-4">
+
+  <!-- ============================================================
+       HEADER
+       ============================================================ -->
+  <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4">
+    <div class="flex flex-wrap justify-between items-center gap-3">
+      <div>
+        <h2 class="text-lg font-black text-white">⚙️ Store Settings & Security</h2>
+        <p class="text-[11px] text-slate-400 mt-0.5">
+          Configure your store profile, bank details, and backup preferences
+        </p>
+      </div>
+      <span id="settingsLockBadge"
+            class="text-[10px] px-3 py-1.5 rounded-lg font-bold bg-emerald-950/60 text-emerald-400 border border-emerald-800/60">
+        🔓 Unlocked
+      </span>
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       AUTO DAILY BACKUP SYSTEM
+       ============================================================ -->
+  <div class="bg-sky-950/40 border-2 border-sky-800/60 rounded-2xl p-4 space-y-3">
+    <div class="flex flex-wrap justify-between items-center gap-2">
+      <h3 class="text-sm font-bold uppercase tracking-wider text-sky-300 flex items-center gap-2">
+        <span>🛡️</span>
+        <span>Auto Daily Backup System</span>
+      </h3>
+      <span id="backupStatusBadge"
+            class="text-[10px] font-bold px-2.5 py-1 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-800/60">
+        Checking...
+      </span>
+    </div>
+
+    <div class="bg-slate-950/70 border border-sky-800/40 rounded-lg p-3 space-y-2 text-xs">
+      <div class="flex justify-between items-center">
+        <span class="text-slate-400 font-semibold">📅 Today's Backup:</span>
+        <span id="todayBackupStatus" class="font-bold text-sky-300">Checking...</span>
+      </div>
+      <div class="flex justify-between items-center">
+        <span class="text-slate-400 font-semibold">📦 Saved Backups:</span>
+        <span id="totalBackupsCount" class="font-bold text-sky-300">0 days</span>
+      </div>
+      <div class="flex justify-between items-center">
+        <span class="text-slate-400 font-semibold">📁 Backup Folder:</span>
+        <span id="backupFolderStatus" class="font-bold text-amber-400">Not Set</span>
+      </div>
+      <div class="flex justify-between items-center">
+        <span class="text-slate-400 font-semibold">⏱️ Last Backup:</span>
+        <span id="lastBackupTime" class="font-bold text-slate-300 font-mono text-[10.5px]">—</span>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <button type="button" onclick="SF.settings.chooseBackupFolder()"
+              class="bg-sky-600 hover:bg-sky-500 text-white font-bold py-2.5 rounded-lg text-xs transition">
+        📁 Set Folder
+      </button>
+      <button type="button" onclick="SF.settings.runDailyBackupNow()"
+              class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-lg text-xs transition">
+        ⚡ Backup Now
+      </button>
+      <button type="button" onclick="SF.settings.openBackupHistory()"
+              class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2.5 rounded-lg text-xs transition">
+        📂 History
+      </button>
+      <button type="button" onclick="SF.settings.downloadBackupJSON()"
+              class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-lg text-xs transition">
+        💾 Download
+      </button>
+    </div>
+
+    <div class="text-[10px] text-sky-300/80 leading-relaxed bg-slate-950/50 border border-sky-800/40 rounded-lg p-2.5">
+      💡 <strong>Desktop Chrome:</strong> Set a folder once and every day's backup saves automatically.<br>
+      📱 <strong>Mobile:</strong> Folder picker won't work — use "Backup Now" to save to your Downloads folder.
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       STORE PROFILE
+       ============================================================ -->
+  <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
+    <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+      <h3 class="text-[11px] font-bold uppercase tracking-wider text-sky-400">
+        🏪 Store Profile
+      </h3>
+      <button type="button" id="stgUnlockBtn" onclick="SF.settings.unlockStore()"
+              class="text-[10px] bg-amber-600 hover:bg-amber-500 text-white font-bold px-3 py-1 rounded hidden">
+        🔓 Unlock to Edit
+      </button>
+    </div>
+
+    <div>
+      <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">
+        Registered Trade / Shop Name
+      </label>
+      <input type="text" id="stgStoreName"
+             placeholder="e.g. Shree Mobile Shop"
+             class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-bold text-slate-100">
+    </div>
+
+    <div class="grid grid-cols-2 gap-2">
+      <div>
+        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">GSTIN</label>
+        <input type="text" id="stgStoreGST" maxlength="15"
+               placeholder="19AAECR4821F1ZM"
+               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono uppercase text-slate-100">
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Contact Phone</label>
+        <input type="tel" id="stgStorePhone" maxlength="10"
+               placeholder="10-digit"
+               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-100">
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Store Address</label>
+      <textarea id="stgStoreAddress" rows="2"
+                placeholder="Full address with city, state, PIN"
+                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs resize-none text-slate-100"></textarea>
+    </div>
+
+    <div>
+      <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Store Logo</label>
+      <div class="flex items-center gap-3">
+        <div id="stgLogoPreview"
+             class="w-16 h-16 rounded-lg border-2 border-dashed border-slate-700 flex items-center justify-center text-slate-600 text-2xl bg-slate-950 flex-shrink-0">
+          🔧
+        </div>
+        <div class="flex-1">
+          <input type="file" id="stgLogoFile" accept="image/*"
+                 onchange="SF.settings.onLogoChange(event)"
+                 class="w-full text-[11px] text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:bg-indigo-950/60 file:text-indigo-300 file:text-[11px] file:font-bold">
+          <button type="button" onclick="SF.settings.removeLogo()"
+                  class="mt-1.5 text-[10px] text-rose-400 hover:text-rose-300 font-bold">
+            ✕ Remove Logo
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       BANK DETAILS
+       ============================================================ -->
+  <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
+    <h3 class="text-[11px] font-bold uppercase tracking-wider text-sky-400 border-b border-slate-800 pb-2">
+      🏦 Bank Details & UPI (prints on invoice)
+    </h3>
+
+    <div class="grid grid-cols-2 gap-2">
+      <div>
+        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Bank Name</label>
+        <input type="text" id="stgBankName" placeholder="ICICI Bank"
+               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100">
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Branch</label>
+        <input type="text" id="stgBankBranch" placeholder="Main Branch"
+               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100">
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-2">
+      <div>
+        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Account Number</label>
+        <input type="text" id="stgBankAcc" placeholder="0000000000"
+               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-100">
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">IFSC Code</label>
+        <input type="text" id="stgBankIFSC" maxlength="11"
+               placeholder="ICIC0001234"
+               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono uppercase text-slate-100">
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">
+        UPI ID (for dynamic QR code on invoice)
+      </label>
+      <input type="text" id="stgUpiId" placeholder="e.g. yourshop@icici"
+             class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-100">
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       TERMS & CONDITIONS
+       ============================================================ -->
+  <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-2">
+    <h3 class="text-[11px] font-bold uppercase tracking-wider text-sky-400 border-b border-slate-800 pb-2">
+      📋 Invoice Terms & Conditions
+    </h3>
+    <textarea id="stgStoreTerms" rows="4"
+              placeholder="1. Subject to Local Jurisdiction.&#10;2. Warranty covered by Brand Authorized Service Centers."
+              class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs resize-none text-slate-100 leading-relaxed"></textarea>
+    <p class="text-[10px] text-slate-500">
+      This text will appear at the bottom of every printed invoice
+    </p>
+  </div>
+
+
+  <!-- ============================================================
+       SECURITY / MASTER PIN
+       ============================================================ -->
+  <div class="bg-amber-950/30 border border-amber-800/60 rounded-2xl p-4 space-y-3">
+    <div class="flex flex-wrap justify-between items-center gap-2 border-b border-amber-800/60 pb-2">
+      <h3 class="text-[11px] font-bold uppercase tracking-wider text-amber-300">
+        🔒 Master PIN & Recovery
+      </h3>
+      <button type="button" onclick="SF.settings.forgotPIN()"
+              class="text-[10px] text-amber-400 hover:text-amber-300 font-bold">
+        Forgot PIN?
+      </button>
+    </div>
+
+    <div class="grid grid-cols-2 gap-2">
+      <div>
+        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">
+          New PIN (4-6 digits)
+        </label>
+        <input type="password" id="stgMasterPin" maxlength="6"
+               inputmode="numeric" placeholder="••••"
+               class="w-full bg-slate-950 border-2 border-amber-700/60 rounded-lg px-3 py-2 text-xs font-mono font-bold text-amber-200 tracking-widest text-center">
+        <p class="text-[9px] text-slate-500 mt-1">Leave blank to keep current PIN</p>
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">
+          Security Question
+        </label>
+        <select id="stgSecQuestion"
+                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-100">
+          <option value="city">City where shop opened?</option>
+          <option value="school">First school name?</option>
+          <option value="pet">Favorite pet's name?</option>
+          <option value="mother">Mother's maiden name?</option>
+          <option value="brand">First phone brand you sold?</option>
+        </select>
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">
+        Recovery Answer
+      </label>
+      <input type="text" id="stgSecAnswer"
+             placeholder="Answer (case-insensitive)"
+             class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100">
+    </div>
+
+    <div class="bg-slate-950/60 border border-amber-800/40 rounded-lg p-3 text-[10.5px] text-amber-200 leading-relaxed">
+      ⚠️ <strong>Important:</strong> Master PIN protects sensitive actions (delete, edit, wipe data). Keep it safe. If forgotten, use the security question to reset.
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       SAVE + MANUAL BACKUP + RESTORE + WIPE
+       ============================================================ -->
+  <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
+
+    <button type="button" id="stgSaveBtn" onclick="SF.settings.saveProfile()"
+            class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-black py-3.5 rounded-xl text-sm shadow-lg shadow-indigo-600/30 transition">
+      💾 Save Settings
+    </button>
+
+    <div class="grid grid-cols-2 gap-3 pt-2 border-t border-slate-800">
+      <button type="button" onclick="SF.settings.downloadBackupJSON()"
+              class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl text-xs transition">
+        💾 Manual Backup (JSON)
+      </button>
+      <button type="button" onclick="document.getElementById('stgRestoreFile').click()"
+              class="bg-amber-600 hover:bg-amber-500 text-white font-bold py-2.5 rounded-xl text-xs transition">
+        📥 Restore from JSON
+      </button>
+      <input type="file" id="stgRestoreFile" accept=".json"
+             onchange="SF.settings.restoreFromJSON(event)"
+             style="display:none;">
+    </div>
+
+    <div class="pt-3 border-t border-slate-800">
+      <button type="button" onclick="SF.settings.wipeAllData()"
+              class="w-full bg-rose-950/60 hover:bg-rose-900/60 text-rose-300 font-bold py-2.5 rounded-xl text-xs border border-rose-800/60 transition">
+        ⚠️ Wipe All Data (Danger Zone)
+      </button>
+      <p class="text-[10px] text-rose-400/70 mt-1.5 text-center">
+        This will permanently delete all invoices, stock, parties, staff & vouchers. Cloud data will NOT be deleted.
+      </p>
+    </div>
+
+  </div>
+
+
+  <!-- ============================================================
+       APP INFO
+       ============================================================ -->
+  <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 text-center">
+    <div class="text-[11px] font-bold text-slate-300 mb-1">SmartFix ERP</div>
+    <div class="text-[10px] text-slate-500 space-y-0.5">
+      <div>Version <span id="stgAppVersion" class="font-mono text-slate-400">4.0.0</span></div>
+      <div>Store Code: <span data-shop-code class="font-mono text-sky-400 font-bold">—</span></div>
+      <div>Signed in as: <span data-owner-email class="font-mono text-slate-400">—</span></div>
+      <div class="pt-1.5 text-[9px] text-slate-600">
+        Developed by Debapriya Sarkar • © 2026
+      </div>
+    </div>
+  </div>
+
+</section>
+
+
+<!-- ============================================================
+     BACKUP HISTORY MODAL
+     ============================================================ -->
+<div id="stgBackupHistoryModal"
+     class="fixed inset-0 z-[9999] hidden"
+     style="background:rgba(0,0,0,0.75); backdrop-filter:blur(6px);">
+  <div class="flex items-center justify-center h-full p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-2xl">
+
+      <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950/70">
+        <div>
+          <h3 class="font-bold text-white text-base">📂 Backup History</h3>
+          <p class="text-[11px] text-slate-400 mt-0.5">Last 30 days of full snapshots</p>
+        </div>
+        <button type="button" onclick="SF.settings.closeBackupHistory()"
+                class="text-slate-400 hover:text-white text-2xl font-bold w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-800">
+          ✕
+        </button>
+      </div>
+
+      <div id="stgBackupHistoryContent"
+           class="p-4 overflow-y-auto space-y-2"
+           style="max-height:70vh;">
+        <!-- injected -->
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     SETTINGS MODULE LOGIC
+     ============================================================ -->
+<script>
+(function () {
+  'use strict';
+
+  const S  = window.SF?.state?.state;
+  const C  = window.SF?.common;
+  const Cl = window.SF?.cloud;
+
+  if (!S || !C) {
+    console.error('Settings module: SF globals not ready');
+    return;
+  }
+
+  /* ============================================================
+     STATE
+     ============================================================ */
+  const SET = {
+    logoData:    null,
+    isLocked:    false,
+    backupFolder: null,
+    backupDB:    'SmartFixBackupDB',
+    backupStore: 'handles',
+    BACKUP_KEY:  'sfp_daily_backups',
+    MAX_BACKUPS: 30
+  };
+
+
+  /* ============================================================
+     1. INIT
+     ============================================================ */
+  function init_settingsModule() {
+    console.log('%c⚙️ Settings module initialized', 'color:#06b6d4;font-weight:bold');
+
+    /* Load profile into form */
+    loadProfileIntoForm();
+
+    /* Load store info badges */
+    const codeEl = document.querySelector('#settingsModule [data-shop-code]');
+    if (codeEl && S.store?.shopCode) codeEl.textContent = S.store.shopCode;
+    const emailEl = document.querySelector('#settingsModule [data-owner-email]');
+    if (emailEl && S.store?.email) emailEl.textContent = S.store.email;
+    const verEl = document.getElementById('stgAppVersion');
+    if (verEl) verEl.textContent = window.SF?.app?.version || '4.0.0';
+
+    /* Update backup UI */
+    updateBackupUI();
+    setTimeout(initBackupSystem, 800);
+
+    /* Check lock state */
+    checkLockState();
+
+    /* Auto-backup on load */
+    setTimeout(() => {
+      runAutoDailyBackup(false).catch(() => {});
+    }, 2500);
+
+    return {
+      onUnload: () => {
+        console.log('Settings module unloading');
+      }
+    };
+  }
+
+
+  /* ============================================================
+     2. LOAD / SAVE PROFILE
+     ============================================================ */
+  function loadProfileIntoForm() {
+    const p = S.profile || {};
+    const setVal = (id, v) => {
+      const el = document.getElementById(id);
+      if (el) el.value = v ?? '';
+    };
+
+    setVal('stgStoreName',    p.name || '');
+    setVal('stgStoreGST',     p.gstin || '');
+    setVal('stgStorePhone',   (p.phone || '').replace(/^Ph:\s*/i, ''));
+    setVal('stgStoreAddress', p.address || '');
+    setVal('stgBankName',     p.bankName || '');
+    setVal('stgBankBranch',   p.bankBranch || '');
+    setVal('stgBankAcc',      p.bankAcc || '');
+    setVal('stgBankIFSC',     p.bankIFSC || '');
+    setVal('stgUpiId',        p.upiId || '');
+    setVal('stgStoreTerms',   p.terms || '');
+    setVal('stgMasterPin',    ''); /* never pre-fill PIN */
+    setVal('stgSecQuestion',  p.secQuestion || 'city');
+    setVal('stgSecAnswer',    p.secAnswer || '');
+
+    /* Logo preview */
+    SET.logoData = p.logo || null;
+    renderLogoPreview();
+  }
+
+  function renderLogoPreview() {
+    const preview = document.getElementById('stgLogoPreview');
+    if (!preview) return;
+    if (SET.logoData) {
+      preview.innerHTML = `<img src="${SET.logoData}" style="width:100%;height:100%;object-fit:contain;border-radius:8px">`;
+      preview.classList.remove('border-dashed');
+    } else {
+      preview.innerHTML = '🔧';
+      preview.classList.add('border-dashed');
+    }
+  }
+
+  async function onLogoChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      C.toast('Logo must be under 2 MB', 'warning');
+      e.target.value = '';
+      return;
+    }
+
+    try {
+      const dataUrl = await C.resizeImage(file, 400);
+      if (!dataUrl) {
+        C.toast('Failed to process image', 'error');
+        return;
+      }
+      SET.logoData = dataUrl;
+      renderLogoPreview();
+      C.toast('Logo loaded. Click "Save Settings" to apply.', 'info', 2500);
+    } catch (err) {
+      C.toast('Image load failed', 'error');
+    }
+  }
+
+  function removeLogo() {
+    SET.logoData = null;
+    renderLogoPreview();
+    const inp = document.getElementById('stgLogoFile');
+    if (inp) inp.value = '';
+    C.toast('Logo removed. Save to confirm.', 'info', 2500);
+  }
+
+  async function saveProfile() {
+    /* Validate */
+    const name = (document.getElementById('stgStoreName')?.value || '').trim();
+    if (!name || name.length < 2) {
+      C.toast('Enter store name (min 2 chars)', 'warning');
+      return;
+    }
+
+    const gstin   = (document.getElementById('stgStoreGST')?.value || '').trim().toUpperCase();
+    if (gstin && gstin.length !== 15) {
+      C.toast('GSTIN must be 15 characters', 'warning');
+      return;
+    }
+
+    const phone   = (document.getElementById('stgStorePhone')?.value || '').trim();
+    if (phone && !/^\d{10}$/.test(phone)) {
+      C.toast('Phone must be 10 digits', 'warning');
+      return;
+    }
+
+    const ifsc = (document.getElementById('stgBankIFSC')?.value || '').trim().toUpperCase();
+    if (ifsc && ifsc.length !== 11) {
+      C.toast('IFSC must be 11 characters', 'warning');
+      return;
+    }
+
+    /* PIN validation */
+    const newPin = (document.getElementById('stgMasterPin')?.value || '').trim();
+    if (newPin) {
+      if (!/^\d{4,6}$/.test(newPin)) {
+        C.toast('PIN must be 4-6 digits', 'warning');
+        return;
+      }
+    }
+
+    const secAnswer = (document.getElementById('stgSecAnswer')?.value || '').trim();
+    if (secAnswer && secAnswer.length < 2) {
+      C.toast('Recovery answer too short', 'warning');
+      return;
+    }
+
+    /* Build profile */
+    const profile = {
+      ...S.profile,
+      name,
+      gstin,
+      phone:     phone ? `Ph: ${phone}` : '',
+      address:   (document.getElementById('stgStoreAddress')?.value || '').trim(),
+      logo:      SET.logoData || '',
+      bankName:  (document.getElementById('stgBankName')?.value || '').trim(),
+      bankBranch:(document.getElementById('stgBankBranch')?.value || '').trim(),
+      bankAcc:   (document.getElementById('stgBankAcc')?.value || '').trim(),
+      bankIFSC:  ifsc,
+      upiId:     (document.getElementById('stgUpiId')?.value || '').trim(),
+      terms:     (document.getElementById('stgStoreTerms')?.value || '').trim(),
+      secQuestion: document.getElementById('stgSecQuestion')?.value || 'city',
+      secAnswer: secAnswer.toLowerCase()
+    };
+
+    /* Update PIN only if provided */
+    if (newPin) {
+      profile.masterPin = newPin;
+    } else if (!profile.masterPin) {
+      profile.masterPin = '1234'; /* default fallback */
+    }
+
+    /* Save */
+    S.profile = profile;
+    C.safeSave('sfp_store_profile', profile);
+
+    /* Push to Firestore */
+    try {
+      await Cl.pushProfile(profile);
+      /* Also update store metadata */
+      await Cl.pushStoreMeta({ shopName: name });
+    } catch (e) {
+      console.warn('Cloud push failed:', e);
+      C.toast('Saved locally. Sync pending.', 'warning', 3000);
+    }
+
+    /* Audit */
+    try {
+      window.SF.state.logAudit('SETTINGS_SAVE', 'Store profile updated');
+    } catch (e) {}
+
+    C.toast('Settings saved successfully', 'success', 3000);
+    C.playBeep();
+
+    /* Refresh invoice previews */
+    try { window.SF.billing?.renderPreview?.(); } catch (e) {}
+
+    /* Clear PIN field */
+    const pinEl = document.getElementById('stgMasterPin');
+    if (pinEl) pinEl.value = '';
+  }
+
+
+  /* ============================================================
+     3. STORE LOCK / UNLOCK
+     ============================================================ */
+  function checkLockState() {
+    const locked = !!S.profile?.isLocked;
+    SET.isLocked = locked;
+
+    const badge = document.getElementById('settingsLockBadge');
+    if (badge) {
+      badge.textContent = locked ? '🔒 Locked' : '🔓 Unlocked';
+      badge.className = 'text-[10px] px-3 py-1.5 rounded-lg font-bold ' +
+        (locked
+          ? 'bg-amber-950/60 text-amber-400 border border-amber-800/60'
+          : 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/60');
+    }
+
+    /* Disable fields if locked */
+    const fieldIds = ['stgStoreName', 'stgStoreGST', 'stgStorePhone', 'stgStoreAddress',
+                     'stgBankName', 'stgBankBranch', 'stgBankAcc', 'stgBankIFSC',
+                     'stgUpiId', 'stgStoreTerms', 'stgLogoFile'];
+    fieldIds.forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.disabled = locked;
+      el.classList.toggle('opacity-50', locked);
+    });
+
+    const unlockBtn = document.getElementById('stgUnlockBtn');
+    if (unlockBtn) unlockBtn.classList.toggle('hidden', !locked);
+
+    const saveBtn = document.getElementById('stgSaveBtn');
+    if (saveBtn) {
+      if (locked) {
+        saveBtn.textContent = '🔒 Store Locked — Unlock to Edit';
+        saveBtn.disabled = true;
+        saveBtn.classList.add('opacity-60', 'cursor-not-allowed');
+      } else {
+        saveBtn.textContent = '💾 Save Settings';
+        saveBtn.disabled = false;
+        saveBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+      }
+    }
+  }
+
+  function unlockStore() {
+    const pin = prompt('🔒 Enter Master PIN to unlock store:');
+    if (!pin) return;
+    if (pin !== (S.profile?.masterPin || '1234')) {
+      C.toast('Incorrect PIN', 'error');
+      C.playErrorBeep();
+      return;
+    }
+    S.profile.isLocked = false;
+    C.safeSave('sfp_store_profile', S.profile);
+    checkLockState();
+    C.toast('Store unlocked', 'success');
+    try {
+      window.SF.state.logAudit('STORE_UNLOCK', 'Store unlocked for editing');
+    } catch (e) {}
+    (async () => {
+      try { await Cl.pushProfile(S.profile); } catch (e) {}
+    })();
+  }
+
+  function forgotPIN() {
+    const qMap = {
+      city:   'City where shop opened?',
+      school: 'First school name?',
+      pet:    "Favorite pet's name?",
+      mother: "Mother's maiden name?",
+      brand:  'First phone brand you sold?'
+    };
+    const q = qMap[S.profile?.secQuestion] || 'Security question';
+    const ans = prompt('Recovery: ' + q + '\n\nEnter your answer:');
+    if (ans === null) return;
+
+    if (ans.trim().toLowerCase() !== (S.profile?.secAnswer || '').toLowerCase()) {
+      C.toast('Incorrect answer', 'error', 3000);
+      C.playErrorBeep();
+      return;
+    }
+
+    const newPin = prompt('✅ Answer correct!\n\nEnter NEW PIN (4-6 digits):');
+    if (!newPin) return;
+    if (!/^\d{4,6}$/.test(newPin)) {
+      C.toast('PIN must be 4-6 digits', 'warning');
+      return;
+    }
+
+    S.profile.masterPin = newPin;
+    C.safeSave('sfp_store_profile', S.profile);
+    C.toast('PIN reset successful', 'success');
+    try {
+      window.SF.state.logAudit('PIN_RESET', 'Master PIN reset via security question');
+    } catch (e) {}
+    (async () => {
+      try { await Cl.pushProfile(S.profile); } catch (e) {}
+    })();
+  }
+
+
+  /* ============================================================
+     4. BACKUP — SNAPSHOT BUILDER
+     ============================================================ */
+  function buildSnapshot() {
+    return {
+      version: '4.0.0',
+      appName: 'SmartFix ERP',
+      exportedAt: new Date().toISOString(),
+      backupDate: C.fmtDate(new Date()),
+      store: S.store || null,
+      profile: S.profile || {},
+      invoices: S.invoices || [],
+      creditNotes: S.creditNotes || [],
+      vouchers: S.vouchers || [],
+      inventory: S.inventory || [],
+      purchases: S.purchases || [],
+      parties: S.parties || [],
+      staff: S.staff || [],
+      salaryPayments: S.salaryPayments || [],
+      categories: S.categories || [],
+      auditLog: (S.auditLog || []).slice(0, 200) /* cap */
+    };
+  }
+
+
+  /* ============================================================
+     5. DAILY BACKUPS (localStorage)
+     ============================================================ */
+  function getDailyBackups() {
+    try {
+      return JSON.parse(localStorage.getItem(SET.BACKUP_KEY) || '{}');
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveDailyBackups(backups) {
+    try {
+      localStorage.setItem(SET.BACKUP_KEY, JSON.stringify(backups));
+      return true;
+    } catch (e) {
+      /* Trim oldest if quota exceeded */
+      const keys = Object.keys(backups).sort();
+      for (let i = 0; i < 5 && keys.length; i++) {
+        delete backups[keys[i]];
+      }
+      try {
+        localStorage.setItem(SET.BACKUP_KEY, JSON.stringify(backups));
+        return true;
+      } catch (e2) {
+        return false;
+      }
+    }
+  }
+
+  async function runAutoDailyBackup(force) {
+    const today = C.fmtDate(new Date());
+    const backups = getDailyBackups();
+
+    if (backups[today] && !force) {
+      updateBackupUI();
+      return;
+    }
+
+    const snapshot = buildSnapshot();
+    backups[today] = snapshot;
+
+    /* Prune old */
+    const keys = Object.keys(backups).sort();
+    while (keys.length > SET.MAX_BACKUPS) {
+      delete backups[keys.shift()];
+    }
+
+    const saved = saveDailyBackups(backups);
+
+    /* Try folder backup if handle exists */
+    if (SET.backupFolder) {
+      try {
+        const hasPerm = await verifyHandlePermission(SET.backupFolder);
+        if (hasPerm) {
+          const fname = `SmartFixERP_Backup_${today}.json`;
+          const fileHandle = await SET.backupFolder.getFileHandle(fname, { create: true });
+          const writable = await fileHandle.createWritable();
+          await writable.write(JSON.stringify(snapshot, null, 2));
+          await writable.close();
+        }
+      } catch (e) {
+        console.warn('Folder backup failed:', e);
+      }
+    }
+
+    /* Update last backup time */
+    localStorage.setItem('sfp_last_backup', new Date().toISOString());
+
+    updateBackupUI();
+
+    if (force) {
+      try {
+        window.SF.state.logAudit('BACKUP_MANUAL', 'Manual backup for ' + today);
+      } catch (e) {}
+      C.toast('✅ Backup completed for ' + today, 'success', 3000);
+    }
+    return saved;
+  }
+
+  function runDailyBackupNow() {
+    runAutoDailyBackup(true).then(() => {
+      /* Also trigger download for mobile users */
+      if (!SET.backupFolder || !window.showDirectoryPicker) {
+        downloadBackupJSON(true);
+      }
+    });
+  }
+
+  function downloadBackupJSON(silent) {
+    const snapshot = buildSnapshot();
+    const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `SmartFixERP_Backup_${C.fmtDate(new Date())}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+    if (!silent) {
+      C.toast('Backup file downloaded', 'success', 2500);
+    }
+  }
+
+
+  /* ============================================================
+     6. BACKUP FOLDER (File System Access API)
+     ============================================================ */
+  function openBackupDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(SET.backupDB, 1);
+      req.onupgradeneeded = () => {
+        if (!req.result.objectStoreNames.contains(SET.backupStore)) {
+          req.result.createObjectStore(SET.backupStore);
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function saveHandleToIDB(handle) {
+    try {
+      const db = await openBackupDB();
+      const tx = db.transaction(SET.backupStore, 'readwrite');
+      tx.objectStore(SET.backupStore).put(handle, 'backupFolder');
+      return new Promise((r) => { tx.oncomplete = () => r(true); });
+    } catch (e) {
+      return false;
+    }
+  }
+
+  async function loadHandleFromIDB() {
+    try {
+      const db = await openBackupDB();
+      const tx = db.transaction(SET.backupStore, 'readonly');
+      const req = tx.objectStore(SET.backupStore).get('backupFolder');
+      return new Promise((r) => {
+        req.onsuccess = () => r(req.result || null);
+        req.onerror = () => r(null);
+      });
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function verifyHandlePermission(handle) {
+    if (!handle) return false;
+    try {
+      const opts = { mode: 'readwrite' };
+      if (await handle.queryPermission(opts) === 'granted') return true;
+      if (await handle.requestPermission(opts) === 'granted') return true;
+    } catch (e) {}
+    return false;
+  }
+
+  async function chooseBackupFolder() {
+    if (!window.showDirectoryPicker) {
+      alert(
+        '⚠️ Folder picker not supported in this browser.\n\n' +
+        '📱 On Mobile: Use "Backup Now" — it saves to Downloads folder.\n\n' +
+        '💻 On Desktop Chrome: Folder feature works.'
+      );
+      return;
+    }
+
+    try {
+      const handle = await window.showDirectoryPicker({
+        mode: 'readwrite',
+        startIn: 'documents'
+      });
+      SET.backupFolder = handle;
+      await saveHandleToIDB(handle);
+      await runAutoDailyBackup(true);
+      C.toast('Backup folder set: ' + handle.name, 'success', 3500);
+      updateBackupUI();
+    } catch (e) {
+      if (e.name !== 'AbortError') {
+        C.toast('Folder setup failed', 'error');
+      }
+    }
+  }
+
+
+  /* ============================================================
+     7. BACKUP HISTORY MODAL
+     ============================================================ */
+  function openBackupHistory() {
+    const backups = getDailyBackups();
+    const dates = Object.keys(backups).sort().reverse();
+
+    const modal = document.getElementById('stgBackupHistoryModal');
+    const content = document.getElementById('stgBackupHistoryContent');
+    if (!modal || !content) return;
+
+    if (dates.length === 0) {
+      content.innerHTML = `
+        <div class="text-center py-10">
+          <div class="text-5xl mb-3">📭</div>
+          <div class="text-slate-400 text-sm font-semibold">No backups yet</div>
+          <div class="text-slate-500 text-xs mt-1">Tap "Backup Now" to create one</div>
+        </div>`;
+    } else {
+      content.innerHTML = dates.map((date) => {
+        const snap = backups[date] || {};
+        const invCount = (snap.invoices || []).length;
+        const stkCount = (snap.inventory || []).length;
+        const partyCount = (snap.parties || []).length;
+        const staffCount = (snap.staff || []).length;
+        const sizeKB = (JSON.stringify(snap).length / 1024).toFixed(1);
+        const isToday = date === C.fmtDate(new Date());
+        return `
+          <div class="border rounded-xl p-3 ${isToday ? 'border-sky-600 bg-sky-950/30' : 'border-slate-800 bg-slate-950/50'}">
+            <div class="flex justify-between items-start gap-2 mb-2">
+              <div class="min-w-0 flex-1">
+                <div class="font-bold text-sm text-white">
+                  ${isToday ? '📅 Today' : '📅 ' + date}
+                </div>
+                <div class="text-[10px] text-slate-500 mt-0.5">
+                  ${invCount} invoices • ${stkCount} stock • ${partyCount} parties • ${staffCount} staff • ${sizeKB} KB
+                </div>
+              </div>
+              <div class="flex gap-1 flex-shrink-0">
+                <button type="button" onclick="SF.settings.downloadBackupByDate('${date}')"
+                        class="text-[10px] bg-sky-700 hover:bg-sky-600 text-white font-bold px-2.5 py-1.5 rounded transition">
+                  ⬇
+                </button>
+                <button type="button" onclick="SF.settings.restoreBackupByDate('${date}')"
+                        class="text-[10px] bg-rose-700 hover:bg-rose-600 text-white font-bold px-2.5 py-1.5 rounded transition">
+                  ↻
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    modal.classList.remove('hidden');
+  }
+
+  function closeBackupHistory() {
+    const modal = document.getElementById('stgBackupHistoryModal');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  function downloadBackupByDate(date) {
+    const backups = getDailyBackups();
+    const snap = backups[date];
+    if (!snap) {
+      C.toast('Backup not found', 'error');
+      return;
+    }
+    const blob = new Blob([JSON.stringify(snap, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `SmartFixERP_Backup_${date}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    C.toast('Downloaded ' + date + ' backup', 'success', 2500);
+  }
+
+  async function restoreBackupByDate(date) {
+    const pin = prompt('🔒 Enter Master PIN to restore backup:');
+    if (!pin) return;
+    if (pin !== (S.profile?.masterPin || '1234')) {
+      C.toast('Incorrect PIN', 'error');
+      C.playErrorBeep();
+      return;
+    }
+
+    const backups = getDailyBackups();
+    const snap = backups[date];
+    if (!snap) {
+      C.toast('Backup not found', 'error');
+      return;
+    }
+
+    const ok = await C.confirmDialog(
+      'Restore Backup?',
+      `Backup from: ${date}\n\n⚠️ ALL current data will be REPLACED!\n\nContinue?`,
+      'Restore',
+      true
+    );
+    if (!ok) return;
+
+    applySnapshot(snap);
+    C.toast('✅ Restored from ' + date + '. Reloading...', 'success', 3000);
+    try {
+      window.SF.state.logAudit('BACKUP_RESTORE', 'Restored from ' + date);
+    } catch (e) {}
+    setTimeout(() => location.reload(), 1200);
+  }
+
+  function applySnapshot(snap) {
+    if (!snap) return;
+    S.profile = snap.profile || S.profile;
+    S.invoices = snap.invoices || [];
+    S.creditNotes = snap.creditNotes || [];
+    S.vouchers = snap.vouchers || [];
+    S.inventory = snap.inventory || [];
+    S.purchases = snap.purchases || [];
+    S.parties = snap.parties || [];
+    S.staff = snap.staff || [];
+    S.salaryPayments = snap.salaryPayments || [];
+    S.categories = snap.categories || S.categories;
+    S.auditLog = snap.auditLog || [];
+
+    C.safeSave('sfp_store_profile', S.profile);
+    C.safeSave('sfp_invoices', S.invoices);
+    C.safeSave('sfp_credit_notes', S.creditNotes);
+    C.safeSave('sfp_vouchers', S.vouchers);
+    C.safeSave('sfp_stock', S.inventory);
+    C.safeSave('sfp_purchases', S.purchases);
+    C.safeSave('sfp_parties', S.parties);
+    C.safeSave('sfp_staff', S.staff);
+    C.safeSave('sfp_salary_payments', S.salaryPayments);
+    C.safeSave('sfp_categories', S.categories);
+    C.safeSave('sfp_audit', S.auditLog);
+  }
+
+
+  /* ============================================================
+     8. RESTORE FROM JSON FILE
+     ============================================================ */
+  async function restoreFromJSON(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const pin = prompt('🔒 Enter Master PIN to restore:');
+    if (!pin) {
+      e.target.value = '';
+      return;
+    }
+    if (pin !== (S.profile?.masterPin || '1234')) {
+      C.toast('Incorrect PIN', 'error');
+      C.playErrorBeep();
+      e.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (!data.profile && !data.invoices) {
+          C.toast('Invalid backup file', 'error');
+          e.target.value = '';
+          return;
+        }
+
+        const ok = await C.confirmDialog(
+          'Restore Backup?',
+          'All current data will be REPLACED!\n\nContinue?',
+          'Restore',
+          true
+        );
+        if (!ok) {
+          e.target.value = '';
+          return;
+        }
+
+        applySnapshot(data);
+        C.toast('Restore complete. Reloading...', 'success', 2500);
+        try {
+          window.SF.state.logAudit('BACKUP_RESTORE_FILE', 'Restored from JSON file: ' + file.name);
+        } catch (err) {}
+        setTimeout(() => location.reload(), 1200);
+      } catch (err) {
+        C.toast('Restore failed: ' + err.message, 'error', 4000);
+        e.target.value = '';
+      }
+    };
+    reader.readAsText(file);
+  }
+
+
+  /* ============================================================
+     9. WIPE ALL DATA
+     ============================================================ */
+  async function wipeAllData() {
+    const pin = prompt('🔒 Enter Master PIN to WIPE ALL DATA:');
+    if (!pin) return;
+    if (pin !== (S.profile?.masterPin || '1234')) {
+      C.toast('Incorrect PIN', 'error');
+      C.playErrorBeep();
+      return;
+    }
+
+    const confirm1 = prompt('Type DELETE ALL (in capitals) to confirm:');
+    if (confirm1 !== 'DELETE ALL') {
+      C.toast('Cancelled', 'info', 2000);
+      return;
+    }
+
+    const ok = await C.confirmDialog(
+      '⚠️ Final Warning',
+      'This will delete:\n\n• All invoices\n• All stock\n• All parties\n• All staff\n• All vouchers\n• All categories\n\n⚠️ Cloud data will NOT be deleted.\n\nThis CANNOT be undone!',
+      'WIPE NOW',
+      true
+    );
+    if (!ok) return;
+
+    /* Clear localStorage keys */
+    const keys = [
+      'sfp_store_profile', 'sfp_invoices', 'sfp_credit_notes', 'sfp_vouchers',
+      'sfp_stock', 'sfp_purchases', 'sfp_parties', 'sfp_staff',
+      'sfp_salary_payments', 'sfp_categories', 'sfp_audit', 'sfp_active_cart',
+      'sfp_daily_backups', 'sfp_last_backup', 'sfp_cloud_queue'
+    ];
+    keys.forEach((k) => {
+      try { localStorage.removeItem(k); } catch (e) {}
+    });
+
+    C.toast('All data wiped. Reloading...', 'success', 2500);
+    setTimeout(() => location.reload(), 1500);
+  }
+
+
+  /* ============================================================
+     10. UPDATE BACKUP UI
+     ============================================================ */
+  function updateBackupUI() {
+    const backups = getDailyBackups();
+    const today = C.fmtDate(new Date());
+    const count = Object.keys(backups).length;
+
+    const todayEl = document.getElementById('todayBackupStatus');
+    if (todayEl) {
+      todayEl.textContent = backups[today] ? '✓ Done' : '⏳ Not yet';
+      todayEl.className = backups[today]
+        ? 'font-bold text-emerald-400'
+        : 'font-bold text-amber-400';
+    }
+
+    const countEl = document.getElementById('totalBackupsCount');
+    if (countEl) countEl.textContent = count + ' day' + (count !== 1 ? 's' : '');
+
+    const folderEl = document.getElementById('backupFolderStatus');
+    if (folderEl) {
+      if (SET.backupFolder) {
+        folderEl.textContent = '✓ ' + (SET.backupFolder.name || 'Set');
+        folderEl.className = 'font-bold text-emerald-400';
+      } else {
+        folderEl.textContent = 'Not Set';
+        folderEl.className = 'font-bold text-amber-400';
+      }
+    }
+
+    const lastEl = document.getElementById('lastBackupTime');
+    if (lastEl) {
+      const last = localStorage.getItem('sfp_last_backup');
+      if (last) {
+        const d = new Date(last);
+        lastEl.textContent = d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
+      } else {
+        lastEl.textContent = '—';
+      }
+    }
+
+    const badge = document.getElementById('backupStatusBadge');
+    if (badge) {
+      if (count > 0) {
+        badge.textContent = '✓ Active';
+        badge.className = 'text-[10px] font-bold px-2.5 py-1 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-800/60';
+      } else {
+        badge.textContent = 'No Backup Yet';
+        badge.className = 'text-[10px] font-bold px-2.5 py-1 rounded bg-amber-950/60 text-amber-400 border border-amber-800/60';
+      }
+    }
+  }
+
+
+  /* ============================================================
+     11. INIT BACKUP SYSTEM
+     ============================================================ */
+  async function initBackupSystem() {
+    try {
+      const handle = await loadHandleFromIDB();
+      if (handle) {
+        SET.backupFolder = handle;
+        await verifyHandlePermission(handle);
+      }
+    } catch (e) {}
+
+    updateBackupUI();
+
+    /* Auto backup on load after delay */
+    setTimeout(() => {
+      runAutoDailyBackup(false).catch(() => {});
+    }, 3000);
+
+    /* Hourly retry */
+    setInterval(() => {
+      runAutoDailyBackup(false).catch(() => {});
+    }, 60 * 60 * 1000);
+  }
+
+
+  /* ============================================================
+     12. EXPOSE API
+     ============================================================ */
+  window.SF = window.SF || {};
+  window.SF.settings = {
+    init: init_settingsModule,
+    loadProfileIntoForm,
+    saveProfile,
+    onLogoChange,
+    removeLogo,
+    unlockStore,
+    forgotPIN,
+    checkLockState,
+
+    /* Backup */
+    runDailyBackupNow,
+    downloadBackupJSON,
+    downloadBackupByDate,
+    restoreBackupByDate,
+    openBackupHistory,
+    closeBackupHistory,
+    chooseBackupFolder,
+
+    /* Restore / Wipe */
+    restoreFromJSON,
+    wipeAllData
+  };
+
+  /* Router expects this */
+  window.init_settingsModule = init_settingsModule;
+
+  /* Auto-init fallback */
+  if (document.getElementById('settingsModule')) {
+    init_settingsModule();
+  }
+})();
+</script>
