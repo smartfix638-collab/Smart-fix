@@ -1,8 +1,8 @@
 /* ============================================================
-   SMARTFIX ERP — Common Utilities
+   SMARTFIX ERP — Common Utilities (v4.0.1)
    File: js/common.js
-   Version: 4.0.0
    Purpose: Shared helper functions used across all modules
+   FIXED: All functions now exposed on window.SF.common
    ============================================================ */
 
 /* ============================================================
@@ -36,9 +36,8 @@ export function fmtDatePretty(d) {
 export function getFY(dt) {
   dt = dt || new Date();
   const y = dt.getFullYear();
-  const m = dt.getMonth(); // 0-11
+  const m = dt.getMonth();
   if (m >= 3) {
-    // April–December
     return {
       label: `FY ${y}-${String(y + 1).slice(-2)}`,
       short: `${y}${String(y + 1).slice(-2)}`,
@@ -46,7 +45,6 @@ export function getFY(dt) {
       end:   new Date(y + 1, 2, 31, 23, 59, 59)
     };
   }
-  // January–March
   return {
     label: `FY ${y - 1}-${String(y).slice(-2)}`,
     short: `${y - 1}${String(y).slice(-2)}`,
@@ -67,9 +65,6 @@ export function today() {
    2. CURRENCY & NUMBER
    ============================================================ */
 
-/**
- * Format number as Indian Rupee: ₹1,23,456.78
- */
 export function money(n) {
   const v = Number(n) || 0;
   return '₹' + v.toLocaleString('en-IN', {
@@ -78,9 +73,6 @@ export function money(n) {
   });
 }
 
-/**
- * Plain number with commas: 1,23,456
- */
 export function numFmt(n, decimals = 0) {
   const v = Number(n) || 0;
   return v.toLocaleString('en-IN', {
@@ -89,17 +81,10 @@ export function numFmt(n, decimals = 0) {
   });
 }
 
-/**
- * Round to 2 decimal places (returns number)
- */
 export function round2(n) {
   return Math.round((Number(n) || 0) * 100) / 100;
 }
 
-/**
- * Convert number to Indian words for invoice
- * Example: 125000 → "ONE LAKH TWENTY FIVE THOUSAND RUPEES ONLY"
- */
 export function numberToWords(num) {
   const a = ['', 'ONE ', 'TWO ', 'THREE ', 'FOUR ', 'FIVE ', 'SIX ',
              'SEVEN ', 'EIGHT ', 'NINE ', 'TEN ', 'ELEVEN ', 'TWELVE ',
@@ -129,9 +114,6 @@ export function numberToWords(num) {
    3. BARCODE / SCANNER HELPERS
    ============================================================ */
 
-/**
- * Play a short beep (barcode scan confirmation)
- */
 export function playBeep() {
   try {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -148,12 +130,9 @@ export function playBeep() {
     setTimeout(() => {
       try { osc.stop(); ctx.close(); } catch (e) {}
     }, 70);
-  } catch (e) { /* silent fail */ }
+  } catch (e) {}
 }
 
-/**
- * Play a longer error buzz
- */
 export function playErrorBeep() {
   try {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -170,12 +149,9 @@ export function playErrorBeep() {
     setTimeout(() => {
       try { osc.stop(); ctx.close(); } catch (e) {}
     }, 220);
-  } catch (e) { /* silent fail */ }
+  } catch (e) {}
 }
 
-/**
- * Normalize IMEI/Serial: uppercase + remove spaces/dashes
- */
 export function normalizeIMEI(str) {
   return (str || '').toString().trim().toUpperCase().replace(/[\s\-_]/g, '');
 }
@@ -185,12 +161,6 @@ export function normalizeIMEI(str) {
    4. IMAGE HANDLING
    ============================================================ */
 
-/**
- * Resize an uploaded image file to a data URL (JPEG)
- * @param {File} file - input file
- * @param {number} maxDim - max width/height (default 400)
- * @returns {Promise<string>} data URL
- */
 export function resizeImage(file, maxDim = 400) {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -223,9 +193,6 @@ export function resizeImage(file, maxDim = 400) {
    5. LOCALSTORAGE WRAPPER
    ============================================================ */
 
-/**
- * Save JSON to localStorage with quota error handling
- */
 export function safeSave(key, data) {
   try {
     localStorage.setItem(key, JSON.stringify(data));
@@ -237,9 +204,6 @@ export function safeSave(key, data) {
   }
 }
 
-/**
- * Load JSON from localStorage with default fallback
- */
 export function safeLoad(key, fallback = null) {
   try {
     const v = localStorage.getItem(key);
@@ -250,9 +214,6 @@ export function safeLoad(key, fallback = null) {
   }
 }
 
-/**
- * Remove a key
- */
 export function safeRemove(key) {
   try { localStorage.removeItem(key); return true; }
   catch (e) { return false; }
@@ -284,12 +245,6 @@ function ensureToastContainer() {
   return toastContainer;
 }
 
-/**
- * Show a toast notification
- * @param {string} msg - message text
- * @param {string} type - 'info' | 'success' | 'error' | 'warning'
- * @param {number} duration - ms to show (default 3000)
- */
 export function toast(msg, type = 'info', duration = 3000) {
   const container = ensureToastContainer();
   const colors = {
@@ -343,10 +298,6 @@ export function toast(msg, type = 'info', duration = 3000) {
    7. UI — MODAL / CONFIRM
    ============================================================ */
 
-/**
- * Beautiful confirm dialog (native confirm is ugly)
- * @returns {Promise<boolean>}
- */
 export function confirmDialog(title, message, okLabel = 'Confirm', dangerous = false) {
   return new Promise((resolve) => {
     const overlay = document.createElement('div');
@@ -420,9 +371,6 @@ export function confirmDialog(title, message, okLabel = 'Confirm', dangerous = f
    8. STRING HELPERS
    ============================================================ */
 
-/**
- * Escape HTML to prevent XSS
- */
 export function escapeHTML(str) {
   return String(str || '')
     .replace(/&/g, '&amp;')
@@ -432,17 +380,11 @@ export function escapeHTML(str) {
     .replace(/'/g, '&#39;');
 }
 
-/**
- * Truncate a long string
- */
 export function truncate(str, n = 30) {
   str = String(str || '');
   return str.length > n ? str.slice(0, n - 1) + '…' : str;
 }
 
-/**
- * Slugify (lowercase + hyphens)
- */
 export function slugify(str) {
   return String(str || '')
     .toLowerCase()
@@ -456,9 +398,6 @@ export function slugify(str) {
    9. FUNCTION HELPERS
    ============================================================ */
 
-/**
- * Debounce: delay function execution until input stops
- */
 export function debounce(fn, wait = 300) {
   let timer;
   return function (...args) {
@@ -467,9 +406,6 @@ export function debounce(fn, wait = 300) {
   };
 }
 
-/**
- * Throttle: limit execution frequency
- */
 export function throttle(fn, wait = 200) {
   let last = 0;
   return function (...args) {
@@ -481,16 +417,10 @@ export function throttle(fn, wait = 200) {
   };
 }
 
-/**
- * Generate a random unique ID (string)
- */
 export function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
 }
 
-/**
- * Deep clone a JSON-safe object
- */
 export function clone(obj) {
   try {
     return JSON.parse(JSON.stringify(obj));
@@ -499,9 +429,6 @@ export function clone(obj) {
   }
 }
 
-/**
- * Sleep for n milliseconds
- */
 export function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
@@ -511,50 +438,32 @@ export function sleep(ms) {
    10. VALIDATION
    ============================================================ */
 
-/**
- * Validate email
- */
 export function isEmail(str) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str || '');
 }
 
-/**
- * Validate Indian phone (10 digits)
- */
 export function isPhone10(str) {
   return /^\d{10}$/.test((str || '').trim());
 }
 
-/**
- * Validate GSTIN (15 chars)
- */
 export function isGSTIN(str) {
   return /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test((str || '').toUpperCase());
 }
 
-/**
- * Validate IMEI (15 digits)
- */
 export function isIMEI15(str) {
   return /^\d{15}$/.test(normalizeIMEI(str));
 }
 
 
 /* ============================================================
-   11. NUMBER PARSING (safe)
+   11. NUMBER PARSING
    ============================================================ */
 
-/**
- * Parse any input to a safe number
- */
 export function toNum(v, fallback = 0) {
   const n = Number(v);
   return Number.isFinite(n) ? n : fallback;
 }
 
-/**
- * Parse to integer
- */
 export function toInt(v, fallback = 0) {
   const n = parseInt(v, 10);
   return Number.isFinite(n) ? n : fallback;
@@ -562,7 +471,7 @@ export function toInt(v, fallback = 0) {
 
 
 /* ============================================================
-   12. EXPORT DEFAULT OBJECT (optional convenience)
+   12. DEFAULT EXPORT
    ============================================================ */
 export default {
   fmtDate, fmtDatePretty, getFY, today,
@@ -579,13 +488,61 @@ export default {
 
 
 /* ============================================================
-   13. GLOBAL CONSOLE ACCESS (for debugging in dev tools)
+   13. GLOBAL CONSOLE ACCESS — FIXED v4.0.1
+   ⚠️ CRITICAL: ALL functions exposed. Modules rely on this.
    ============================================================ */
 window.SF = window.SF || {};
 window.SF.common = {
-  fmtDate, getFY, money, numberToWords,
-  toast, confirmDialog, safeSave, safeLoad,
-  normalizeIMEI, playBeep
+  /* Dates */
+  fmtDate,
+  fmtDatePretty,
+  getFY,
+  today,
+
+  /* Numbers */
+  money,
+  numFmt,
+  round2,
+  numberToWords,
+
+  /* Scanner */
+  playBeep,
+  playErrorBeep,
+  normalizeIMEI,
+
+  /* Image */
+  resizeImage,
+
+  /* Storage */
+  safeSave,
+  safeLoad,
+  safeRemove,
+
+  /* UI */
+  toast,
+  confirmDialog,
+
+  /* Strings */
+  escapeHTML,
+  truncate,
+  slugify,
+
+  /* Functions */
+  debounce,
+  throttle,
+  uid,
+  clone,
+  sleep,
+
+  /* Validation */
+  isEmail,
+  isPhone10,
+  isGSTIN,
+  isIMEI15,
+
+  /* Numbers */
+  toNum,
+  toInt
 };
 
 
@@ -593,6 +550,6 @@ window.SF.common = {
    14. BOOT LOG
    ============================================================ */
 console.log(
-  '%c🧰 Common utilities loaded',
+  '%c🧰 Common utilities loaded (v4.0.1 — ' + Object.keys(window.SF.common).length + ' functions exposed)',
   'color:#a78bfa;font-weight:bold;font-size:11px'
 );
