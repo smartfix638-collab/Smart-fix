@@ -1,10 +1,10 @@
 /* ============================================================
-   SMARTFIX ERP — SPA Router
+   SMARTFIX ERP — SPA Router (v4.0.1)
    File: js/router.js
-   Version: 4.0.0
    Purpose:
      • Hash-based routing (#billing, #inventory, etc.)
      • Dynamically loads module HTML into shell container
+     • Re-executes inline scripts (browser doesn't auto-run injected scripts)
      • Manages active tab state
      • Supports module lifecycle hooks (onLoad/onUnload)
      • Browser back/forward navigation
@@ -156,7 +156,7 @@ export function initRouter(containerSelector = '#moduleContainer') {
 /**
  * Navigate to a route
  * @param {string} routeKey - e.g. 'billing'
- * @param {object} opts - { replace, skipHistory }
+ * @param {object} opts - { replace, skipHistory, force }
  */
 export async function navigateTo(routeKey, opts = {}) {
   if (ROUTER.loading) {
@@ -208,6 +208,13 @@ export async function navigateTo(routeKey, opts = {}) {
     /* Inject into container */
     ROUTER.container.innerHTML = html;
 
+    /* --------------------------------------------------------
+       ⭐ CRITICAL: Re-execute inline <script> tags
+       Browser does NOT auto-run scripts injected via innerHTML.
+       We must clone each script and replace it so it executes.
+       -------------------------------------------------------- */
+    reExecuteScripts(ROUTER.container);
+
     /* Update tab bar active state */
     updateTabBar(routeKey);
 
@@ -254,7 +261,52 @@ export async function navigateTo(routeKey, opts = {}) {
 
 
 /* ============================================================
-   5. HASH CHANGE HANDLER
+   5. SCRIPT RE-EXECUTION HELPER
+   ============================================================ */
+/**
+ * Clone and replace all <script> tags inside a container
+ * so that browser executes them.
+ *
+ * Handles:
+ *   • Inline scripts (textContent)
+ *   • External scripts (src attribute) — loaded sequentially
+ *   • Module scripts (type="module")
+ *
+ * @param {HTMLElement} container
+ */
+function reExecuteScripts(container) {
+  if (!container) return;
+
+  const oldScripts = Array.from(container.querySelectorAll('script'));
+  if (oldScripts.length === 0) return;
+
+  console.log('%c🔧 Re-executing ' + oldScripts.length + ' script(s)', 'color:#8b5cf6');
+
+  oldScripts.forEach((oldScript) => {
+    const newScript = document.createElement('script');
+
+    /* Copy all attributes (src, type, async, defer, etc.) */
+    Array.from(oldScript.attributes).forEach((attr) => {
+      newScript.setAttribute(attr.name, attr.value);
+    });
+
+    /* Copy inline content */
+    if (!oldScript.src) {
+      newScript.textContent = oldScript.textContent;
+    }
+
+    /* Replace in DOM — this triggers execution */
+    try {
+      oldScript.parentNode.replaceChild(newScript, oldScript);
+    } catch (e) {
+      console.error('Failed to re-execute script:', e);
+    }
+  });
+}
+
+
+/* ============================================================
+   6. HASH CHANGE HANDLER
    ============================================================ */
 function onHashChange() {
   const hash = window.location.hash.replace('#', '').trim();
@@ -272,7 +324,7 @@ function onHashChange() {
 
 
 /* ============================================================
-   6. KEYBOARD SHORTCUTS (F1–F10)
+   7. KEYBOARD SHORTCUTS (F1–F10)
    ============================================================ */
 function onGlobalKeydown(e) {
   /* Skip if user is typing in an input */
@@ -295,7 +347,7 @@ function onGlobalKeydown(e) {
 
 
 /* ============================================================
-   7. MODULE HTML LOADER
+   8. MODULE HTML LOADER
    ============================================================ */
 async function loadModuleHTML(routeKey) {
   /* Check cache first */
@@ -334,7 +386,7 @@ export function clearModuleCache(routeKey) {
 
 
 /* ============================================================
-   8. UI — LOADING / ERROR STATES
+   9. UI — LOADING / ERROR STATES
    ============================================================ */
 function showModuleLoading() {
   if (!ROUTER.container) return;
@@ -381,7 +433,7 @@ function showModuleError(label, err) {
 
 
 /* ============================================================
-   9. TAB BAR — active state management
+   10. TAB BAR — active state management
    ============================================================ */
 function updateTabBar(routeKey) {
   const route = ROUTES[routeKey];
@@ -438,7 +490,7 @@ export function renderTabBar() {
 
 
 /* ============================================================
-   10. PUBLIC API
+   11. PUBLIC API
    ============================================================ */
 export const Router = {
   go:          navigateTo,
@@ -453,7 +505,7 @@ export const Router = {
 
 
 /* ============================================================
-   11. GLOBAL CONSOLE ACCESS
+   12. GLOBAL CONSOLE ACCESS
    ============================================================ */
 window.SF = window.SF || {};
 window.SF.router = Router;
@@ -463,7 +515,7 @@ window.SF.go = navigateTo;
 
 
 /* ============================================================
-   12. HANDLE BROWSER BACK / FORWARD
+   13. HANDLE BROWSER BACK / FORWARD
    ============================================================ */
 window.addEventListener('popstate', () => {
   const hash = window.location.hash.replace('#', '').trim();
@@ -474,10 +526,10 @@ window.addEventListener('popstate', () => {
 
 
 /* ============================================================
-   13. BOOT LOG
+   14. BOOT LOG
    ============================================================ */
 console.log(
-  '%c🧭 Router ready',
+  '%c🧭 Router ready (v4.0.1)',
   'color:#06b6d4;font-weight:bold;font-size:11px',
   `| ${ROUTE_ORDER.length} routes registered`
 );
