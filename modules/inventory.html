@@ -1,0 +1,1159 @@
+<!-- ============================================================
+     SMARTFIX ERP — Inventory / Stock Module
+     File: modules/inventory.html
+     Version: 4.0.0
+     ============================================================ -->
+
+<section id="inventoryModule" class="space-y-4">
+
+  <!-- ============================================================
+       HEADER
+       ============================================================ -->
+  <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 flex flex-wrap justify-between items-center gap-3">
+    <div>
+      <h2 class="text-lg font-black text-white">📦 Stock Management System</h2>
+      <p class="text-[11px] text-slate-400 mt-0.5">
+        Add, track, sell and manage your inventory
+      </p>
+    </div>
+    <span class="text-[10px] bg-amber-950/60 text-amber-300 border border-amber-800/60 px-3 py-1.5 rounded-lg font-bold">
+      🔒 Owner Protected
+    </span>
+  </div>
+
+
+  <!-- ============================================================
+       CATEGORY MANAGER
+       ============================================================ -->
+  <div class="bg-violet-950/30 border border-violet-800/60 rounded-2xl p-4 space-y-3">
+    <div class="flex flex-wrap justify-between items-center gap-2">
+      <h3 class="text-[11px] font-bold uppercase tracking-wider text-violet-300">
+        🏷️ Category Manager
+      </h3>
+      <div class="flex gap-2">
+        <button type="button" onclick="SF.inventory.openCategoryManager()"
+                class="text-[10px] bg-violet-600 hover:bg-violet-500 text-white font-bold px-3 py-1.5 rounded-lg transition">
+          ⚙️ Manage
+        </button>
+      </div>
+    </div>
+    <div id="invChipBar" class="flex flex-wrap gap-1.5">
+      <!-- chips injected by JS -->
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       ADD STOCK PANEL
+       ============================================================ -->
+  <div class="bg-sky-950/30 border border-sky-800/60 rounded-2xl p-4 space-y-3">
+    <div class="flex justify-between items-center">
+      <h3 class="text-[11px] font-bold uppercase tracking-wider text-sky-300">
+        ⚡ Add Stock (Regular or Old)
+      </h3>
+      <button type="button" id="invScannerBtn" onclick="SF.inventory.toggleScanner()"
+              class="text-[10px] bg-sky-600 hover:bg-sky-500 text-white font-bold px-2.5 py-1 rounded-lg transition">
+        📷 Camera
+      </button>
+    </div>
+
+    <div id="invScannerWrap" class="overflow-hidden rounded-lg border border-sky-700" style="display:none">
+      <div id="invReader" style="width:100%"></div>
+    </div>
+
+    <!-- Row 1: Category + Model + Type -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <div>
+        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Category *</label>
+        <select id="invCategory"
+                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs font-bold text-slate-100">
+        </select>
+      </div>
+      <div class="sm:col-span-2">
+        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Model Name *</label>
+        <input type="text" id="invModel" placeholder="e.g. Samsung A15 5G"
+               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs font-bold text-slate-100">
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Stock Type</label>
+        <select id="invAddType"
+                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs font-bold text-slate-100">
+          <option value="new">New Stock</option>
+          <option value="old">Old / Pre-owned</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Row 2: Cost + Sell -->
+    <div class="grid grid-cols-2 gap-2">
+      <div>
+        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Purchase Cost ₹</label>
+        <input type="number" id="invPurchaseCost" placeholder="Optional for old stock" step="0.01"
+               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs font-bold text-slate-100">
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Selling Price ₹ *</label>
+        <input type="number" id="invSellPrice" placeholder="Sell price" step="0.01"
+               class="w-full bg-slate-950 border border-emerald-700/60 rounded-lg px-2.5 py-2 text-xs font-bold text-emerald-300">
+      </div>
+    </div>
+
+    <!-- Rapid scan input -->
+    <div>
+      <label class="block text-[10px] font-bold uppercase text-sky-300 mb-1">
+        Rapid USB / Bluetooth Scanner (Continuous)
+      </label>
+      <input type="text" id="invRapidInput"
+             onkeydown="SF.inventory.handleRapidScan(event)"
+             placeholder="⚡ Scan IMEI (auto-adds to batch)"
+             class="w-full bg-slate-950 border-2 border-sky-600 rounded-lg px-3 py-2 text-xs font-mono font-bold text-sky-100 placeholder-sky-800">
+    </div>
+
+    <!-- Batch list -->
+    <div class="bg-slate-950/70 border border-sky-800/40 rounded-lg p-2.5">
+      <div class="flex justify-between items-center mb-2">
+        <span id="invBatchCounter" class="text-[10px] font-bold text-sky-300">Scanned: 0 units</span>
+        <button type="button" onclick="SF.inventory.clearBatch()"
+                class="text-[10px] text-rose-400 hover:text-rose-300 font-bold">
+          ✕ Clear All
+        </button>
+      </div>
+      <div id="invBatchList" class="flex flex-wrap gap-1 max-h-28 overflow-y-auto">
+        <span class="text-[10px] text-slate-500 italic">No IMEIs scanned yet</span>
+      </div>
+    </div>
+
+    <!-- Add button -->
+    <button type="button" onclick="SF.inventory.addStock()"
+            class="w-full bg-gradient-to-r from-sky-600 to-sky-700 hover:from-sky-500 hover:to-sky-600 text-white font-black py-3 rounded-xl text-sm shadow-lg shadow-sky-600/30 transition">
+      ⬇️ Inward to Stock
+    </button>
+  </div>
+
+
+  <!-- ============================================================
+       STOCK REGISTER
+       ============================================================ -->
+  <div class="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden">
+
+    <!-- Filters + stats -->
+    <div class="p-4 border-b border-slate-800 space-y-3">
+
+      <div class="flex flex-wrap justify-between items-center gap-2">
+        <h3 class="font-bold text-xs uppercase tracking-wider text-slate-300">
+          📋 Live Inventory Register
+        </h3>
+        <span id="invCountDisplay" class="text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded font-mono">
+          0 units
+        </span>
+      </div>
+
+      <!-- Search + status filter -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+        <div class="md:col-span-2">
+          <input type="text" id="invSearchInput"
+                 oninput="SF.inventory.renderRegister()"
+                 placeholder="🔎 Search by model, IMEI, category..."
+                 class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200">
+        </div>
+        <div>
+          <select id="invStatusFilter" onchange="SF.inventory.renderRegister()"
+                  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200">
+            <option value="Available">Available Only</option>
+            <option value="ALL">All Status</option>
+            <option value="Sold">Sold Only</option>
+            <option value="OLD">Old Stock Only</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Stat cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <div class="bg-emerald-950/40 border border-emerald-800/40 rounded-lg p-2.5">
+          <div class="text-[9px] font-bold text-emerald-400 uppercase">Available Units</div>
+          <div id="invStatAvailable" class="text-base font-black text-emerald-300 mt-0.5">0</div>
+        </div>
+        <div class="bg-sky-950/40 border border-sky-800/40 rounded-lg p-2.5">
+          <div class="text-[9px] font-bold text-sky-400 uppercase">Stock Value</div>
+          <div id="invStatValue" class="text-base font-black text-sky-300 mt-0.5">₹0</div>
+        </div>
+        <div class="bg-rose-950/40 border border-rose-800/40 rounded-lg p-2.5">
+          <div class="text-[9px] font-bold text-rose-400 uppercase">Sold Units</div>
+          <div id="invStatSold" class="text-base font-black text-rose-300 mt-0.5">0</div>
+        </div>
+        <div class="bg-amber-950/40 border border-amber-800/40 rounded-lg p-2.5">
+          <div class="text-[9px] font-bold text-amber-400 uppercase">Old Stock</div>
+          <div id="invStatOld" class="text-base font-black text-amber-300 mt-0.5">0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs border-collapse min-w-[900px]">
+        <thead class="bg-slate-950/70 text-slate-500 uppercase text-[10px]">
+          <tr>
+            <th class="p-2.5 border-b border-slate-800 w-12">#</th>
+            <th class="p-2.5 border-b border-slate-800">Category</th>
+            <th class="p-2.5 border-b border-slate-800">Model</th>
+            <th class="p-2.5 border-b border-slate-800">IMEI</th>
+            <th class="p-2.5 border-b border-slate-800 text-right">Purchase</th>
+            <th class="p-2.5 border-b border-slate-800 text-right">Selling</th>
+            <th class="p-2.5 border-b border-slate-800 text-center">Status</th>
+            <th class="p-2.5 border-b border-slate-800 text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="invRegisterBody" class="divide-y divide-slate-800/60">
+          <tr>
+            <td colspan="8" class="text-center py-8 text-slate-500 text-xs">No stock items.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- ============================================================
+     CATEGORY MANAGER MODAL
+     ============================================================ -->
+<div id="invCatModal"
+     class="fixed inset-0 z-[9999] hidden"
+     style="background:rgba(0,0,0,0.75); backdrop-filter:blur(6px);">
+  <div class="flex items-center justify-center h-full p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full max-h-[85vh] overflow-hidden shadow-2xl">
+
+      <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950/70">
+        <div>
+          <h3 class="font-bold text-white text-base">⚙️ Category Manager</h3>
+          <p class="text-[11px] text-slate-400 mt-0.5">Add, rename, or delete product categories</p>
+        </div>
+        <button type="button" onclick="SF.inventory.closeCategoryManager()"
+                class="text-slate-400 hover:text-white text-2xl font-bold w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-800">
+          ✕
+        </button>
+      </div>
+
+      <div class="p-4 space-y-3">
+        <!-- Add new -->
+        <div class="flex gap-2">
+          <input type="text" id="invNewCatInput"
+                 onkeydown="if(event.key==='Enter'){event.preventDefault();SF.inventory.addCategory();}"
+                 placeholder="New category name"
+                 class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs">
+          <button type="button" onclick="SF.inventory.addCategory()"
+                  class="bg-violet-600 hover:bg-violet-500 text-white font-bold px-4 py-2 rounded-lg text-xs">
+            + Add
+          </button>
+        </div>
+
+        <!-- List -->
+        <div id="invCatList" class="space-y-1.5 max-h-96 overflow-y-auto">
+          <!-- categories injected -->
+        </div>
+      </div>
+
+      <div class="p-3 border-t border-slate-800 bg-slate-950/50">
+        <p class="text-[10px] text-slate-500 text-center">
+          Categories with items cannot be deleted
+        </p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     INVENTORY MODULE LOGIC
+     ============================================================ -->
+<script>
+(function () {
+  'use strict';
+
+  const S  = window.SF?.state?.state;
+  const C  = window.SF?.common;
+  const Cl = window.SF?.cloud;
+
+  if (!S || !C) {
+    console.error('Inventory module: SF globals not ready');
+    return;
+  }
+
+  /* ============================================================
+     MODULE STATE
+     ============================================================ */
+  const IM = {
+    batch:        [],
+    scannerActive:false,
+    html5Qr:      null,
+    activeCategory: 'ALL'
+  };
+
+
+  /* ============================================================
+     1. INIT
+     ============================================================ */
+  function init_inventoryModule() {
+    console.log('%c📦 Inventory module initialized', 'color:#0ea5e9;font-weight:bold');
+
+    IM.batch = [];
+    IM.activeCategory = 'ALL';
+
+    /* Populate categories dropdown */
+    refreshCategoryDropdowns();
+
+    /* Render chips */
+    renderChips();
+
+    /* Render register */
+    renderRegister();
+
+    /* Render batch */
+    renderBatch();
+
+    /* Subscribe */
+    if (window.SF?.state?.on) {
+      window.SF.state.on('change:inventory', () => {
+        renderChips();
+        renderRegister();
+      });
+      window.SF.state.on('change:categories', () => {
+        refreshCategoryDropdowns();
+        renderChips();
+      });
+    }
+
+    /* Focus rapid input */
+    setTimeout(() => {
+      const r = document.getElementById('invRapidInput');
+      if (r && window.innerWidth > 640) r.focus();
+    }, 300);
+
+    return {
+      onUnload: () => {
+        try {
+          if (IM.html5Qr && IM.scannerActive) {
+            IM.html5Qr.stop().then(() => IM.html5Qr.clear()).catch(() => {});
+          }
+        } catch (e) {}
+        console.log('Inventory module unloading');
+      }
+    };
+  }
+
+
+  /* ============================================================
+     2. CATEGORY DROPDOWN + CHIPS
+     ============================================================ */
+  function refreshCategoryDropdowns() {
+    const sel = document.getElementById('invCategory');
+    if (!sel) return;
+    const cats = S.categories || ['Mobile Phone'];
+    sel.innerHTML = cats.map((c) => `<option value="${C.escapeHTML(c)}">${C.escapeHTML(c)}</option>`).join('');
+  }
+
+  function renderChips() {
+    const bar = document.getElementById('invChipBar');
+    if (!bar) return;
+
+    const inventory = S.inventory || [];
+    const cats = S.categories || ['Mobile Phone'];
+
+    const allCount = inventory.length;
+    const allActive = IM.activeCategory === 'ALL';
+
+    let html = `
+      <button type="button" onclick="SF.inventory.setCategory('ALL')"
+              class="text-[10.5px] font-bold px-3 py-1 rounded-full border-2 transition ${
+                allActive
+                  ? 'bg-sky-600 border-sky-600 text-white'
+                  : 'bg-slate-950 border-slate-700 text-slate-300 hover:border-sky-600'
+              }">
+        All (${allCount})
+      </button>
+    `;
+
+    cats.forEach((cat) => {
+      const count = inventory.filter((i) => i.category === cat).length;
+      const active = IM.activeCategory === cat;
+      html += `
+        <button type="button" onclick="SF.inventory.setCategory('${C.escapeHTML(cat).replace(/'/g, "\\'")}')"
+                class="text-[10.5px] font-bold px-3 py-1 rounded-full border-2 transition ${
+                  active
+                    ? 'bg-violet-600 border-violet-600 text-white'
+                    : 'bg-slate-950 border-slate-700 text-slate-300 hover:border-violet-600'
+                }">
+          ${C.escapeHTML(cat)} (${count})
+        </button>
+      `;
+    });
+
+    bar.innerHTML = html;
+  }
+
+  function setCategory(cat) {
+    IM.activeCategory = cat;
+    renderChips();
+    renderRegister();
+  }
+
+
+  /* ============================================================
+     3. RAPID SCAN
+     ============================================================ */
+  function handleRapidScan(e) {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const code = (e.target.value || '').trim();
+    if (!code) return;
+    e.target.value = '';
+    addToBatch(code);
+  }
+
+  function addToBatch(code) {
+    const clean = C.normalizeIMEI(code);
+    if (!clean) return;
+
+    /* Duplicate in batch */
+    const exists = IM.batch.some((x) => x.imei === clean);
+    if (exists) {
+      C.toast('Already in batch: ' + code, 'warning');
+      C.playErrorBeep();
+      return;
+    }
+
+    /* Duplicate in inventory */
+    const inStock = (S.inventory || []).some((x) =>
+      x.imei && C.normalizeIMEI(x.imei) === clean
+    );
+    if (inStock) {
+      C.toast('Already in stock: ' + code, 'warning');
+      C.playErrorBeep();
+      return;
+    }
+
+    IM.batch.push({ imei: clean, raw: code });
+    renderBatch();
+    C.playBeep();
+  }
+
+  function removeFromBatch(idx) {
+    IM.batch.splice(idx, 1);
+    renderBatch();
+  }
+
+  function clearBatch() {
+    if (IM.batch.length === 0) return;
+    if (!confirm('Clear all ' + IM.batch.length + ' scanned IMEIs?')) return;
+    IM.batch = [];
+    renderBatch();
+  }
+
+  function renderBatch() {
+    const container = document.getElementById('invBatchList');
+    const counter = document.getElementById('invBatchCounter');
+    if (counter) counter.textContent = 'Scanned: ' + IM.batch.length + ' units';
+
+    if (!container) return;
+
+    if (IM.batch.length === 0) {
+      container.innerHTML = '<span class="text-[10px] text-slate-500 italic">No IMEIs scanned yet</span>';
+      return;
+    }
+
+    container.innerHTML = IM.batch.map((b, idx) => `
+      <span class="inline-flex items-center gap-1 bg-sky-900/40 border border-sky-700/60 text-sky-100 text-[10px] font-mono px-2 py-0.5 rounded">
+        <span>${C.escapeHTML(b.imei)}</span>
+        <button type="button" onclick="SF.inventory.removeFromBatch(${idx})"
+                class="text-rose-400 hover:text-rose-300 font-bold">✕</button>
+      </span>
+    `).join('');
+  }
+
+
+  /* ============================================================
+     4. CAMERA SCANNER
+     ============================================================ */
+  async function toggleScanner() {
+    const wrap = document.getElementById('invScannerWrap');
+    const btn  = document.getElementById('invScannerBtn');
+
+    if (typeof Html5Qrcode === 'undefined') {
+      try {
+        await new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js';
+          s.onload = resolve;
+          s.onerror = reject;
+          document.head.appendChild(s);
+        });
+      } catch (e) {
+        C.toast('Scanner library failed to load', 'error');
+        return;
+      }
+    }
+
+    if (IM.scannerActive) {
+      try { await IM.html5Qr.stop(); await IM.html5Qr.clear(); } catch (e) {}
+      IM.scannerActive = false;
+      if (wrap) wrap.style.display = 'none';
+      if (btn) btn.textContent = '📷 Camera';
+      return;
+    }
+
+    if (wrap) wrap.style.display = 'block';
+    if (btn) btn.textContent = '✕ Close';
+
+    try {
+      IM.html5Qr = new Html5Qrcode('invReader');
+      await IM.html5Qr.start(
+        { facingMode: 'environment' },
+        { fps: 12, qrbox: { width: 280, height: 160 } },
+        (decodedText) => { addToBatch(decodedText); },
+        () => {}
+      );
+      IM.scannerActive = true;
+    } catch (e) {
+      C.toast('Camera error: ' + (e.message || 'denied'), 'error');
+      if (wrap) wrap.style.display = 'none';
+      if (btn) btn.textContent = '📷 Camera';
+    }
+  }
+
+
+  /* ============================================================
+     5. ADD STOCK
+     ============================================================ */
+  async function addStock() {
+    const category = document.getElementById('invCategory')?.value || 'Mobile Phone';
+    const model    = (document.getElementById('invModel')?.value || '').trim();
+    const addType  = document.getElementById('invAddType')?.value || 'new';
+    const pc       = parseFloat(document.getElementById('invPurchaseCost')?.value) || 0;
+    const sp       = parseFloat(document.getElementById('invSellPrice')?.value) || 0;
+
+    if (!model) { C.toast('Enter model name', 'warning'); return; }
+    if (sp <= 0) { C.toast('Enter selling price', 'warning'); return; }
+
+    const isOld = (addType === 'old');
+    const now = new Date().toISOString();
+    const newItems = [];
+
+    if (IM.batch.length === 0) {
+      /* No IMEIs — single non-serialized stock */
+      newItems.push({
+        id: 'stk-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+        model,
+        imei: '',
+        category,
+        purchaseCost: pc,
+        cost: sp,
+        gst: 18,
+        status: 'Available',
+        isOldStock: isOld,
+        addedAt: now
+      });
+    } else {
+      /* One item per IMEI */
+      IM.batch.forEach((b) => {
+        newItems.push({
+          id: 'stk-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+          model,
+          imei: b.imei,
+          category,
+          purchaseCost: pc,
+          cost: sp,
+          gst: 18,
+          status: 'Available',
+          isOldStock: isOld,
+          addedAt: now
+        });
+      });
+    }
+
+    if (!Array.isArray(S.inventory)) S.inventory = [];
+    newItems.forEach((item) => S.inventory.push(item));
+    C.safeSave('sfp_stock', S.inventory);
+
+    /* Push to cloud */
+    try {
+      for (const item of newItems) {
+        await Cl.pushOne('inventory', item);
+      }
+    } catch (e) {
+      console.warn('Cloud push failed:', e);
+      C.toast('Saved locally. Will sync when online.', 'warning', 3500);
+    }
+
+    /* Audit */
+    try {
+      window.SF.state.logAudit(
+        isOld ? 'STOCK_ADD_OLD' : 'STOCK_ADD_NEW',
+        category + ' | ' + model + ' | ' + newItems.length + ' unit' + (newItems.length > 1 ? 's' : '')
+      );
+    } catch (e) {}
+
+    C.toast(
+      newItems.length + ' unit' + (newItems.length > 1 ? 's' : '') +
+      ' of ' + model + ' added',
+      'success', 3000
+    );
+    C.playBeep();
+
+    /* Reset form */
+    document.getElementById('invModel').value = '';
+    document.getElementById('invPurchaseCost').value = '';
+    document.getElementById('invSellPrice').value = '';
+    IM.batch = [];
+    renderBatch();
+
+    /* Refresh UI */
+    renderChips();
+    renderRegister();
+
+    /* Refocus */
+    setTimeout(() => {
+      document.getElementById('invRapidInput')?.focus();
+    }, 150);
+  }
+
+
+  /* ============================================================
+     6. RENDER REGISTER
+     ============================================================ */
+  function renderRegister() {
+    const body = document.getElementById('invRegisterBody');
+    if (!body) return;
+
+    const inventory = S.inventory || [];
+
+    /* Stats */
+    const available  = inventory.filter((i) => i.status !== 'Sold');
+    const soldItems  = inventory.filter((i) => i.status === 'Sold');
+    const oldItems   = inventory.filter((i) => i.isOldStock && i.status !== 'Sold');
+    const totalValue = available.reduce((s, i) => s + (parseFloat(i.cost) || 0), 0);
+
+    setText('invStatAvailable', available.length);
+    setText('invStatValue', '₹' + fmt0(totalValue));
+    setText('invStatSold', soldItems.length);
+    setText('invStatOld', oldItems.length);
+    setText('invCountDisplay', available.length + ' Available / ' + inventory.length + ' Total');
+
+    /* Filters */
+    const searchQ = (document.getElementById('invSearchInput')?.value || '').trim().toLowerCase();
+    const statusFilter = document.getElementById('invStatusFilter')?.value || 'Available';
+
+    let filtered = inventory.filter((item) => {
+      /* Category */
+      if (IM.activeCategory !== 'ALL' && item.category !== IM.activeCategory) return false;
+
+      /* Status */
+      if (statusFilter === 'Available' && item.status === 'Sold') return false;
+      if (statusFilter === 'Sold' && item.status !== 'Sold') return false;
+      if (statusFilter === 'OLD' && !item.isOldStock) return false;
+
+      /* Search */
+      if (searchQ) {
+        const blob = (
+          (item.model || '') + ' ' +
+          (item.imei || '') + ' ' +
+          (item.category || '')
+        ).toLowerCase();
+        if (!blob.includes(searchQ)) return false;
+      }
+
+      return true;
+    });
+
+    /* Sort: available first, then by added date desc */
+    filtered.sort((a, b) => {
+      if (a.status === b.status) {
+        return new Date(b.addedAt || 0) - new Date(a.addedAt || 0);
+      }
+      return a.status === 'Sold' ? 1 : -1;
+    });
+
+    if (filtered.length === 0) {
+      body.innerHTML = `
+        <tr>
+          <td colspan="8" class="text-center py-10 text-slate-500 text-xs">
+            ${searchQ || IM.activeCategory !== 'ALL' || statusFilter !== 'Available'
+              ? 'No matching stock items.'
+              : 'No stock items yet. Add your first product above.'}
+          </td>
+        </tr>`;
+      return;
+    }
+
+    body.innerHTML = filtered.map((item, idx) => {
+      const sold = item.status === 'Sold';
+      const oldBadge = item.isOldStock
+        ? '<span class="ml-1.5 text-[9px] bg-amber-950/60 text-amber-400 border border-amber-800/60 px-1.5 py-0.5 rounded font-bold">OLD</span>'
+        : '';
+
+      const statusBadge = sold
+        ? '<span class="text-[10px] bg-rose-950/60 text-rose-400 border border-rose-800/60 px-2 py-0.5 rounded font-bold">SOLD</span>'
+        : '<span class="text-[10px] bg-emerald-950/60 text-emerald-400 border border-emerald-800/60 px-2 py-0.5 rounded font-bold">AVAILABLE</span>';
+
+      const actions = sold
+        ? '<span class="text-slate-700 text-[10px]">—</span>'
+        : `
+            <div class="inline-flex gap-1">
+              <button type="button" onclick="SF.inventory.sellFromStock('${item.id}')"
+                      title="Sell"
+                      class="text-[10px] bg-indigo-950/60 hover:bg-indigo-900/60 text-indigo-400 font-bold px-2 py-1 rounded">
+                ⚡
+              </button>
+              <button type="button" onclick="SF.inventory.editPrice('${item.id}')"
+                      title="Edit Price"
+                      class="text-[10px] bg-amber-950/60 hover:bg-amber-900/60 text-amber-400 font-bold px-2 py-1 rounded">
+                ✏
+              </button>
+              <button type="button" onclick="SF.inventory.editCategory('${item.id}')"
+                      title="Change Category"
+                      class="text-[10px] bg-violet-950/60 hover:bg-violet-900/60 text-violet-400 font-bold px-2 py-1 rounded">
+                🏷
+              </button>
+              <button type="button" onclick="SF.inventory.deleteStock('${item.id}')"
+                      title="Delete"
+                      class="text-[10px] bg-rose-950/60 hover:bg-rose-900/60 text-rose-400 font-bold px-2 py-1 rounded">
+                🗑
+              </button>
+            </div>
+          `;
+
+      return `
+        <tr class="hover:bg-slate-800/30 transition ${sold ? 'opacity-60' : ''}">
+          <td class="p-2.5 border-b border-slate-800/60 text-slate-500 font-bold text-[11px]">${idx + 1}</td>
+          <td class="p-2.5 border-b border-slate-800/60">
+            <span class="text-[10px] bg-violet-950/60 text-violet-300 border border-violet-800/60 px-2 py-0.5 rounded font-bold">
+              ${C.escapeHTML(item.category || 'Mobile Phone')}
+            </span>
+          </td>
+          <td class="p-2.5 border-b border-slate-800/60">
+            <div class="font-bold text-white text-[12px]">
+              ${C.escapeHTML(item.model)}
+              ${oldBadge}
+            </div>
+          </td>
+          <td class="p-2.5 border-b border-slate-800/60 font-mono text-slate-400 text-[10.5px]">
+            ${C.escapeHTML(item.imei || 'N/A')}
+          </td>
+          <td class="p-2.5 border-b border-slate-800/60 text-right font-mono text-slate-500 text-[11px]">
+            ₹${fmt2(item.purchaseCost || 0)}
+          </td>
+          <td class="p-2.5 border-b border-slate-800/60 text-right font-mono font-bold text-emerald-400 text-[11.5px]">
+            ₹${fmt2(item.cost || 0)}
+          </td>
+          <td class="p-2.5 border-b border-slate-800/60 text-center">${statusBadge}</td>
+          <td class="p-2.5 border-b border-slate-800/60 text-center whitespace-nowrap">${actions}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+
+  /* ============================================================
+     7. ITEM ACTIONS
+     ============================================================ */
+  function sellFromStock(id) {
+    const item = (S.inventory || []).find((x) => x.id === id);
+    if (!item || item.status === 'Sold') {
+      C.toast('Item not available', 'warning');
+      return;
+    }
+
+    /* Navigate to billing and preload cart */
+    if (window.SF?.router) {
+      window.SF.router.go('billing');
+    }
+
+    setTimeout(() => {
+      try {
+        const cart = S.activeCart || [];
+        /* Avoid duplicate */
+        if (item.imei) {
+          const dup = cart.some((x) => C.normalizeIMEI(x.imei) === C.normalizeIMEI(item.imei));
+          if (dup) {
+            C.toast('Already in cart', 'warning');
+            return;
+          }
+        }
+        cart.push({
+          stockId: item.id,
+          model: item.model,
+          imei: item.imei || '',
+          hsn: '8517',
+          gst: item.gst || 18,
+          qty: 1,
+          rate: item.cost || 0,
+          purchaseCost: item.purchaseCost || 0
+        });
+        S.activeCart = cart;
+        C.safeSave('sfp_active_cart', S.activeCart);
+
+        if (typeof window.SF.billing?.renderCart === 'function') {
+          window.SF.billing.renderCart();
+          window.SF.billing.renderPreview();
+        }
+
+        C.toast('Loaded in billing: ' + item.model, 'success', 2000);
+      } catch (e) {
+        console.error(e);
+      }
+    }, 400);
+  }
+
+  function editPrice(id) {
+    const pin = prompt('🔒 Master PIN to edit price:');
+    if (!pin) return;
+    if (pin !== (S.profile?.masterPin || '1234')) {
+      C.toast('Incorrect PIN', 'error');
+      C.playErrorBeep();
+      return;
+    }
+
+    const item = (S.inventory || []).find((x) => x.id === id);
+    if (!item) return;
+
+    const newCost = prompt(
+      'New selling price for "' + item.model + '":\n\nCurrent: ₹' + (item.cost || 0),
+      item.cost || 0
+    );
+    if (newCost === null) return;
+    const v = parseFloat(newCost);
+    if (isNaN(v) || v <= 0) {
+      C.toast('Invalid price', 'warning');
+      return;
+    }
+
+    item.cost = +v.toFixed(2);
+    C.safeSave('sfp_stock', S.inventory);
+
+    (async () => {
+      try { await Cl.pushOne('inventory', item); } catch (e) {}
+    })();
+
+    try {
+      window.SF.state.logAudit('STOCK_PRICE_EDIT', item.model + ' | ₹' + v);
+    } catch (e) {}
+
+    C.toast('Price updated to ₹' + v, 'success');
+    renderRegister();
+  }
+
+  function editCategory(id) {
+    const pin = prompt('🔒 Master PIN to change category:');
+    if (!pin) return;
+    if (pin !== (S.profile?.masterPin || '1234')) {
+      C.toast('Incorrect PIN', 'error');
+      C.playErrorBeep();
+      return;
+    }
+
+    const item = (S.inventory || []).find((x) => x.id === id);
+    if (!item) return;
+
+    const cats = S.categories || [];
+    const newCat = prompt(
+      'New category for "' + item.model + '":\n\nAvailable: ' + cats.join(', '),
+      item.category || 'Mobile Phone'
+    );
+    if (newCat === null) return;
+
+    const trimmed = newCat.trim();
+    if (!cats.includes(trimmed)) {
+      C.toast('Category not found: ' + trimmed, 'error');
+      return;
+    }
+
+    item.category = trimmed;
+    C.safeSave('sfp_stock', S.inventory);
+
+    (async () => {
+      try { await Cl.pushOne('inventory', item); } catch (e) {}
+    })();
+
+    try {
+      window.SF.state.logAudit('STOCK_CAT_CHANGE', item.model + ' → ' + trimmed);
+    } catch (e) {}
+
+    C.toast('Category changed to ' + trimmed, 'success');
+    renderChips();
+    renderRegister();
+  }
+
+  async function deleteStock(id) {
+    const pin = prompt('🔒 Master PIN to delete stock:');
+    if (!pin) return;
+    if (pin !== (S.profile?.masterPin || '1234')) {
+      C.toast('Incorrect PIN', 'error');
+      C.playErrorBeep();
+      return;
+    }
+
+    const item = (S.inventory || []).find((x) => x.id === id);
+    if (!item) return;
+
+    const ok = await C.confirmDialog(
+      'Delete Stock Item?',
+      item.model + '\n' + (item.imei || 'No IMEI') + '\n\n₹' + (item.cost || 0).toFixed(2) +
+      '\n\nThis cannot be undone.',
+      'Delete',
+      true
+    );
+    if (!ok) return;
+
+    S.inventory = (S.inventory || []).filter((x) => x.id !== id);
+    C.safeSave('sfp_stock', S.inventory);
+
+    (async () => {
+      try { await Cl.deleteOne('inventory', id); } catch (e) {}
+    })();
+
+    try {
+      window.SF.state.logAudit('STOCK_DELETE', item.model + (item.imei ? ' | ' + item.imei : ''));
+    } catch (e) {}
+
+    C.toast('Stock item deleted', 'success');
+    renderChips();
+    renderRegister();
+  }
+
+
+  /* ============================================================
+     8. CATEGORY MANAGER MODAL
+     ============================================================ */
+  function openCategoryManager() {
+    const modal = document.getElementById('invCatModal');
+    if (modal) modal.classList.remove('hidden');
+    renderCategoryList();
+    setTimeout(() => {
+      document.getElementById('invNewCatInput')?.focus();
+    }, 200);
+  }
+
+  function closeCategoryManager() {
+    const modal = document.getElementById('invCatModal');
+    if (modal) modal.classList.add('hidden');
+    const inp = document.getElementById('invNewCatInput');
+    if (inp) inp.value = '';
+  }
+
+  function renderCategoryList() {
+    const list = document.getElementById('invCatList');
+    if (!list) return;
+
+    const cats = S.categories || [];
+    const inventory = S.inventory || [];
+
+    if (cats.length === 0) {
+      list.innerHTML = '<div class="text-center py-6 text-slate-500 text-xs">No categories. Add one above.</div>';
+      return;
+    }
+
+    list.innerHTML = cats.map((cat) => {
+      const count = inventory.filter((i) => i.category === cat).length;
+      return `
+        <div class="flex items-center justify-between bg-slate-950/70 border border-slate-800 rounded-lg p-2.5">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="text-[11.5px] font-bold text-white truncate">${C.escapeHTML(cat)}</span>
+            <span class="text-[10px] text-slate-500">(${count})</span>
+          </div>
+          <div class="flex gap-1 flex-shrink-0">
+            <button type="button" onclick="SF.inventory.renameCategory('${C.escapeHTML(cat).replace(/'/g, "\\'")}')"
+                    class="text-[10px] bg-amber-950/60 hover:bg-amber-900/60 text-amber-400 font-bold px-2 py-1 rounded">
+              ✏
+            </button>
+            <button type="button" onclick="SF.inventory.deleteCategory('${C.escapeHTML(cat).replace(/'/g, "\\'")}')"
+                    class="text-[10px] bg-rose-950/60 hover:bg-rose-900/60 text-rose-400 font-bold px-2 py-1 rounded">
+              🗑
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function addCategory() {
+    const input = document.getElementById('invNewCatInput');
+    const name = (input?.value || '').trim();
+    if (!name) {
+      C.toast('Enter category name', 'warning');
+      return;
+    }
+    if (name.length < 2) {
+      C.toast('Name too short', 'warning');
+      return;
+    }
+    const cats = S.categories || [];
+    if (cats.some((c) => c.toLowerCase() === name.toLowerCase())) {
+      C.toast('Category already exists', 'warning');
+      return;
+    }
+
+    S.categories.push(name);
+    C.safeSave('sfp_categories', S.categories);
+
+    /* Push to cloud */
+    try {
+      await Cl.pushCategories(S.categories);
+    } catch (e) {}
+
+    try {
+      window.SF.state.logAudit('CATEGORY_ADD', name);
+    } catch (e) {}
+
+    C.toast('Category added: ' + name, 'success');
+    if (input) input.value = '';
+    renderCategoryList();
+    renderChips();
+    refreshCategoryDropdowns();
+  }
+
+  async function renameCategory(oldName) {
+    const cats = S.categories || [];
+    const idx = cats.indexOf(oldName);
+    if (idx === -1) return;
+
+    const newName = prompt('Rename category "' + oldName + '" to:', oldName);
+    if (newName === null) return;
+    const trimmed = newName.trim();
+    if (!trimmed) { C.toast('Name cannot be empty', 'warning'); return; }
+    if (trimmed === oldName) return;
+    if (cats.some((c) => c.toLowerCase() === trimmed.toLowerCase())) {
+      C.toast('Another category with this name exists', 'warning');
+      return;
+    }
+
+    cats[idx] = trimmed;
+    C.safeSave('sfp_categories', S.categories);
+
+    /* Update all stock items */
+    let updatedCount = 0;
+    (S.inventory || []).forEach((it) => {
+      if (it.category === oldName) {
+        it.category = trimmed;
+        updatedCount++;
+      }
+    });
+    C.safeSave('sfp_stock', S.inventory);
+
+    /* Push to cloud */
+    try {
+      await Cl.pushCategories(S.categories);
+      if (updatedCount > 0) {
+        /* Push all updated stock items in background */
+        const updated = (S.inventory || []).filter((it) => it.category === trimmed);
+        for (const it of updated) {
+          try { await Cl.pushOne('inventory', it); } catch (e) {}
+        }
+      }
+    } catch (e) {}
+
+    try {
+      window.SF.state.logAudit('CATEGORY_RENAME', oldName + ' → ' + trimmed + ' (' + updatedCount + ' items)');
+    } catch (e) {}
+
+    C.toast('Renamed to "' + trimmed + '" (' + updatedCount + ' items updated)', 'success', 3000);
+    renderCategoryList();
+    renderChips();
+    refreshCategoryDropdowns();
+    renderRegister();
+  }
+
+  async function deleteCategory(name) {
+    const cats = S.categories || [];
+    if (cats.length <= 1) {
+      C.toast('At least one category required', 'warning');
+      return;
+    }
+
+    const count = (S.inventory || []).filter((i) => i.category === name).length;
+    if (count > 0) {
+      C.toast('Cannot delete — ' + count + ' item(s) in this category', 'error', 4000);
+      return;
+    }
+
+    const ok = await C.confirmDialog(
+      'Delete Category?',
+      '"' + name + '"\n\nThis cannot be undone.',
+      'Delete',
+      true
+    );
+    if (!ok) return;
+
+    S.categories = cats.filter((c) => c !== name);
+    C.safeSave('sfp_categories', S.categories);
+
+    try {
+      await Cl.pushCategories(S.categories);
+    } catch (e) {}
+
+    try {
+      window.SF.state.logAudit('CATEGORY_DELETE', name);
+    } catch (e) {}
+
+    C.toast('Category deleted: ' + name, 'success');
+    renderCategoryList();
+    renderChips();
+    refreshCategoryDropdowns();
+  }
+
+
+  /* ============================================================
+     9. HELPERS
+     ============================================================ */
+  function setText(id, text) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  }
+
+  function fmt0(n) {
+    const v = Number(n) || 0;
+    return v.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+  }
+
+  function fmt2(n) {
+    const v = Number(n) || 0;
+    return v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+
+  /* ============================================================
+     10. EXPOSE API
+     ============================================================ */
+  window.SF = window.SF || {};
+  window.SF.inventory = {
+    init: init_inventoryModule,
+    setCategory,
+    handleRapidScan,
+    addToBatch,
+    removeFromBatch,
+    clearBatch,
+    toggleScanner,
+    addStock,
+    renderRegister,
+    sellFromStock,
+    editPrice,
+    editCategory,
+    deleteStock,
+    openCategoryManager,
+    closeCategoryManager,
+    addCategory,
+    renameCategory,
+    deleteCategory,
+    renderChips
+  };
+
+  /* Router expects this */
+  window.init_inventoryModule = init_inventoryModule;
+
+  /* Auto-init fallback */
+  if (document.getElementById('inventoryModule')) {
+    init_inventoryModule();
+  }
+})();
+</script>
