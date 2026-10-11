@@ -1,7 +1,7 @@
 <!-- ============================================================
-     SMARTFIX ERP — Mobile Repair / Job Card Module (v4.4.0)
+     SMARTFIX ERP — Mobile Repair / Job Card Module (v4.4.1)
      File: modules/repair.html
-     Self-contained: own storage + direct Firestore sync
+     Shop Code + Customer Portal QR on print slip
      ============================================================ -->
 
 <section id="repairModule" class="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -258,13 +258,13 @@
   const RM = {
     editingId: null,
     currentJob: null,
-    jobs: [],       // own array
+    jobs: [],
     unsub: null
   };
 
 
   /* ============================================================
-     STORAGE HELPERS
+     STORAGE
      ============================================================ */
   function loadLocal() {
     try {
@@ -324,10 +324,10 @@
         { ...job, _updatedAt: fb.serverTimestamp() },
         { merge: true }
       );
-      debug('☁️ Synced to cloud: ' + job.id);
+      debug('☁️ Synced: ' + job.id);
     } catch (e) {
-      console.warn('Cloud sync failed (will stay local):', e);
-      debug('⚠️ Cloud sync failed: ' + (e.code || e.message));
+      console.warn('Cloud sync failed:', e);
+      debug('⚠️ Sync failed: ' + (e.code || e.message));
     }
   }
 
@@ -338,10 +338,8 @@
       const fb = await getFirestore();
       if (!fb) return;
       await fb.deleteDoc(fb.doc(fb.db, 'stores', storeId, COLLECTION, jobId));
-      debug('☁️ Deleted from cloud: ' + jobId);
-    } catch (e) {
-      console.warn('Cloud delete failed:', e);
-    }
+      debug('☁️ Deleted: ' + jobId);
+    } catch (e) {}
   }
 
   async function loadFromCloud() {
@@ -365,7 +363,7 @@
         RM.jobs = arr;
         saveLocal(arr);
         renderList();
-        debug('☁️ Loaded ' + arr.length + ' jobs from cloud');
+        debug('☁️ Loaded ' + arr.length + ' jobs');
       }
     } catch (e) {
       console.warn('Cloud load failed:', e);
@@ -394,7 +392,7 @@
             saveLocal(arr);
             renderList();
           },
-          (err) => console.warn('Realtime listener error:', err.code)
+          (err) => console.warn('Realtime error:', err.code)
         );
       } catch (e) {}
     })();
@@ -436,7 +434,7 @@
      INIT
      ============================================================ */
   async function init_repairModule() {
-    console.log('%c🔧 Repair module initialized (v4.4.0)', 'color:#8b5cf6;font-weight:bold');
+    console.log('%c🔧 Repair module initialized (v4.4.1)', 'color:#8b5cf6;font-weight:bold');
 
     if (!window.SF?.perms?.can?.('repair.view')) {
       const c = document.getElementById('moduleContainer');
@@ -446,12 +444,9 @@
 
     RM.editingId = null;
     RM.currentJob = null;
-
-    /* Load from local storage first */
     RM.jobs = loadLocal();
     debug('📦 Local jobs: ' + RM.jobs.length);
 
-    /* Setup form */
     const dEl = document.getElementById('repDate');
     if (dEl && !dEl.value) dEl.value = C.fmtDate(new Date());
     const jobNoEl = document.getElementById('repJobNo');
@@ -461,13 +456,11 @@
     populateCustomerList();
     renderList();
 
-    /* Sync from cloud in background */
     setTimeout(() => {
       loadFromCloud();
       subscribeCloud();
     }, 500);
 
-    /* Subscribe to staff/parties */
     if (window.SF?.state?.on) {
       window.SF.state.on('change:staff', () => populateTechnicians());
       window.SF.state.on('change:parties', () => populateCustomerList());
@@ -504,14 +497,9 @@
      ============================================================ */
   async function save() {
     debug('💾 Save called');
-
-    if (!requirePerm('repair.create', 'Cannot create job cards')) {
-      debug('❌ Permission denied');
-      return;
-    }
+    if (!requirePerm('repair.create', 'Cannot create job cards')) { debug('❌ Permission denied'); return; }
 
     try {
-      /* Read all fields */
       const date = document.getElementById('repDate')?.value || C.fmtDate(new Date());
       const custName = (document.getElementById('repCustName')?.value || '').trim();
       const custPhone = (document.getElementById('repCustPhone')?.value || '').trim();
@@ -528,42 +516,20 @@
       const techId = document.getElementById('repTechnician')?.value || '';
       const notes = (document.getElementById('repNotes')?.value || '').trim();
 
-      /* Accessories */
       const accessories = [];
-      document.querySelectorAll('.rep-acc:checked').forEach((cb) => {
-        accessories.push(cb.value);
-      });
+      document.querySelectorAll('.rep-acc:checked').forEach((cb) => accessories.push(cb.value));
 
-      /* Validation */
-      if (!custName || custName.length < 2) {
-        debug('❌ Customer name required');
-        C.toast('Enter customer name (min 2 chars)', 'warning');
-        return;
-      }
-      if (!/^\d{10}$/.test(custPhone)) {
-        debug('❌ Invalid phone: ' + custPhone);
-        C.toast('Enter valid 10-digit phone number', 'warning');
-        return;
-      }
-      if (!model) {
-        debug('❌ Device model required');
-        C.toast('Enter device model', 'warning');
-        return;
-      }
-      if (!issue || issue.length < 3) {
-        debug('❌ Issue description required');
-        C.toast('Describe the problem (min 3 chars)', 'warning');
-        return;
-      }
+      if (!custName || custName.length < 2) { C.toast('Enter customer name', 'warning'); return; }
+      if (!/^\d{10}$/.test(custPhone)) { C.toast('Enter valid 10-digit phone', 'warning'); return; }
+      if (!model) { C.toast('Enter device model', 'warning'); return; }
+      if (!issue || issue.length < 3) { C.toast('Describe the problem', 'warning'); return; }
 
-      /* Technician name */
       let techName = '';
       if (techId) {
         const t = (S.staff || []).find((x) => x.id === techId);
         if (t) techName = t.name;
       }
 
-      /* Job number — generate if empty */
       let jobNo = document.getElementById('repJobNo')?.value || '';
       if (!jobNo || jobNo.includes('TMP')) {
         jobNo = generateJobNo();
@@ -577,26 +543,14 @@
       const record = {
         id: isEdit ? RM.editingId : jobNo,
         jobNo: isEdit ? (existing?.jobNo || jobNo) : jobNo,
-        date,
-        customerName: custName,
-        customerPhone: custPhone,
-        customerAddress: custAddr,
-        deviceBrand: brand,
-        deviceModel: model,
-        deviceIMEI: imei,
-        deviceColor: color,
-        devicePassword: password,
-        accessories,
-        issueDescription: issue,
-        estimatedCost: +estimate.toFixed(2),
-        advancePaid: +advance.toFixed(2),
+        date, customerName: custName, customerPhone: custPhone, customerAddress: custAddr,
+        deviceBrand: brand, deviceModel: model, deviceIMEI: imei, deviceColor: color, devicePassword: password,
+        accessories, issueDescription: issue,
+        estimatedCost: +estimate.toFixed(2), advancePaid: +advance.toFixed(2),
         finalCost: isEdit ? (existing?.finalCost || 0) : 0,
         balanceDue: isEdit ? (existing?.balanceDue || 0) : 0,
         status: isEdit ? (existing?.status || 'RECEIVED') : 'RECEIVED',
-        technicianId: techId,
-        technicianName: techName,
-        notes,
-        warrantyDays,
+        technicianId: techId, technicianName: techName, notes, warrantyDays,
         partsUsed: isEdit ? (existing?.partsUsed || []) : [],
         statusHistory: isEdit
           ? (existing?.statusHistory || [])
@@ -605,9 +559,6 @@
         updatedAt: new Date().toISOString()
       };
 
-      debug('📝 Record built: ' + record.jobNo);
-
-      /* Update local array */
       if (isEdit) {
         const idx = RM.jobs.findIndex((x) => x.id === RM.editingId);
         if (idx !== -1) RM.jobs[idx] = record;
@@ -616,34 +567,23 @@
         RM.jobs.unshift(record);
       }
 
-      /* Save locally */
-      const savedOk = saveLocal(RM.jobs);
-      debug(savedOk ? '✅ Saved locally' : '❌ Local save failed');
-
-      C.toast(isEdit ? '✅ Job updated: ' + record.jobNo : '✅ Job created: ' + record.jobNo, 'success', 3000);
+      saveLocal(RM.jobs);
+      C.toast(isEdit ? '✅ Job updated' : '✅ Job created: ' + record.jobNo, 'success', 3000);
       C.playBeep();
-
-      /* Sync to cloud (async, non-blocking) */
       syncToCloud(record);
 
-      /* Audit */
       try {
         if (window.SF?.state?.logAudit) {
-          window.SF.state.logAudit(
-            isEdit ? 'REPAIR_UPDATE' : 'REPAIR_CREATE',
-            record.jobNo + ' | ' + custName + ' | ' + model
-          );
+          window.SF.state.logAudit(isEdit ? 'REPAIR_UPDATE' : 'REPAIR_CREATE', record.jobNo + ' | ' + custName + ' | ' + model);
         }
       } catch (e) {}
 
-      /* Reset and refresh */
       resetForm();
       renderList();
-      debug('✅ Job saved successfully');
-
+      debug('✅ Saved');
     } catch (err) {
       console.error('Save error:', err);
-      debug('❌ Save error: ' + err.message);
+      debug('❌ Error: ' + err.message);
       C.toast('Save failed: ' + err.message, 'error', 4000);
     }
   }
@@ -652,7 +592,6 @@
   function resetForm() {
     RM.editingId = null;
     RM.currentJob = null;
-
     ['repCustName','repCustPhone','repCustAddr','repBrand','repModel','repIMEI','repColor','repPassword','repIssue','repEstimate','repAdvance','repNotes'].forEach((id) => {
       const el = document.getElementById(id);
       if (el) el.value = '';
@@ -666,10 +605,8 @@
     if (dEl) dEl.value = C.fmtDate(new Date());
     const idEl = document.getElementById('repEditId');
     if (idEl) idEl.value = '';
-
     const jobNoEl = document.getElementById('repJobNo');
     if (jobNoEl) jobNoEl.value = generateJobNo();
-
     const titleEl = document.getElementById('repFormTitle');
     if (titleEl) titleEl.textContent = '🔧 New Job Card';
     const resetBtn = document.getElementById('repResetBtn');
@@ -733,7 +670,6 @@
     const q = (document.getElementById('repSearchInput')?.value || '').trim().toLowerCase();
     const statusFilter = document.getElementById('repStatusFilter')?.value || 'ALL';
 
-    /* Stats */
     const total = jobs.length;
     const progress = jobs.filter((r) => ['RECEIVED','DIAGNOSED','WAITING_APPROVAL','IN_REPAIR'].includes(r.status)).length;
     const ready = jobs.filter((r) => r.status === 'READY').length;
@@ -743,20 +679,11 @@
     setText('repStatReady', ready);
     setText('repStatDelivered', delivered);
 
-    /* Filter */
     let filtered = jobs;
     if (statusFilter !== 'ALL') filtered = filtered.filter((r) => r.status === statusFilter);
     if (q) {
       filtered = filtered.filter((r) => {
-        const blob = (
-          (r.jobNo || '') + ' ' +
-          (r.customerName || '') + ' ' +
-          (r.customerPhone || '') + ' ' +
-          (r.deviceBrand || '') + ' ' +
-          (r.deviceModel || '') + ' ' +
-          (r.deviceIMEI || '') + ' ' +
-          (r.issueDescription || '')
-        ).toLowerCase();
+        const blob = ((r.jobNo || '') + ' ' + (r.customerName || '') + ' ' + (r.customerPhone || '') + ' ' + (r.deviceBrand || '') + ' ' + (r.deviceModel || '') + ' ' + (r.deviceIMEI || '') + ' ' + (r.issueDescription || '')).toLowerCase();
         return blob.includes(q);
       });
     }
@@ -807,7 +734,7 @@
 
 
   /* ============================================================
-     DETAIL
+     DETAIL MODAL
      ============================================================ */
   function openDetail(jobId) {
     const job = RM.jobs.find((x) => x.id === jobId);
@@ -980,7 +907,6 @@
       by: window.SF?.perms?.getUserMeta?.()?.name || 'Staff'
     });
 
-    /* Update in RM.jobs array */
     const idx = RM.jobs.findIndex((x) => x.id === job.id);
     if (idx !== -1) RM.jobs[idx] = job;
 
@@ -1025,15 +951,20 @@
 
 
   /* ============================================================
-     PRINT
+     PRINT SLIP — With Shop Code + Customer Portal QR
      ============================================================ */
   function printSlip() {
     const job = RM.currentJob;
     if (!job) return;
     const prof = S.profile || {};
+    const shopCode = S.store?.shopCode || prof.shopCode || '—';
     const st = STATUS[job.status] || STATUS.RECEIVED;
     const balance = (job.finalCost || job.estimatedCost || 0) - (job.advancePaid || 0);
     const datePretty = C.fmtDatePretty(new Date(job.date + 'T12:00:00'));
+
+    /* Base URL for customer portal */
+    const baseUrl = window.location.origin + window.location.pathname.replace(/\/app\.html.*$/, '/').replace(/\/index\.html.*$/, '/');
+    const portalQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(baseUrl + 'index.html#customer')}`;
 
     const html = `
       <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#0f172a;width:100%;padding:8mm;">
@@ -1043,6 +974,9 @@
             <div style="font-size:18px;font-weight:900;color:#3730a3;line-height:1;">${C.escapeHTML(prof.name || 'Store')}</div>
             <div style="font-size:9px;color:#475569;margin-top:3px;max-width:250px;line-height:1.3;">${C.escapeHTML(prof.address || '')}</div>
             <div style="font-size:9px;font-weight:600;color:#334155;margin-top:1px;">${C.escapeHTML(prof.phone || '')}</div>
+            <div style="font-size:9px;color:#64748b;margin-top:2px;font-weight:700;">
+              Shop Code: <span style="font-family:monospace;color:#6366f1;font-size:10px;">${C.escapeHTML(shopCode)}</span>
+            </div>
           </div>
           <div style="text-align:right;">
             <div style="background:linear-gradient(135deg,#6366f1,#4338ca);color:white;font-size:10px;font-weight:900;padding:5px 14px;border-radius:4px;letter-spacing:1.5px;text-transform:uppercase;">Job Card</div>
@@ -1116,6 +1050,16 @@
 
         ${job.warrantyDays > 0 ? `<div style="background:#ecfdf5;border:1px solid #86efac;border-radius:6px;padding:6px 10px;margin-bottom:8px;font-size:10px;color:#065f46;">🛡️ <strong>Warranty: ${job.warrantyDays} days</strong> from delivery</div>` : ''}
 
+        <!-- CUSTOMER PORTAL QR -->
+        <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:6px;padding:8px 10px;margin-bottom:8px;display:flex;gap:10px;align-items:center;">
+          <img src="${portalQrUrl}" style="width:56px;height:56px;border:1px solid #86efac;padding:2px;border-radius:4px;background:white;flex-shrink:0;">
+          <div style="font-size:9.5px;line-height:1.4;color:#166534;flex:1;">
+            <div style="font-weight:900;font-size:10px;color:#065f46;margin-bottom:2px;">📱 Track Your Repair Status Online</div>
+            Scan QR or visit <span style="font-family:monospace;background:#dcfce7;padding:0 3px;border-radius:2px;font-weight:700;">${C.escapeHTML(baseUrl.replace(/^https?:\/\//, '').substring(0, 30))}</span><br>
+            Use <strong>Shop Code: ${C.escapeHTML(shopCode)}</strong> + your <strong>Phone</strong> + <strong>Job No. ${C.escapeHTML(job.jobNo)}</strong> to view live status, timeline & billing.
+          </div>
+        </div>
+
         <div style="background:#f8fafc;border-left:3px solid #6366f1;padding:6px 10px;font-size:9px;color:#475569;line-height:1.5;border-radius:3px;">
           <strong>Terms:</strong><br>
           1. Bring this receipt when collecting the device.<br>
@@ -1158,14 +1102,17 @@
 
 
   /* ============================================================
-     WHATSAPP
+     WHATSAPP SHARE
      ============================================================ */
   function shareWhatsApp() {
     const job = RM.currentJob;
     if (!job) return;
     const prof = S.profile || {};
+    const shopCode = S.store?.shopCode || prof.shopCode || '';
     const st = STATUS[job.status] || STATUS.RECEIVED;
     const balance = (job.finalCost || job.estimatedCost || 0) - (job.advancePaid || 0);
+
+    const baseUrl = window.location.origin + window.location.pathname.replace(/\/app\.html.*$/, '/').replace(/\/index\.html.*$/, '/');
 
     const msg =
       `*${prof.name || 'Store'}*\n🔧 *Repair Job Card*\n` +
@@ -1181,7 +1128,11 @@
       `💵 Balance: ₹${Math.max(0, balance).toFixed(2)}\n\n` +
       `📌 Status: ${st.icon} ${st.label}\n` +
       `${job.warrantyDays > 0 ? '🛡️ Warranty: ' + job.warrantyDays + ' days\n' : ''}` +
-      `\n${prof.phone ? '📞 ' + prof.phone : ''}\n🙏 Thank you!`;
+      `\n📱 *Track online:* ${baseUrl}index.html#customer\n` +
+      `🔑 Shop Code: *${shopCode}*\n` +
+      `📞 Phone: ${job.customerPhone}\n` +
+      `📋 Job No: ${job.jobNo}\n` +
+      `\n${prof.phone ? '☎️ ' + prof.phone : ''}\n🙏 Thank you!`;
 
     const phone = (job.customerPhone || '').replace(/\D/g, '');
     const url = phone.length === 10
@@ -1197,16 +1148,9 @@
   window.SF = window.SF || {};
   window.SF.repair = {
     init: init_repairModule,
-    save,
-    resetForm,
-    editJob,
-    renderList,
-    openDetail,
-    closeModal,
-    changeStatus,
-    deleteJob,
-    printSlip,
-    shareWhatsApp,
+    save, resetForm, editJob, renderList,
+    openDetail, closeModal, changeStatus, deleteJob,
+    printSlip, shareWhatsApp,
     reloadFromCloud: async () => {
       RM.jobs = loadLocal();
       renderList();
