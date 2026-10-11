@@ -1,6 +1,11 @@
 /* ============================================================
-   SMARTFIX ERP — Authentication Engine (v4.1.0)
+   SMARTFIX ERP — Authentication Engine (v4.4.0)
    File: js/auth.js
+   Purpose:
+     • Owner registration + login
+     • STAFF login (phone + password)
+     • Customer portal lookup (invoice + repairs)
+     • Role detection
    ============================================================ */
 
 import { auth, db, PATHS } from './firebase-config.js';
@@ -22,6 +27,9 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 
+/* ============================================================
+   HELPERS
+   ============================================================ */
 function setBtnLoading(btnId, busy, label) {
   const btn = document.getElementById(btnId);
   if (!btn) return;
@@ -159,7 +167,7 @@ window.ownerRegister = async function () {
       uid, ownerEmail: email.toLowerCase(),
       ownerPhone: phone || '', shopName: shop, shopCode,
       createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
-      plan: 'trial', version: '4.1.0'
+      plan: 'trial', version: '4.4.0'
     });
 
     await setDoc(doc(db, PATHS.stores, uid, PATHS.counters, 'main'), {
@@ -212,7 +220,7 @@ window.ownerRegister = async function () {
 
 
 /* ============================================================
-   STAFF LOGIN (Phone + Password)
+   STAFF LOGIN
    ============================================================ */
 window.staffLogin = async function () {
   clearAllErrors();
@@ -351,7 +359,7 @@ window.ownerLogout = async function () {
 
 
 /* ============================================================
-   CUSTOMER PORTAL LOOKUP
+   CUSTOMER PORTAL LOOKUP — Invoices + Repairs
    ============================================================ */
 window.customerLookup = async function () {
   clearAllErrors();
@@ -360,55 +368,78 @@ window.customerLookup = async function () {
   const code     = (document.getElementById('custCode')?.value || '').trim().toUpperCase();
 
   if (!shopCode)                 { setError('custError', 'Enter Shop Code.'); return; }
-  if (!/^\d{10}$/.test(phone))   { setError('custError', 'Enter valid phone.'); return; }
-  if (!code || code.length < 4)  { setError('custError', 'Enter IMEI last 6 or invoice no.'); return; }
+  if (!/^\d{10}$/.test(phone))   { setError('custError', 'Enter valid 10-digit phone.'); return; }
+  if (!code || code.length < 3)  { setError('custError', 'Enter IMEI / Invoice No / Job No.'); return; }
 
   setBtnLoading('custBtn', true, 'Searching...');
 
   try {
+    /* ---- Shop lookup ---- */
     const shopSnap = await getDoc(doc(db, PATHS.publicCodes, shopCode));
     if (!shopSnap.exists()) {
-      setError('custError', 'Shop Code not found.');
+      setError('custError', 'Shop Code not found. Ask your dealer.');
       setBtnLoading('custBtn', false, 'Find My Bill →');
       return;
     }
     const storeId = shopSnap.data().uid;
 
-    const invQ = query(
-      collection(db, PATHS.stores, storeId, PATHS.invoices),
-      where('customerPhone', '==', phone)
-    );
-    const snap = await getDocs(invQ);
-
-    if (snap.empty) {
-      setError('custError', 'No bills found for this phone.');
-      setBtnLoading('custBtn', false, 'Find My Bill →');
-      return;
-    }
-
-    const matches = [];
-    snap.forEach((d) => {
-      const inv = d.data();
-      const invNo = (inv.invoiceNo || '').toUpperCase();
-      const items = inv.items || [];
-      const invNoMatch = invNo.includes(code);
-      const imeiMatch = items.some((it) => {
-        const imei = (it.imei || '').toUpperCase();
-        return imei.endsWith(code) || imei.includes(code);
+    /* ---- Fetch invoices by phone ---- */
+    let invoiceMatches = [];
+    try {
+      const invQ = query(
+        collection(db, PATHS.stores, storeId, PATHS.invoices),
+        where('customerPhone', '==', phone)
+      );
+      const invSnap = await getDocs(invQ);
+      invSnap.forEach((d) => {
+        const inv = d.data();
+        const invNo = (inv.invoiceNo || '').toUpperCase();
+        const items = inv.items || [];
+        const invNoMatch = invNo.includes(code);
+        const imeiMatch = items.some((it) => {
+          const imei = (it.imei || '').toUpperCase();
+          return imei.endsWith(code) || imei.includes(code);
+        });
+        if (invNoMatch || imeiMatch) invoiceMatches.push({ id: d.id, ...inv });
       });
-      if (invNoMatch || imeiMatch) matches.push({ id: d.id, ...inv });
-    });
+    } catch (e) {
+      console.warn('Invoice lookup failed:', e.code);
+    }
 
-    if (matches.length === 0) {
-      setError('custError', 'Phone matched, but code did not.');
+    /* ---- Fetch repairs by phone ---- */
+    let repairMatches = [];
+    try {
+      const repQ = query(
+        collection(db, PATHS.stores, storeId, 'repairs'),
+        where('customerPhone', '==', phone)
+      );
+      const repSnap = await getDocs(repQ);
+      repSnap.forEach((d) => {
+        const rep = d.data();
+        const jobNo = (rep.jobNo || '').toUpperCase();
+        const imei = (rep.deviceIMEI || '').toUpperCase();
+        const jobMatch = jobNo.includes(code);
+        const imeiMatch = imei && (imei.endsWith(code) || imei.includes(code));
+        if (jobMatch || imeiMatch) repairMatches.push({ id: d.id, ...rep });
+      });
+    } catch (e) {
+      console.warn('Repair lookup failed:', e.code);
+    }
+
+    /* ---- Nothing found ---- */
+    if (invoiceMatches.length === 0 && repairMatches.length === 0) {
+      setError('custError', 'No bills or repairs found. Check phone and code.');
       setBtnLoading('custBtn', false, 'Find My Bill →');
       return;
     }
 
+    /* ---- Save session ---- */
     sessionStorage.setItem('sfp_customer_session', JSON.stringify({
       storeId, shopCode,
       shopName: shopSnap.data().shopName || 'Store',
-      phone, code, invoices: matches,
+      phone, code,
+      invoices: invoiceMatches,
+      repairs: repairMatches,
       searchedAt: new Date().toISOString()
     }));
 
@@ -453,4 +484,4 @@ onAuthStateChanged(auth, async (user) => {
   } catch (e) { console.warn(e); }
 });
 
-console.log('%c🔐 Auth module ready (v4.1.0)', 'color:#10b981;font-weight:bold');
+console.log('%c🔐 Auth module ready (v4.4.0)', 'color:#10b981;font-weight:bold');
