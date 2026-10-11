@@ -1,5 +1,5 @@
 /* ============================================================
-   SMARTFIX ERP — SPA Router (v4.1.0)
+   SMARTFIX ERP — SPA Router (v4.2.0)
    File: js/router.js
    ============================================================ */
 
@@ -8,21 +8,24 @@ import { toast } from './common.js';
 
 
 export const ROUTES = {
-  billing:    { id: 'billingTab',    label: 'Sales',       icon: '🧾', file: './modules/billing.html',    shortcut: 'F1',  description: 'POS Sales Invoice' },
-  returns:    { id: 'returnsTab',    label: 'Returns',     icon: '↩️', file: './modules/returns.html',    shortcut: 'F2',  description: 'Credit Notes & Refunds' },
-  purchase:   { id: 'purchaseTab',   label: 'Purchase',    icon: '🛒', file: './modules/purchase.html',   shortcut: 'F3',  description: 'Supplier Bills & Stock In' },
-  vouchers:   { id: 'vouchersTab',   label: 'Vouchers',    icon: '📒', file: './modules/vouchers.html',   shortcut: 'F4',  description: 'Payment / Receipt / Journal' },
-  accounting: { id: 'accountingTab', label: 'P&L',         icon: '📊', file: './modules/accounting.html', shortcut: 'F5',  description: 'Profit & Loss, GST, Audit' },
-  books:      { id: 'booksTab',      label: 'Books',       icon: '📚', file: './modules/books.html',      shortcut: 'F6',  description: 'Cash Book, Bank Book, Trial Balance' },
-  parties:    { id: 'partiesTab',    label: 'Parties',     icon: '👥', file: './modules/parties.html',    shortcut: 'F7',  description: 'Customers & Suppliers' },
-  inventory:  { id: 'inventoryTab',  label: 'Stock',       icon: '📦', file: './modules/inventory.html',  shortcut: 'F8',  description: 'Inventory Management' },
-  staff:      { id: 'staffTab',      label: 'Staff',       icon: '👨‍💼', file: './modules/staff.html',     shortcut: 'F9',  description: 'Staff & Salary' },
-  settings:   { id: 'settingsTab',   label: 'Settings',    icon: '⚙️', file: './modules/settings.html',  shortcut: 'F10', description: 'Store Settings & Backup' }
+  billing:              { id: 'billingTab',         label: 'Sales',       icon: '🧾', file: './modules/billing.html',              shortcut: 'F1',  description: 'POS Sales Invoice' },
+  returns:              { id: 'returnsTab',         label: 'Returns',     icon: '↩️', file: './modules/returns.html',              shortcut: 'F2',  description: 'Credit Notes & Refunds' },
+  purchase:             { id: 'purchaseTab',        label: 'Purchase',    icon: '🛒', file: './modules/purchase.html',             shortcut: 'F3',  description: 'Supplier Bills & Stock In' },
+  vouchers:             { id: 'vouchersTab',        label: 'Vouchers',    icon: '📒', file: './modules/vouchers.html',             shortcut: 'F4',  description: 'Payment / Receipt / Journal' },
+  accounting:           { id: 'accountingTab',      label: 'P&L',         icon: '📊', file: './modules/accounting.html',           shortcut: 'F5',  description: 'Profit & Loss, GST, Audit' },
+  books:                { id: 'booksTab',           label: 'Books',       icon: '📚', file: './modules/books.html',                shortcut: 'F6',  description: 'Cash Book, Bank Book, Trial Balance' },
+  parties:              { id: 'partiesTab',         label: 'Parties',     icon: '👥', file: './modules/parties.html',              shortcut: 'F7',  description: 'Customers & Suppliers' },
+  inventory:            { id: 'inventoryTab',       label: 'Stock',       icon: '📦', file: './modules/inventory.html',            shortcut: 'F8',  description: 'Inventory Management' },
+  staff:                { id: 'staffTab',           label: 'Staff',       icon: '👨‍💼', file: './modules/staff.html',              shortcut: 'F9',  description: 'Staff & Salary' },
+  settings:             { id: 'settingsTab',        label: 'Settings',    icon: '⚙️', file: './modules/settings.html',             shortcut: 'F10', description: 'Store Settings & Backup' },
+  attendance:           { id: 'attendanceTab',      label: 'Attendance',  icon: '📸', file: './modules/attendance.html',           shortcut: 'F11', description: 'Selfie Check-In / Check-Out' },
+  'attendance-report':  { id: 'attendanceReportTab', label: 'Att. Report', icon: '📈', file: './modules/attendance-report.html',  shortcut: 'F12', description: 'Team Attendance Summary' }
 };
 
 export const ROUTE_ORDER = [
   'billing', 'returns', 'purchase', 'vouchers', 'accounting',
-  'books', 'parties', 'inventory', 'staff', 'settings'
+  'books', 'parties', 'inventory', 'staff', 'settings',
+  'attendance', 'attendance-report'
 ];
 
 
@@ -60,7 +63,7 @@ export function initRouter(containerSelector = '#moduleContainer') {
    NAVIGATE
    ============================================================ */
 export async function navigateTo(routeKey, opts = {}) {
-  /* 🔐 Permission guard */
+  /* Role guard */
   try {
     const perms = window.SF?.perms;
     if (perms && typeof perms.canAccessRoute === 'function') {
@@ -77,24 +80,16 @@ export async function navigateTo(routeKey, opts = {}) {
     }
   } catch (e) {}
 
-  if (ROUTER.loading) {
-    console.warn('⏳ Navigation in progress');
-    return;
-  }
+  if (ROUTER.loading) { console.warn('⏳ Navigation in progress'); return; }
 
   const route = ROUTES[routeKey];
-  if (!route) {
-    console.warn('Unknown route:', routeKey);
-    toast('Module not found: ' + routeKey, 'error');
-    return;
-  }
+  if (!route) { console.warn('Unknown route:', routeKey); toast('Module not found: ' + routeKey, 'error'); return; }
 
   if (ROUTER.currentRoute === routeKey && !opts.force) return;
 
   ROUTER.loading = true;
 
   try {
-    /* Notify previous module */
     if (ROUTER.currentModule && typeof ROUTER.currentModule.onUnload === 'function') {
       try { await ROUTER.currentModule.onUnload(); } catch (e) { console.error(e); }
     }
@@ -110,15 +105,14 @@ export async function navigateTo(routeKey, opts = {}) {
     const html = await loadModuleHTML(routeKey);
     ROUTER.container.innerHTML = html;
 
-    /* ⭐ Re-execute injected <script> tags */
+    /* Re-execute injected <script> tags */
     reExecuteScripts(ROUTER.container);
 
     updateTabBar(routeKey);
     ROUTER.currentRoute = routeKey;
     emit('route:changed', { route: routeKey, config: route });
 
-    /* Call module init function */
-    const initFnName = 'init_' + routeKey + 'Module';
+    const initFnName = 'init_' + routeKey.replace(/-/g, '_') + 'Module';
     if (typeof window[initFnName] === 'function') {
       try {
         ROUTER.currentModule = await window[initFnName]() || null;
@@ -155,20 +149,16 @@ export async function navigateTo(routeKey, opts = {}) {
 
 
 /* ============================================================
-   RE-EXECUTE SCRIPTS
+   RE-EXECUTE INJECTED SCRIPTS
    ============================================================ */
 function reExecuteScripts(container) {
   if (!container) return;
   const oldScripts = Array.from(container.querySelectorAll('script'));
   if (oldScripts.length === 0) return;
-
   console.log('%c🔧 Re-executing ' + oldScripts.length + ' script(s)', 'color:#8b5cf6');
-
   oldScripts.forEach((oldScript) => {
     const newScript = document.createElement('script');
-    Array.from(oldScript.attributes).forEach((attr) => {
-      newScript.setAttribute(attr.name, attr.value);
-    });
+    Array.from(oldScript.attributes).forEach((attr) => newScript.setAttribute(attr.name, attr.value));
     if (!oldScript.src) newScript.textContent = oldScript.textContent;
     try { oldScript.parentNode.replaceChild(newScript, oldScript); }
     catch (e) { console.error('Failed to re-execute script:', e); }
@@ -190,7 +180,7 @@ function onHashChange() {
 
 
 /* ============================================================
-   KEYBOARD SHORTCUTS (F1-F10) — with role guard
+   KEYBOARD SHORTCUTS (F1-F12)
    ============================================================ */
 function onGlobalKeydown(e) {
   const tag = (e.target && e.target.tagName) || '';
@@ -206,10 +196,7 @@ function onGlobalKeydown(e) {
   e.preventDefault();
   const routeKey = ROUTE_ORDER[num - 1];
 
-  /* Role guard — silently block */
-  if (window.SF?.perms && !window.SF.perms.canAccessRoute(routeKey)) {
-    return;
-  }
+  if (window.SF?.perms && !window.SF.perms.canAccessRoute(routeKey)) return;
 
   navigateTo(routeKey);
 }
@@ -220,10 +207,8 @@ function onGlobalKeydown(e) {
    ============================================================ */
 async function loadModuleHTML(routeKey) {
   if (ROUTER.moduleCache[routeKey]) return ROUTER.moduleCache[routeKey];
-
   const route = ROUTES[routeKey];
   const url = route.file + '?v=' + Date.now();
-
   try {
     const res = await fetch(url, { cache: 'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
@@ -244,7 +229,7 @@ export function clearModuleCache(routeKey) {
 
 
 /* ============================================================
-   LOADING / ERROR STATES
+   UI STATES
    ============================================================ */
 function showModuleLoading() {
   if (!ROUTER.container) return;
@@ -292,17 +277,10 @@ function updateTabBar(routeKey) {
   document.title = `${route.label} — SmartFix ERP`;
 }
 
-/**
- * Render only allowed tabs (called from app-init)
- */
 export function renderTabBar(allowedRoutes) {
   const nav = document.getElementById('sfTabBar');
   if (!nav) return;
-
-  const routes = Array.isArray(allowedRoutes) && allowedRoutes.length
-    ? allowedRoutes
-    : ROUTE_ORDER;
-
+  const routes = Array.isArray(allowedRoutes) && allowedRoutes.length ? allowedRoutes : ROUTE_ORDER;
   nav.innerHTML = routes.map((key) => {
     const r = ROUTES[key];
     if (!r) return '';
@@ -314,7 +292,6 @@ export function renderTabBar(allowedRoutes) {
       </button>
     `;
   }).join('');
-
   if (ROUTER.currentRoute) updateTabBar(ROUTER.currentRoute);
 }
 
@@ -348,4 +325,4 @@ window.addEventListener('popstate', () => {
   }
 });
 
-console.log('%c🧭 Router ready (v4.1.0)', 'color:#06b6d4;font-weight:bold;font-size:11px', `| ${ROUTE_ORDER.length} routes`);
+console.log('%c🧭 Router ready (v4.2.0)', 'color:#06b6d4;font-weight:bold;font-size:11px', `| ${ROUTE_ORDER.length} routes`);
