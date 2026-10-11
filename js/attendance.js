@@ -1,13 +1,13 @@
 /* ============================================================
-   SMARTFIX ERP — Attendance Module (v4.2.1 — No Storage)
+   SMARTFIX ERP — Attendance Module (v4.3.0)
    File: js/attendance.js
    Purpose:
      • Selfie capture + compress to 1-2 KB
-     • Location + timestamp overlay on photo
-     • Store selfie as base64 INSIDE Firestore (no Storage needed)
-     • Check-in / Check-out with metadata
-     • Auto-cleanup of attendance older than 60 days
-     • Report aggregation
+     • Location + timestamp overlay
+     • Store selfie as base64 INSIDE Firestore
+     • Check-in / Check-out
+     • Auto-cleanup 60+ days old
+     • Dispatch event to unlock attendance gate
    ============================================================ */
 
 import { db, auth, PATHS } from './firebase-config.js';
@@ -15,13 +15,10 @@ import { toast, fmtDate, fmtDatePretty, escapeHTML } from './common.js';
 
 import {
   collection, doc, setDoc, getDoc, getDocs, deleteDoc,
-  query, where, orderBy, serverTimestamp, writeBatch
+  query, where, serverTimestamp, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 
-/* ============================================================
-   CONSTANTS
-   ============================================================ */
 const SELFIE_SIZE = 200;
 const INFO_STRIP_H = 24;
 const TARGET_KB = 2;
@@ -30,18 +27,11 @@ const CLEANUP_AGE_DAYS = 60;
 const CLEANUP_KEY = 'sfp_attendance_last_cleanup';
 const CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
-
-/* ============================================================
-   STATE
-   ============================================================ */
-const ATT = {
-  stream: null,
-  videoEl: null
-};
+const ATT = { stream: null, videoEl: null };
 
 
 /* ============================================================
-   1. CAMERA
+   CAMERA
    ============================================================ */
 export async function startCamera(videoEl) {
   if (!videoEl) throw new Error('Video element required');
@@ -82,7 +72,7 @@ export function isCameraActive() { return !!ATT.stream; }
 
 
 /* ============================================================
-   2. CAPTURE + COMPRESS TO 1-2 KB
+   CAPTURE + COMPRESS
    ============================================================ */
 export async function captureAndCompress(videoEl, meta) {
   if (!videoEl || !videoEl.videoWidth) throw new Error('Video not ready');
@@ -101,13 +91,11 @@ export async function captureAndCompress(videoEl, meta) {
   const sx = (vw - sq) / 2;
   const sy = (vh - sq) / 2;
 
-  /* Mirror front camera */
   ctx.save();
   ctx.scale(-1, 1);
   ctx.drawImage(videoEl, sx, sy, sq, sq, -W, 0, W, SELFIE_SIZE);
   ctx.restore();
 
-  /* Info strip */
   ctx.fillStyle = '#000000';
   ctx.fillRect(0, SELFIE_SIZE, W, INFO_STRIP_H);
 
@@ -122,7 +110,6 @@ export async function captureAndCompress(videoEl, meta) {
   const locTxt = (meta.location || 'Location unavailable').substring(0, 30);
   ctx.fillText(locTxt, 4, SELFIE_SIZE + 13);
 
-  /* Iterative compress */
   let quality = 0.55;
   let dataUrl = canvas.toDataURL('image/jpeg', quality);
   let sizeKB = base64SizeKB(dataUrl);
@@ -144,7 +131,7 @@ function base64SizeKB(dataUrl) {
 
 
 /* ============================================================
-   3. LOCATION
+   LOCATION
    ============================================================ */
 export async function getLocation() {
   return new Promise((resolve) => {
@@ -185,7 +172,7 @@ export async function getCityName(lat, lng) {
 
 
 /* ============================================================
-   4. CHECK-IN (selfie stored inside Firestore doc)
+   CHECK-IN
    ============================================================ */
 export async function checkIn(storeId, staffId, staffName, options = {}) {
   if (!storeId || !staffId) throw new Error('Missing storeId or staffId');
@@ -195,7 +182,6 @@ export async function checkIn(storeId, staffId, staffName, options = {}) {
   const timeStr = formatTime(now);
   const recordId = `${dateStr}_${staffId}`;
 
-  /* Already checked in? */
   const existing = await getDoc(doc(db, PATHS.stores, storeId, 'attendance', recordId));
   if (existing.exists() && existing.data().checkInTs) {
     throw new Error('Already checked in today');
@@ -204,7 +190,6 @@ export async function checkIn(storeId, staffId, staffName, options = {}) {
   const selfieDataUrl = options.selfie?.dataUrl || '';
   const selfieKB = options.selfie?.sizeKB ? +options.selfie.sizeKB.toFixed(2) : 0;
 
-  /* Firestore doc — selfie base64 included inline */
   const record = {
     id: recordId,
     storeId,
@@ -218,7 +203,7 @@ export async function checkIn(storeId, staffId, staffName, options = {}) {
     checkInLocation: options.location || '',
     checkInLat: options.lat || null,
     checkInLng: options.lng || null,
-    selfie: selfieDataUrl,           // ← base64 stored directly
+    selfie: selfieDataUrl,
     selfieSizeKB: selfieKB,
     status: 'present',
     createdAt: serverTimestamp()
@@ -232,12 +217,19 @@ export async function checkIn(storeId, staffId, staffName, options = {}) {
 
   try { window.SF?.state?.logAudit?.('ATTENDANCE_CHECKIN', `${staffName} | ${dateStr} ${timeStr}`); } catch (e) {}
 
+  /* ⭐ Dispatch event — unlock attendance gate */
+  try {
+    window.SF = window.SF || {};
+    window.SF.attendanceGate = false;
+    window.dispatchEvent(new CustomEvent('attendance:checkedin', { detail: record }));
+  } catch (e) {}
+
   return record;
 }
 
 
 /* ============================================================
-   5. CHECK-OUT
+   CHECK-OUT
    ============================================================ */
 export async function checkOut(storeId, staffId) {
   if (!storeId || !staffId) throw new Error('Missing storeId or staffId');
@@ -271,7 +263,7 @@ export async function checkOut(storeId, staffId) {
 
 
 /* ============================================================
-   6. GET TODAY
+   GET TODAY
    ============================================================ */
 export async function getTodayRecord(storeId, staffId) {
   const dateStr = fmtDate(new Date());
@@ -282,7 +274,7 @@ export async function getTodayRecord(storeId, staffId) {
 
 
 /* ============================================================
-   7. MONTHLY QUERIES
+   MONTHLY QUERIES
    ============================================================ */
 export async function getMonthlyAttendance(storeId, month, year, staffId) {
   const collRef = collection(db, PATHS.stores, storeId, 'attendance');
@@ -306,8 +298,7 @@ export async function getMonthlyReport(storeId, month, year) {
     const sid = r.staffId;
     if (!byStaff[sid]) {
       byStaff[sid] = {
-        staffId: sid,
-        staffName: r.staffName || '',
+        staffId: sid, staffName: r.staffName || '',
         days: [], present: 0, totalHours: 0,
         avgIn: '', avgOut: ''
       };
@@ -327,12 +318,10 @@ export async function getMonthlyReport(storeId, month, year) {
 
 
 /* ============================================================
-   8. AUTO-CLEANUP (60+ days old)
-   Now deletes ONLY Firestore docs (no Storage)
+   CLEANUP
    ============================================================ */
 export async function cleanupOldAttendance(storeId, force = false) {
   if (!storeId) return 0;
-
   if (!force) {
     try {
       const last = parseInt(localStorage.getItem(CLEANUP_KEY) || '0', 10);
@@ -349,18 +338,14 @@ export async function cleanupOldAttendance(storeId, force = false) {
     const collRef = collection(db, PATHS.stores, storeId, 'attendance');
     const q = query(collRef, where('date', '<', cutoffStr));
     const snap = await getDocs(q);
-
     if (snap.empty) {
       try { localStorage.setItem(CLEANUP_KEY, String(Date.now())); } catch (e) {}
       return 0;
     }
-
     const batch = writeBatch(db);
     snap.forEach((d) => { batch.delete(d.ref); deleted++; });
     await batch.commit();
-
     try { localStorage.setItem(CLEANUP_KEY, String(Date.now())); } catch (e) {}
-
     console.log(`%c🗑️ Attendance cleanup: ${deleted} records removed`, 'color:#f59e0b;font-weight:bold');
     if (deleted > 0) {
       try { window.SF?.state?.logAudit?.('ATTENDANCE_CLEANUP', `${deleted} old records removed`); } catch (e) {}
@@ -374,7 +359,7 @@ export async function cleanupOldAttendance(storeId, force = false) {
 
 
 /* ============================================================
-   9. HELPERS
+   HELPERS
    ============================================================ */
 function formatTime(d) {
   const h = String(d.getHours()).padStart(2, '0');
@@ -412,10 +397,6 @@ function monthName(m) {
           'July', 'August', 'September', 'October', 'November', 'December'][m] || '';
 }
 
-
-/* ============================================================
-   10. FORMAT HELPERS
-   ============================================================ */
 export function formatDayOfWeek(dateStr) {
   try {
     const d = new Date(dateStr + 'T12:00:00');
@@ -430,7 +411,7 @@ export function formatDateTimePretty(d) {
 
 
 /* ============================================================
-   11. EXPORT
+   EXPORT
    ============================================================ */
 window.SF = window.SF || {};
 window.SF.attendance = {
@@ -443,5 +424,4 @@ window.SF.attendance = {
   formatDayOfWeek, monthName
 };
 
-
-console.log('%c📸 Attendance module ready (v4.2.1 — No Storage required)', 'color:#10b981;font-weight:bold;font-size:11px');
+console.log('%c📸 Attendance module ready (v4.3.0)', 'color:#10b981;font-weight:bold;font-size:11px');
