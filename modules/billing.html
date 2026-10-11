@@ -1,6 +1,7 @@
 <!-- ============================================================
-     SMARTFIX ERP — Billing / POS Module (v4.1.0)
+     SMARTFIX ERP — Billing / POS Module (v4.2.1)
      File: modules/billing.html
+     Print fix: iframe-based for mobile compatibility
      ============================================================ -->
 
 <section id="billingModule" class="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -150,9 +151,6 @@
 
   if (!S || !C) { console.error('Billing module: SF globals not ready'); return; }
 
-  /* ============================================================
-     ROLE GUARD HELPER
-     ============================================================ */
   function requirePerm(perm, msg) {
     if (!window.SF?.perms?.can?.(perm)) {
       C.toast('🔒 ' + (msg || 'You do not have permission for this action'), 'error', 3000);
@@ -162,7 +160,7 @@
   }
 
   /* ============================================================
-     RENDER PREVIEW — PREMIUM DESIGN
+     RENDER PREVIEW
      ============================================================ */
   function renderPreview() {
     const el = document.getElementById('billInvoicePreview');
@@ -235,7 +233,6 @@
       <div style="display:flex;flex-direction:column;justify-content:space-between;min-height:270mm;height:100%;background:white;color:#0f172a;">
 
         <div>
-          <!-- HEADER -->
           <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:2px solid #0369a1;">
             <div style="display:flex;gap:12px;align-items:flex-start;">
               ${p.logo ? `<img src="${p.logo}" style="height:52px;width:52px;object-fit:contain;">` : `<div style="width:48px;height:48px;background:linear-gradient(135deg,#0ea5e9,#0369a1);border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-size:24px;box-shadow:0 4px 12px rgba(3,105,161,0.3);">🔧</div>`}
@@ -584,7 +581,7 @@
 
 
   /* ============================================================
-     FINALIZE — SAVE + PRINT (with role guard)
+     FINALIZE — SAVE + PRINT
      ============================================================ */
   async function finalize() {
     if (!requirePerm('billing.create', 'You cannot create invoices')) return;
@@ -688,40 +685,65 @@
     document.getElementById('billCustGSTIN').value = '';
     document.getElementById('billDiscount').value = '0';
 
+    renderPreview();
+
     setTimeout(() => {
       try { C.toast('✅ Invoice ' + invNo + ' saved & printed', 'success', 2500); } catch (e) {}
-    }, 900);
+    }, 1200);
   }
 
 
   /* ============================================================
-     PRINT
+     PRINT — iframe-based (mobile-safe)
      ============================================================ */
   function printInvoice() {
     const srcEl = document.getElementById('billInvoicePreview');
-    const target = document.getElementById('isolatedPrintContainer');
-    if (!srcEl || !target) return;
+    if (!srcEl || !srcEl.innerHTML.trim()) {
+      C.toast('Nothing to print', 'warning');
+      return;
+    }
 
-    target.innerHTML = srcEl.innerHTML;
-    target.style.cssText = `
-      display: flex !important; flex-direction: column !important;
-      justify-content: space-between !important;
-      width: 100% !important; max-width: 202mm !important;
-      min-height: 285mm !important; height: 285mm !important;
-      padding: 2mm 3mm !important; box-sizing: border-box !important;
-      margin: 0 auto !important; background: white !important; color: #000 !important;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-      font-size: 10px !important;
-      -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
-    `;
+    const invoiceHTML = srcEl.innerHTML;
 
-    setTimeout(() => {
-      window.print();
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;pointer-events:none;';
+    iframe.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+
+    doc.open();
+    doc.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invoice</title><style>
+      @page { size: A4 portrait; margin: 4mm; }
+      * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      html, body { margin:0; padding:0; background:#fff; color:#0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; font-size:10px; }
+      .print-wrapper { width:202mm; min-height:285mm; margin:0 auto; padding:2mm 3mm; }
+      table { border-collapse: collapse; }
+      tr { page-break-inside: avoid; }
+      img { max-width:100%; }
+      button { display:none !important; }
+    </style></head><body><div class="print-wrapper">${invoiceHTML}</div></body></html>`);
+    doc.close();
+
+    const triggerPrint = () => {
+      try {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+      } catch (e) {
+        console.error('iframe.print failed:', e);
+        C.toast('Print dialog blocked. Allow popups.', 'error', 4000);
+      }
       setTimeout(() => {
-        target.innerHTML = '';
-        target.style.cssText = '';
-      }, 600);
-    }, 250);
+        try { document.body.removeChild(iframe); } catch (e) {}
+      }, 1500);
+    };
+
+    if (iframe.contentWindow.document.readyState === 'complete') {
+      setTimeout(triggerPrint, 500);
+    } else {
+      iframe.onload = () => setTimeout(triggerPrint, 500);
+      setTimeout(triggerPrint, 1200);
+    }
   }
 
 
@@ -740,12 +762,11 @@
      INIT
      ============================================================ */
   async function init_billingModule() {
-    console.log('%c🧾 Billing module initialized', 'color:#0ea5e9;font-weight:bold');
+    console.log('%c🧾 Billing module initialized (v4.2.1)', 'color:#0ea5e9;font-weight:bold');
 
-    /* Role guard — must be able to see billing */
     if (!window.SF?.perms?.can?.('billing.view')) {
       const container = document.getElementById('moduleContainer');
-      if (container) container.innerHTML = '<div style="max-width:520px;margin:60px auto;padding:28px;background:#1e1b2e;border:1px solid #7f1d1d;border-radius:16px;text-align:center;"><div style="font-size:42px;margin-bottom:12px">🔒</div><div style="font-size:16px;font-weight:800;color:#fca5a5;">Access Denied</div><div style="font-size:12px;color:#94a3b8;margin-top:6px;">You do not have permission to view this module.</div></div>';
+      if (container) container.innerHTML = '<div style="max-width:520px;margin:60px auto;padding:28px;background:#1e1b2e;border:1px solid #7f1d1d;border-radius:16px;text-align:center;"><div style="font-size:42px;margin-bottom:12px">🔒</div><div style="font-size:16px;font-weight:800;color:#fca5a5;">Access Denied</div></div>';
       return { onUnload: () => {} };
     }
 
@@ -782,9 +803,6 @@
   }
 
 
-  /* ============================================================
-     EXPOSE
-     ============================================================ */
   window.SF = window.SF || {};
   window.SF.billing = {
     renderPreview, renderCart, addManualItem, removeItem,
