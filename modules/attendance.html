@@ -1,0 +1,605 @@
+<!-- ============================================================
+     SMARTFIX ERP — Attendance Module (Staff View)
+     File: modules/attendance.html
+     Version: 4.2.0
+     ============================================================ -->
+
+<section id="attendanceModule" class="space-y-4">
+
+  <!-- HEADER -->
+  <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 flex flex-wrap justify-between items-center gap-3">
+    <div>
+      <h2 class="text-lg font-black text-white">📸 Attendance</h2>
+      <p class="text-[11px] text-slate-400 mt-0.5">Check in with selfie + location • Auto-cleanup after 60 days</p>
+    </div>
+    <div class="text-right">
+      <div id="attLiveClock" class="text-base font-black text-sky-400 font-mono">--:--:--</div>
+      <div id="attTodayDate" class="text-[10px] text-slate-500 font-mono">—</div>
+    </div>
+  </div>
+
+  <!-- TODAY'S STATUS -->
+  <div id="attTodayStatus" class="rounded-2xl p-4 border-2 transition-all">
+    <div class="flex justify-between items-center flex-wrap gap-3">
+      <div class="flex items-center gap-3">
+        <div id="attStatusIcon" class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0">⏳</div>
+        <div>
+          <div id="attStatusTitle" class="text-base font-black text-white">Not Checked In</div>
+          <div id="attStatusSubtitle" class="text-[11px] text-slate-400 mt-0.5">Take a selfie to check in</div>
+        </div>
+      </div>
+      <div class="text-right">
+        <div class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Today</div>
+        <div id="attStatusTime" class="text-xs font-mono font-bold text-slate-300 mt-0.5">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+
+    <!-- LEFT: CAMERA -->
+    <div class="lg:col-span-7 space-y-3">
+
+      <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
+        <div class="flex justify-between items-center">
+          <h3 class="text-[11px] font-bold uppercase tracking-wider text-sky-400">📷 Camera Preview</h3>
+          <button type="button" id="attCamToggleBtn" onclick="SF.attendanceUI.toggleCamera()"
+                  class="text-[10px] bg-sky-600 hover:bg-sky-500 text-white font-bold px-3 py-1.5 rounded-lg transition">
+            ▶ Start Camera
+          </button>
+        </div>
+
+        <div class="relative rounded-xl overflow-hidden bg-black aspect-[4/3] flex items-center justify-center border-2 border-slate-700">
+          <video id="attVideo" playsinline muted class="w-full h-full object-cover" style="display:none"></video>
+          <div id="attCamPlaceholder" class="text-center px-6">
+            <div class="text-5xl mb-3">📸</div>
+            <div class="text-sm font-bold text-slate-400">Camera is off</div>
+            <div class="text-[11px] text-slate-500 mt-1">Click "Start Camera" to begin</div>
+          </div>
+          <div id="attCamHint" class="absolute bottom-2 left-2 right-2 text-center text-[10px] text-white/80 bg-black/50 rounded py-1" style="display:none">
+            Position your face in the center
+          </div>
+        </div>
+
+        <div id="attLocationBox" class="bg-slate-950/60 border border-slate-800 rounded-lg p-2.5">
+          <div class="flex items-center gap-2">
+            <span class="text-base">📍</span>
+            <div class="flex-1 min-w-0">
+              <div class="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Location</div>
+              <div id="attLocationText" class="text-[11px] text-slate-300 font-mono truncate">Fetching location...</div>
+            </div>
+            <button type="button" onclick="SF.attendanceUI.refreshLocation()"
+                    class="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-2 py-1 rounded">
+              ↻
+            </button>
+          </div>
+        </div>
+
+        <button type="button" id="attActionBtn" onclick="SF.attendanceUI.checkIn()"
+                class="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-black py-4 rounded-xl text-sm shadow-lg shadow-emerald-600/30 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled>
+          <span>📸</span>
+          <span>Take Selfie & Check In</span>
+        </button>
+      </div>
+
+      <!-- PREVIEW MODAL (captured selfie) -->
+      <div id="attPreviewCard" class="bg-slate-900/70 border-2 border-emerald-700/60 rounded-2xl p-4 space-y-3" style="display:none">
+        <h3 class="text-[11px] font-bold uppercase tracking-wider text-emerald-400">✅ Captured Selfie</h3>
+        <div class="flex justify-center">
+          <img id="attPreviewImg" src="" alt="Selfie" class="rounded-lg border border-slate-700" style="max-width:200px">
+        </div>
+        <div id="attPreviewInfo" class="text-[10px] text-center text-slate-400 font-mono"></div>
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" onclick="SF.attendanceUI.retake()"
+                  class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-2 rounded-lg text-xs transition">
+            🔄 Retake
+          </button>
+          <button type="button" onclick="SF.attendanceUI.confirmCheckIn()"
+                  class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-lg text-xs transition">
+            ✅ Confirm
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: HISTORY -->
+    <div class="lg:col-span-5 space-y-3">
+
+      <!-- Stats -->
+      <div class="grid grid-cols-3 gap-2">
+        <div class="bg-emerald-950/40 border border-emerald-800/50 rounded-xl p-3">
+          <div class="text-[9px] font-bold uppercase text-emerald-400">Present</div>
+          <div id="attStatPresent" class="text-lg font-black text-emerald-300 mt-0.5">0</div>
+        </div>
+        <div class="bg-sky-950/40 border border-sky-800/50 rounded-xl p-3">
+          <div class="text-[9px] font-bold uppercase text-sky-400">Total Hours</div>
+          <div id="attStatHours" class="text-lg font-black text-sky-300 mt-0.5">0</div>
+        </div>
+        <div class="bg-violet-950/40 border border-violet-800/50 rounded-xl p-3">
+          <div class="text-[9px] font-bold uppercase text-violet-400">Avg In</div>
+          <div id="attStatAvgIn" class="text-lg font-black text-violet-300 mt-0.5">--:--</div>
+        </div>
+      </div>
+
+      <!-- Monthly filter -->
+      <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-3">
+        <div class="flex gap-2 items-center">
+          <select id="attHistMonth" onchange="SF.attendanceUI.loadHistory()"
+                  class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200">
+            <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+            <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+            <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+            <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+          </select>
+          <input type="number" id="attHistYear" onchange="SF.attendanceUI.loadHistory()"
+                 class="w-24 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 font-mono">
+        </div>
+      </div>
+
+      <!-- History list -->
+      <div class="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden">
+        <div class="p-3 border-b border-slate-800 flex justify-between items-center">
+          <h3 class="text-[11px] font-bold uppercase tracking-wider text-slate-300">📅 History</h3>
+          <span id="attHistCount" class="text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded font-mono">0 days</span>
+        </div>
+        <div id="attHistList" class="max-h-[500px] overflow-y-auto divide-y divide-slate-800/60">
+          <div class="text-center py-10 text-slate-500 text-xs">Loading...</div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<script>
+(function () {
+  'use strict';
+
+  const S = window.SF?.state?.state;
+  const C = window.SF?.common;
+  const ATT = window.SF?.attendance;
+
+  if (!S || !C || !ATT) {
+    console.error('Attendance UI: SF globals not ready');
+    return;
+  }
+
+  /* ============================================================
+     STATE
+     ============================================================ */
+  const UI = {
+    cameraActive: false,
+    capturedSelfie: null,      // { dataUrl, sizeKB }
+    currentLocation: null,     // { available, lat, lng, city }
+    todayRecord: null,
+    checkInMode: 'in',         // 'in' | 'out'
+    storeId: null,
+    staffId: null,
+    staffName: '',
+    clockTimer: null
+  };
+
+
+  /* ============================================================
+     INIT
+     ============================================================ */
+  function init_attendanceModule() {
+    console.log('%c📸 Attendance UI initialized', 'color:#10b981;font-weight:bold');
+
+    /* Resolve store + staff identity */
+    const store = S.store || {};
+    const perms = window.SF?.perms;
+    const meta = perms?.getUserMeta?.() || {};
+
+    /* Owner: use own uid as staffId; Staff: use their uid */
+    UI.storeId = meta.storeId || store.storeId || store.uid;
+    UI.staffId = meta.uid || (window.SF?.cloud?.getStoreId?.()) || 'unknown';
+    UI.staffName = meta.name || store.staffName || 'Me';
+
+    if (!UI.storeId) {
+      C.toast('Store not resolved. Please re-login.', 'error', 5000);
+      return { onUnload: stopCameraCleanup };
+    }
+
+    console.log('📸 Attendance — StoreId:', UI.storeId, '| StaffId:', UI.staffId, '| Name:', UI.staffName);
+
+    /* Today date + month defaults */
+    const today = new Date();
+    const dateEl = document.getElementById('attTodayDate');
+    if (dateEl) dateEl.textContent = C.fmtDatePretty(today);
+    const monEl = document.getElementById('attHistMonth');
+    if (monEl) monEl.value = today.getMonth() + 1;
+    const yrEl = document.getElementById('attHistYear');
+    if (yrEl) yrEl.value = today.getFullYear();
+
+    /* Start live clock */
+    startClock();
+
+    /* Load today + history */
+    loadToday();
+    loadHistory();
+
+    /* Fetch location */
+    refreshLocation();
+
+    /* Cleanup old attendance (silent, once per 24h) */
+    setTimeout(() => {
+      ATT.cleanupOldAttendance(UI.storeId).catch((e) => console.warn('Cleanup failed:', e));
+    }, 4000);
+
+    return { onUnload: stopCameraCleanup };
+  }
+
+  function stopCameraCleanup() {
+    try { ATT.stopCamera(); } catch (e) {}
+    if (UI.clockTimer) clearInterval(UI.clockTimer);
+  }
+
+
+  /* ============================================================
+     LIVE CLOCK
+     ============================================================ */
+  function startClock() {
+    if (UI.clockTimer) clearInterval(UI.clockTimer);
+    const el = document.getElementById('attLiveClock');
+    const tick = () => {
+      if (!el) return;
+      const d = new Date();
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mm = String(d.getMinutes()).padStart(2, '0');
+      const ss = String(d.getSeconds()).padStart(2, '0');
+      el.textContent = `${hh}:${mm}:${ss}`;
+    };
+    tick();
+    UI.clockTimer = setInterval(tick, 1000);
+  }
+
+
+  /* ============================================================
+     CAMERA
+     ============================================================ */
+  async function toggleCamera() {
+    const btn = document.getElementById('attCamToggleBtn');
+    const video = document.getElementById('attVideo');
+    const placeholder = document.getElementById('attCamPlaceholder');
+    const hint = document.getElementById('attCamHint');
+    const actionBtn = document.getElementById('attActionBtn');
+
+    if (UI.cameraActive) {
+      try { ATT.stopCamera(); } catch (e) {}
+      UI.cameraActive = false;
+      if (video) video.style.display = 'none';
+      if (placeholder) placeholder.style.display = 'block';
+      if (hint) hint.style.display = 'none';
+      if (btn) { btn.textContent = '▶ Start Camera'; btn.classList.remove('bg-rose-600','hover:bg-rose-500'); btn.classList.add('bg-sky-600','hover:bg-sky-500'); }
+      if (actionBtn) actionBtn.disabled = true;
+      return;
+    }
+
+    try {
+      await ATT.startCamera(video);
+      UI.cameraActive = true;
+      if (video) video.style.display = 'block';
+      if (placeholder) placeholder.style.display = 'none';
+      if (hint) hint.style.display = 'block';
+      if (btn) { btn.textContent = '✕ Stop Camera'; btn.classList.remove('bg-sky-600','hover:bg-sky-500'); btn.classList.add('bg-rose-600','hover:bg-rose-500'); }
+      if (actionBtn) actionBtn.disabled = false;
+      C.playBeep();
+    } catch (e) {
+      C.toast(e.message || 'Camera failed', 'error', 4000);
+    }
+  }
+
+
+  /* ============================================================
+     LOCATION
+     ============================================================ */
+  async function refreshLocation() {
+    const el = document.getElementById('attLocationText');
+    if (el) el.textContent = 'Fetching location...';
+
+    const loc = await ATT.getLocation();
+    if (loc.available) {
+      const city = await ATT.getCityName(loc.lat, loc.lng);
+      UI.currentLocation = { available: true, lat: loc.lat, lng: loc.lng, city };
+      if (el) el.textContent = city + ' (' + loc.lat + ', ' + loc.lng + ')';
+    } else {
+      UI.currentLocation = { available: false, city: 'Location unavailable' };
+      if (el) el.textContent = 'Location unavailable (permission denied)';
+    }
+  }
+
+
+  /* ============================================================
+     LOAD TODAY'S RECORD
+     ============================================================ */
+  async function loadToday() {
+    try {
+      const rec = await ATT.getTodayRecord(UI.storeId, UI.staffId);
+      UI.todayRecord = rec;
+
+      const statusBox = document.getElementById('attTodayStatus');
+      const icon = document.getElementById('attStatusIcon');
+      const title = document.getElementById('attStatusTitle');
+      const sub = document.getElementById('attStatusSubtitle');
+      const timeEl = document.getElementById('attStatusTime');
+      const actionBtn = document.getElementById('attActionBtn');
+
+      if (!rec || !rec.checkInTime) {
+        /* Not checked in */
+        if (statusBox) statusBox.className = 'rounded-2xl p-4 border-2 border-amber-800/60 bg-amber-950/30';
+        if (icon) icon.textContent = '⏳';
+        if (title) title.textContent = 'Not Checked In';
+        if (sub) sub.textContent = 'Take a selfie to check in';
+        if (timeEl) timeEl.textContent = '—';
+        if (actionBtn) {
+          actionBtn.disabled = !UI.cameraActive;
+          actionBtn.innerHTML = '<span>📸</span><span>Take Selfie & Check In</span>';
+          actionBtn.onclick = checkIn;
+        }
+        UI.checkInMode = 'in';
+        return;
+      }
+
+      if (rec.checkInTime && !rec.checkOutTime) {
+        /* Checked in, not out */
+        if (statusBox) statusBox.className = 'rounded-2xl p-4 border-2 border-emerald-800/60 bg-emerald-950/30';
+        if (icon) icon.textContent = '✅';
+        if (title) title.textContent = 'Checked In';
+        if (sub) sub.textContent = 'In: ' + rec.checkInTime + (rec.checkInLocation ? ' • ' + rec.checkInLocation : '');
+        if (timeEl) timeEl.textContent = 'In: ' + rec.checkInTime;
+        if (actionBtn) {
+          actionBtn.disabled = false;
+          actionBtn.innerHTML = '<span>🔴</span><span>Check Out Now</span>';
+          actionBtn.onclick = checkOut;
+          actionBtn.className = 'w-full bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-black py-4 rounded-xl text-sm shadow-lg shadow-rose-600/30 transition flex items-center justify-center gap-2';
+        }
+        UI.checkInMode = 'out';
+        return;
+      }
+
+      /* Checked in and out */
+      if (statusBox) statusBox.className = 'rounded-2xl p-4 border-2 border-sky-800/60 bg-sky-950/30';
+      if (icon) icon.textContent = '🎯';
+      if (title) title.textContent = 'Completed Today';
+      if (sub) sub.textContent = 'In: ' + rec.checkInTime + ' • Out: ' + rec.checkOutTime + ' • ' + (rec.hoursWorked || 0).toFixed(2) + ' hrs';
+      if (timeEl) timeEl.textContent = (rec.hoursWorked || 0).toFixed(2) + ' hrs';
+      if (actionBtn) {
+        actionBtn.disabled = true;
+        actionBtn.innerHTML = '<span>✓</span><span>Done for Today</span>';
+        actionBtn.className = 'w-full bg-slate-700 text-slate-300 font-black py-4 rounded-xl text-sm cursor-not-allowed flex items-center justify-center gap-2';
+      }
+      UI.checkInMode = 'done';
+
+    } catch (e) {
+      console.warn('loadToday failed:', e);
+    }
+  }
+
+
+  /* ============================================================
+     CAPTURE + CHECK IN
+     ============================================================ */
+  async function checkIn() {
+    if (!UI.cameraActive) { C.toast('Start camera first', 'warning'); return; }
+
+    const video = document.getElementById('attVideo');
+    if (!video) return;
+
+    const now = new Date();
+    const meta = {
+      dateStr: C.fmtDate(now),
+      timeStr: String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0'),
+      location: UI.currentLocation?.city || 'Location unavailable'
+    };
+
+    try {
+      const result = await ATT.captureAndCompress(video, meta);
+      UI.capturedSelfie = result;
+
+      /* Show preview card */
+      const card = document.getElementById('attPreviewCard');
+      const img = document.getElementById('attPreviewImg');
+      const info = document.getElementById('attPreviewInfo');
+      if (card) card.style.display = 'block';
+      if (img) img.src = result.dataUrl;
+      if (info) info.textContent = `${result.sizeKB.toFixed(2)} KB • quality ${Math.round(result.quality*100)}%`;
+
+      C.toast('Selfie captured — confirm to check in', 'info', 3000);
+      C.playBeep();
+
+      /* Scroll to preview */
+      card?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } catch (e) {
+      C.toast(e.message || 'Capture failed', 'error', 3000);
+    }
+  }
+
+  function retake() {
+    UI.capturedSelfie = null;
+    const card = document.getElementById('attPreviewCard');
+    if (card) card.style.display = 'none';
+    C.toast('Retake your selfie', 'info', 2000);
+  }
+
+  async function confirmCheckIn() {
+    if (!UI.capturedSelfie) { C.toast('No selfie captured', 'warning'); return; }
+
+    const btn = document.querySelector('#attPreviewCard button:last-child');
+    if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+
+    try {
+      await ATT.checkIn(UI.storeId, UI.staffId, UI.staffName, {
+        selfie: UI.capturedSelfie,
+        location: UI.currentLocation?.city || 'Location unavailable',
+        lat: UI.currentLocation?.lat || null,
+        lng: UI.currentLocation?.lng || null
+      });
+
+      C.toast('✅ Checked in successfully', 'success', 3000);
+      C.playBeep();
+
+      /* Reset */
+      UI.capturedSelfie = null;
+      const card = document.getElementById('attPreviewCard');
+      if (card) card.style.display = 'none';
+
+      /* Stop camera */
+      try { ATT.stopCamera(); } catch (e) {}
+      UI.cameraActive = false;
+      const videoEl = document.getElementById('attVideo');
+      if (videoEl) videoEl.style.display = 'none';
+      const placeholder = document.getElementById('attCamPlaceholder');
+      if (placeholder) placeholder.style.display = 'block';
+      const hint = document.getElementById('attCamHint');
+      if (hint) hint.style.display = 'none';
+      const camBtn = document.getElementById('attCamToggleBtn');
+      if (camBtn) {
+        camBtn.textContent = '▶ Start Camera';
+        camBtn.classList.remove('bg-rose-600','hover:bg-rose-500');
+        camBtn.classList.add('bg-sky-600','hover:bg-sky-500');
+      }
+
+      /* Reload */
+      await loadToday();
+      await loadHistory();
+
+    } catch (e) {
+      C.toast(e.message || 'Check-in failed', 'error', 4000);
+      if (btn) { btn.disabled = false; btn.textContent = '✅ Confirm'; }
+    }
+  }
+
+
+  /* ============================================================
+     CHECK OUT
+     ============================================================ */
+  async function checkOut() {
+    const ok = await C.confirmDialog('Check Out?', 'This will mark your departure time.', 'Check Out');
+    if (!ok) return;
+
+    try {
+      await ATT.checkOut(UI.storeId, UI.staffId);
+      C.toast('✅ Checked out', 'success', 3000);
+      C.playBeep();
+      await loadToday();
+      await loadHistory();
+    } catch (e) {
+      C.toast(e.message || 'Check-out failed', 'error', 4000);
+    }
+  }
+
+
+  /* ============================================================
+     HISTORY
+     ============================================================ */
+  async function loadHistory() {
+    const month = parseInt(document.getElementById('attHistMonth')?.value, 10) || (new Date().getMonth() + 1);
+    const year = parseInt(document.getElementById('attHistYear')?.value, 10) || new Date().getFullYear();
+    const listEl = document.getElementById('attHistList');
+    const countEl = document.getElementById('attHistCount');
+
+    if (listEl) listEl.innerHTML = '<div class="text-center py-10 text-slate-500 text-xs">Loading...</div>';
+
+    try {
+      const rows = await ATT.getMonthlyAttendance(UI.storeId, month, year, UI.staffId);
+
+      /* Stats */
+      let present = 0, totalHours = 0;
+      const inTimes = [];
+      rows.forEach((r) => {
+        if (r.checkInTime) { present++; inTimes.push(r.checkInTime); }
+        if (r.hoursWorked) totalHours += r.hoursWorked;
+      });
+
+      const avgIn = (() => {
+        if (inTimes.length === 0) return '--:--';
+        let tot = 0;
+        inTimes.forEach((t) => {
+          const [h, m] = t.split(':').map(Number);
+          tot += h * 60 + m;
+        });
+        const avg = Math.round(tot / inTimes.length);
+        return String(Math.floor(avg / 60)).padStart(2,'0') + ':' + String(avg % 60).padStart(2,'0');
+      })();
+
+      const pEl = document.getElementById('attStatPresent');
+      if (pEl) pEl.textContent = present;
+      const hEl = document.getElementById('attStatHours');
+      if (hEl) hEl.textContent = totalHours.toFixed(1);
+      const aEl = document.getElementById('attStatAvgIn');
+      if (aEl) aEl.textContent = avgIn;
+      if (countEl) countEl.textContent = rows.length + ' day' + (rows.length !== 1 ? 's' : '');
+
+      /* List */
+      if (!listEl) return;
+      if (rows.length === 0) {
+        listEl.innerHTML = '<div class="text-center py-10 text-slate-500 text-xs">No records this month.</div>';
+        return;
+      }
+
+      listEl.innerHTML = rows.slice().reverse().map((r) => {
+        const day = r.date?.split('-')[2] || '';
+        const dow = ATT.formatDayOfWeek(r.date);
+        const hours = (r.hoursWorked || 0).toFixed(2);
+        const selfieThumb = r.selfie
+          ? `<img src="${r.selfie}" class="w-10 h-12 object-cover rounded border border-slate-700 flex-shrink-0" alt="selfie">`
+          : `<div class="w-10 h-12 rounded border border-slate-700 flex items-center justify-center text-slate-600 text-[9px] flex-shrink-0 bg-slate-950">No pic</div>`;
+
+        return `
+          <div class="flex items-center gap-3 p-2.5 hover:bg-slate-800/30">
+            ${selfieThumb}
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-[11px] font-bold text-white">${day} ${dow}</span>
+                ${r.checkInTime ? `<span class="text-[9px] bg-emerald-950/60 text-emerald-400 border border-emerald-800/60 px-1.5 py-0.5 rounded font-bold">IN ${C.escapeHTML(r.checkInTime)}</span>` : ''}
+                ${r.checkOutTime ? `<span class="text-[9px] bg-rose-950/60 text-rose-400 border border-rose-800/60 px-1.5 py-0.5 rounded font-bold">OUT ${C.escapeHTML(r.checkOutTime)}</span>` : ''}
+              </div>
+              <div class="text-[10px] text-slate-500 mt-0.5 truncate">
+                ${r.checkInLocation ? '📍 ' + C.escapeHTML(r.checkInLocation) : ''}
+              </div>
+            </div>
+            <div class="text-right flex-shrink-0">
+              <div class="text-[11px] font-bold text-sky-400 font-mono">${hours}h</div>
+              <div class="text-[9px] text-slate-500">${(r.selfieSizeKB || 0).toFixed(1)}KB</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+    } catch (e) {
+      console.error('loadHistory failed:', e);
+      if (listEl) listEl.innerHTML = '<div class="text-center py-10 text-rose-400 text-xs">Failed to load. Check connection.</div>';
+    }
+  }
+
+
+  /* ============================================================
+     EXPOSE
+     ============================================================ */
+  window.SF = window.SF || {};
+  window.SF.attendanceUI = {
+    init: init_attendanceModule,
+    toggleCamera,
+    refreshLocation,
+    checkIn,
+    retake,
+    confirmCheckIn,
+    checkOut,
+    loadToday,
+    loadHistory
+  };
+
+  window.init_attendanceModule = init_attendanceModule;
+
+  if (document.getElementById('attendanceModule')) {
+    init_attendanceModule();
+  }
+})();
+</script>
