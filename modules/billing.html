@@ -1,17 +1,34 @@
 <!-- ============================================================
-     SMARTFIX ERP — Billing / POS Module (v4.2.1)
-     File: modules/billing.html
-     Print fix: iframe-based for mobile compatibility
+     SMARTFIX ERP — Billing / POS (v4.4.0)
+     GST + Non-GST support
      ============================================================ -->
 
 <section id="billingModule" class="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
-  <!-- LEFT PANEL — POS FORM -->
   <div class="lg:col-span-5 space-y-3">
 
+    <!-- ============ BILL TYPE TOGGLE ============ -->
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-3">
+      <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">🧾 Bill Type</div>
+      <div class="grid grid-cols-2 gap-2">
+        <button type="button" id="billTypeGST" onclick="SF.billing.setBillType('GST')"
+                class="py-2.5 rounded-lg text-xs font-bold transition bg-emerald-600 text-white">
+          ✅ GST Bill
+        </button>
+        <button type="button" id="billTypeNonGST" onclick="SF.billing.setBillType('NON_GST')"
+                class="py-2.5 rounded-lg text-xs font-bold transition bg-slate-950 border border-slate-700 text-slate-400">
+          ⚪ Non-GST Bill
+        </button>
+      </div>
+      <div class="text-[10px] text-slate-500 mt-2">
+        <span id="billTypeHint">GST invoice with tax breakup (CGST/SGST/IGST)</span>
+      </div>
+    </div>
+
+    <!-- ============ INVOICE HEADER ============ -->
     <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
       <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-        <h2 class="font-bold text-xs uppercase tracking-wider text-white">🧾 POS Sales Invoice</h2>
+        <h2 class="font-bold text-xs uppercase tracking-wider text-white">📄 Invoice Details</h2>
         <span id="billFyBadge" class="text-[10px] bg-sky-950 text-sky-300 font-mono font-bold px-2 py-0.5 rounded border border-sky-800">FY</span>
       </div>
       <div class="grid grid-cols-2 gap-2">
@@ -26,6 +43,7 @@
       </div>
     </div>
 
+    <!-- ============ CUSTOMER ============ -->
     <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
       <h3 class="text-[11px] font-bold uppercase tracking-wider text-sky-400 border-b border-slate-800 pb-2">👤 Customer Details</h3>
       <div class="grid grid-cols-2 gap-2">
@@ -44,11 +62,11 @@
         <input type="text" id="billCustAddr" oninput="SF.billing.renderPreview()" placeholder="City, State" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs">
       </div>
       <div class="grid grid-cols-2 gap-2">
-        <div>
+        <div id="billGSTINWrap">
           <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">GSTIN</label>
           <input type="text" id="billCustGSTIN" oninput="SF.billing.renderPreview()" placeholder="Optional" maxlength="15" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-mono uppercase">
         </div>
-        <div>
+        <div id="billGSTTypeWrap">
           <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">GST Type</label>
           <select id="billGstType" onchange="SF.billing.renderPreview()" class="w-full bg-slate-950 border border-sky-700/60 rounded-lg px-2.5 py-1.5 text-xs text-sky-200 font-semibold">
             <option value="INTRA">Intra (CGST+SGST)</option>
@@ -68,6 +86,7 @@
       </div>
     </div>
 
+    <!-- ============ ADD PRODUCT ============ -->
     <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
       <div class="flex justify-between items-center">
         <h3 class="text-[11px] font-bold uppercase tracking-wider text-sky-400">📦 Add Product</h3>
@@ -88,9 +107,9 @@
           <input type="text" id="billItemModel" placeholder="Model name" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs">
         </div>
       </div>
-      <div class="grid grid-cols-4 gap-1.5">
-        <div><label class="block text-[9px] font-bold uppercase mb-0.5 text-slate-500">HSN</label><input type="text" id="billItemHSN" value="8517" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-1.5 py-1.5 text-xs font-mono text-center"></div>
-        <div><label class="block text-[9px] font-bold uppercase mb-0.5 text-slate-500">GST%</label>
+      <div id="billItemMetaRow" class="grid grid-cols-4 gap-1.5">
+        <div id="billItemHSNWrap"><label class="block text-[9px] font-bold uppercase mb-0.5 text-slate-500">HSN</label><input type="text" id="billItemHSN" value="8517" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-1.5 py-1.5 text-xs font-mono text-center"></div>
+        <div id="billItemGSTWrap"><label class="block text-[9px] font-bold uppercase mb-0.5 text-slate-500">GST%</label>
           <select id="billItemGST" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-1 py-1.5 text-xs">
             <option value="18">18</option><option value="12">12</option><option value="28">28</option><option value="0">0</option>
           </select>
@@ -101,6 +120,7 @@
       <button type="button" onclick="SF.billing.addManualItem()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 rounded-lg text-xs transition">+ Add to Invoice</button>
     </div>
 
+    <!-- ============ DISCOUNT ============ -->
     <div class="bg-amber-950/40 border border-amber-800/60 rounded-2xl p-4">
       <div class="flex items-center justify-between gap-3">
         <div class="flex-1">
@@ -111,6 +131,7 @@
       </div>
     </div>
 
+    <!-- ============ CART ============ -->
     <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4">
       <div class="flex justify-between items-center mb-2">
         <h3 class="text-[11px] font-bold uppercase tracking-wider text-sky-400">🛒 Cart</h3>
@@ -122,16 +143,16 @@
     </div>
 
     <button type="button" onclick="SF.billing.finalize()" class="w-full bg-gradient-to-r from-sky-600 to-sky-700 hover:from-sky-500 hover:to-sky-600 text-white font-black py-3.5 rounded-2xl text-sm shadow-lg shadow-sky-600/30 transition flex items-center justify-center gap-2">
-      <span>🖨️</span><span>Save & Print GST Invoice</span>
+      <span>🖨️</span><span>Save & Print Invoice</span>
     </button>
 
   </div>
 
-  <!-- RIGHT PANEL — LIVE PREVIEW -->
+  <!-- RIGHT: PREVIEW -->
   <div class="lg:col-span-7">
     <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 overflow-x-auto">
       <div class="flex justify-between items-center mb-3">
-        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">📄 Live Invoice Preview (A4)</span>
+        <span id="billPreviewTitle" class="text-[10px] font-bold uppercase tracking-wider text-slate-400">📄 Live Invoice Preview (A4)</span>
         <button type="button" onclick="SF.billing.finalize()" class="text-[10px] bg-sky-600 hover:bg-sky-700 text-white font-bold px-3 py-1 rounded-lg">Quick Print</button>
       </div>
       <div id="billInvoicePreview" class="bg-white text-slate-900 shadow-2xl mx-auto" style="width:100%;max-width:202mm;min-height:282mm;padding:6mm 7mm;box-sizing:border-box;font-size:10px;"></div>
@@ -151,13 +172,55 @@
 
   if (!S || !C) { console.error('Billing module: SF globals not ready'); return; }
 
+  let billType = 'GST';
+
   function requirePerm(perm, msg) {
     if (!window.SF?.perms?.can?.(perm)) {
-      C.toast('🔒 ' + (msg || 'You do not have permission for this action'), 'error', 3000);
+      C.toast('🔒 ' + (msg || 'Permission denied'), 'error', 3000);
       return false;
     }
     return true;
   }
+
+
+  /* ============================================================
+     BILL TYPE TOGGLE
+     ============================================================ */
+  function setBillType(type) {
+    billType = type === 'NON_GST' ? 'NON_GST' : 'GST';
+
+    const gstBtn = document.getElementById('billTypeGST');
+    const nonGstBtn = document.getElementById('billTypeNonGST');
+    const hint = document.getElementById('billTypeHint');
+    const gstinWrap = document.getElementById('billGSTINWrap');
+    const gstTypeWrap = document.getElementById('billGSTTypeWrap');
+    const hsnWrap = document.getElementById('billItemHSNWrap');
+    const gstRateWrap = document.getElementById('billItemGSTWrap');
+    const previewTitle = document.getElementById('billPreviewTitle');
+
+    if (billType === 'GST') {
+      if (gstBtn) gstBtn.className = 'py-2.5 rounded-lg text-xs font-bold transition bg-emerald-600 text-white';
+      if (nonGstBtn) nonGstBtn.className = 'py-2.5 rounded-lg text-xs font-bold transition bg-slate-950 border border-slate-700 text-slate-400';
+      if (hint) hint.textContent = 'GST invoice with tax breakup (CGST/SGST/IGST)';
+      if (gstinWrap) gstinWrap.style.display = '';
+      if (gstTypeWrap) gstTypeWrap.style.display = '';
+      if (hsnWrap) hsnWrap.style.display = '';
+      if (gstRateWrap) gstRateWrap.style.display = '';
+      if (previewTitle) previewTitle.textContent = '📄 Live GST Invoice Preview (A4)';
+    } else {
+      if (gstBtn) gstBtn.className = 'py-2.5 rounded-lg text-xs font-bold transition bg-slate-950 border border-slate-700 text-slate-400';
+      if (nonGstBtn) nonGstBtn.className = 'py-2.5 rounded-lg text-xs font-bold transition bg-violet-600 text-white';
+      if (hint) hint.textContent = 'Simple bill — no GST, no tax breakup (for unregistered sales)';
+      if (gstinWrap) gstinWrap.style.display = 'none';
+      if (gstTypeWrap) gstTypeWrap.style.display = 'none';
+      if (hsnWrap) hsnWrap.style.display = 'none';
+      if (gstRateWrap) gstRateWrap.style.display = 'none';
+      if (previewTitle) previewTitle.textContent = '📄 Live Non-GST Bill Preview (A4)';
+    }
+
+    renderPreview();
+  }
+
 
   /* ============================================================
      RENDER PREVIEW
@@ -179,6 +242,192 @@
     const shopCode = S.store?.shopCode || p.shopCode || '—';
     const items = S.activeCart || [];
 
+    const datePretty = C.fmtDatePretty(new Date(invDateStr + 'T12:00:00'));
+    const baseUrl = window.location.origin + window.location.pathname.replace(/\/app\.html.*$/, '/').replace(/\/index\.html.*$/, '/');
+    const portalQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${encodeURIComponent(baseUrl + 'index.html#customer')}`;
+
+    if (billType === 'NON_GST') {
+      el.innerHTML = renderNonGstHTML({ invNo, datePretty, custName, custPhone, custAddr, discount, p, shopCode, items, baseUrl, portalQrUrl });
+    } else {
+      el.innerHTML = renderGstHTML({ invNo, datePretty, custName, custPhone, custAddr, custGSTIN, taxType, discount, p, shopCode, items, baseUrl, portalQrUrl });
+    }
+  }
+
+
+  /* ============================================================
+     NON-GST TEMPLATE
+     ============================================================ */
+  function renderNonGstHTML({ invNo, datePretty, custName, custPhone, custAddr, discount, p, shopCode, items, baseUrl, portalQrUrl }) {
+    let totalAmount = 0, totalQty = 0;
+    const rows = items.map((it, idx) => {
+      const lineTotal = (it.rate || 0) * (it.qty || 1);
+      totalAmount += lineTotal;
+      totalQty += (it.qty || 1);
+      return `
+        <tr style="height:16mm">
+          <td style="border:1px solid #6d28d9;padding:5px;text-align:center;font-weight:700;color:#0f172a;">${idx + 1}</td>
+          <td style="border:1px solid #6d28d9;padding:5px;">
+            <div style="font-weight:700;color:#0f172a;font-size:11.5px;">${C.escapeHTML(it.model || '')}</div>
+            ${it.imei ? `<div style="font-size:9px;color:#6d28d9;font-family:monospace;margin-top:1px;">IMEI: ${C.escapeHTML(it.imei)}</div>` : ''}
+          </td>
+          <td style="border:1px solid #6d28d9;padding:5px;text-align:center;font-weight:700;color:#0f172a;">${it.qty || 1}</td>
+          <td style="border:1px solid #6d28d9;padding:5px;text-align:right;font-family:monospace;color:#0f172a;">${(it.rate || 0).toFixed(2)}</td>
+          <td style="border:1px solid #6d28d9;padding:5px;text-align:right;font-family:monospace;font-weight:700;color:#0f172a;">${lineTotal.toFixed(2)}</td>
+        </tr>
+      `;
+    }).join('');
+
+    const minRows = 8;
+    let emptyRows = '';
+    for (let i = items.length; i < minRows; i++) {
+      emptyRows += `<tr style="height:14mm"><td style="border:1px solid #6d28d9;padding:5px;">&nbsp;</td><td style="border:1px solid #6d28d9;padding:5px;">&nbsp;</td><td style="border:1px solid #6d28d9;padding:5px;">&nbsp;</td><td style="border:1px solid #6d28d9;padding:5px;">&nbsp;</td><td style="border:1px solid #6d28d9;padding:5px;">&nbsp;</td></tr>`;
+    }
+
+    const finalPayable = Math.max(0, totalAmount - discount);
+    const discountPct = totalAmount > 0 ? ((discount / totalAmount) * 100).toFixed(1) : 0;
+    const words = C.numberToWords(finalPayable);
+    const upiUri = `upi://pay?pa=${encodeURIComponent(p.upiId || '')}&pn=${encodeURIComponent(p.name || 'Store')}&am=${finalPayable.toFixed(2)}&cu=INR`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=${encodeURIComponent(upiUri)}`;
+
+    return `
+      <div style="display:flex;flex-direction:column;justify-content:space-between;min-height:270mm;height:100%;background:white;color:#0f172a;">
+
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:2px solid #6d28d9;">
+            <div style="display:flex;gap:12px;align-items:flex-start;">
+              ${p.logo ? `<img src="${p.logo}" style="height:52px;width:52px;object-fit:contain;">` : `<div style="width:48px;height:48px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-size:24px;box-shadow:0 4px 12px rgba(109,40,217,0.3);">🔧</div>`}
+              <div>
+                <div style="font-size:20px;font-weight:900;color:#5b21b6;letter-spacing:-0.02em;line-height:1;">${C.escapeHTML(p.name || 'My Store')}</div>
+                <div style="font-size:9px;color:#475569;margin-top:4px;max-width:240px;line-height:1.35;">${C.escapeHTML(p.address || '')}</div>
+                <div style="font-size:9px;font-weight:700;color:#0f172a;margin-top:2px;">${C.escapeHTML(p.phone || '')}</div>
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <div style="display:inline-block;background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:white;font-size:11px;font-weight:900;padding:6px 14px;border-radius:5px;letter-spacing:2px;">
+                INVOICE
+              </div>
+              <div style="font-size:7.5px;color:#64748b;font-weight:700;margin-top:5px;">
+                Shop Code: <span style="font-family:monospace;color:#6d28d9;font-size:8px;">${C.escapeHTML(shopCode)}</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="border-bottom:1px solid #6d28d9;padding:3px;text-align:center;font-size:9px;font-weight:800;background:#f5f3ff;color:#6d28d9;letter-spacing:0.3px;">
+            ✨ All Smartphones • Best Prices • Easy EMI Available ✨
+          </div>
+
+          <div style="border:1px solid #6d28d9;border-top:none;">
+            <div style="display:grid;grid-template-columns:6fr 6fr;font-size:10px;">
+              <div style="border-right:1px solid #6d28d9;padding:6px;">
+                <div style="font-size:8px;font-weight:800;color:#6d28d9;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #ddd6fe;padding-bottom:2px;margin-bottom:4px;">Bill To</div>
+                <div style="display:flex;margin-bottom:2px;"><span style="width:60px;color:#64748b;font-weight:700;">Name:</span><span style="font-weight:800;color:#0f172a;">${C.escapeHTML(custName)}</span></div>
+                <div style="display:flex;margin-bottom:2px;"><span style="width:60px;color:#64748b;font-weight:700;">Address:</span><span style="color:#334155;">${C.escapeHTML(custAddr)}</span></div>
+                <div style="display:flex;"><span style="width:60px;color:#64748b;font-weight:700;">Phone:</span><span style="font-family:monospace;color:#334155;">${C.escapeHTML(custPhone)}</span></div>
+              </div>
+              <div style="padding:6px;">
+                <div style="display:flex;justify-content:space-between;padding-bottom:3px;border-bottom:1px solid #ddd6fe;margin-bottom:3px;">
+                  <span style="color:#64748b;font-weight:700;">Invoice No:</span>
+                  <strong style="font-family:monospace;color:#6d28d9;font-size:11px;">${C.escapeHTML(invNo)}</strong>
+                </div>
+                <div style="display:flex;justify-content:space-between;">
+                  <span style="color:#64748b;font-weight:700;">Date:</span>
+                  <strong style="font-family:monospace;color:#0f172a;">${datePretty}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <table style="width:100%;border-collapse:collapse;font-size:10px;margin-top:0;">
+            <thead>
+              <tr style="background:#ede9fe;color:#5b21b6;font-size:9px;text-transform:uppercase;font-weight:800;letter-spacing:0.3px;">
+                <th style="border:1px solid #6d28d9;padding:5px;width:30px;">#</th>
+                <th style="border:1px solid #6d28d9;padding:5px;text-align:left;">Item Description</th>
+                <th style="border:1px solid #6d28d9;padding:5px;width:44px;">Qty</th>
+                <th style="border:1px solid #6d28d9;padding:5px;width:78px;text-align:right;">Rate ₹</th>
+                <th style="border:1px solid #6d28d9;padding:5px;width:88px;text-align:right;">Amount ₹</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows || '<tr><td colspan="5" style="border:1px solid #6d28d9;padding:14px;text-align:center;color:#94a3b8;">No items yet</td></tr>'}
+              ${emptyRows}
+            </tbody>
+            <tfoot>
+              <tr style="background:#f5f3ff;font-weight:800;font-size:10px;">
+                <td colspan="2" style="border:1px solid #6d28d9;padding:5px;text-align:right;text-transform:uppercase;color:#5b21b6;">Total</td>
+                <td style="border:1px solid #6d28d9;padding:5px;text-align:center;font-family:monospace;color:#6d28d9;">${totalQty}</td>
+                <td style="border:1px solid #6d28d9;padding:5px;"></td>
+                <td style="border:1px solid #6d28d9;padding:5px;text-align:right;font-family:monospace;font-weight:900;color:#0f172a;">${totalAmount.toFixed(2)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div>
+          <div style="border:1px solid #6d28d9;margin-top:6px;">
+            <div style="display:grid;grid-template-columns:7fr 5fr;">
+              <div style="border-right:1px solid #6d28d9;padding:7px;display:flex;flex-direction:column;gap:5px;">
+                <div>
+                  <div style="font-size:8px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Amount in Words</div>
+                  <div style="font-size:10.5px;font-weight:900;color:#0f172a;text-transform:uppercase;letter-spacing:-0.01em;line-height:1.25;margin-top:1px;">${words}</div>
+                </div>
+                <div style="border-top:1px solid #ddd6fe;padding-top:5px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+                  <div style="font-size:9px;line-height:1.45;flex:1;">
+                    <div style="font-weight:800;color:#6d28d9;text-transform:uppercase;font-size:8px;letter-spacing:0.5px;margin-bottom:2px;">Payment Details</div>
+                    <div><span style="color:#64748b;">Bank:</span> <strong style="color:#0f172a;">${C.escapeHTML(p.bankName || '—')}</strong></div>
+                    <div><span style="color:#64748b;">A/c No:</span> <span style="font-family:monospace;font-weight:700;color:#0f172a;">${C.escapeHTML(p.bankAcc || '—')}</span></div>
+                    <div><span style="color:#64748b;">IFSC:</span> <span style="font-family:monospace;color:#0f172a;">${C.escapeHTML(p.bankIFSC || '—')}</span></div>
+                    <div><span style="color:#64748b;">UPI ID:</span> <span style="font-family:monospace;color:#6d28d9;font-weight:700;">${C.escapeHTML(p.upiId || '—')}</span></div>
+                  </div>
+                  <div style="text-align:center;">
+                    ${p.upiId ? `<img src="${qrUrl}" style="width:66px;height:66px;border:1px solid #cbd5e1;padding:2px;border-radius:5px;background:white;">` : ''}
+                    <div style="font-size:6.5px;color:#6d28d9;font-weight:800;margin-top:2px;letter-spacing:0.3px;">SCAN TO PAY</div>
+                  </div>
+                </div>
+                <div style="border-top:1px solid #ddd6fe;padding-top:5px;display:flex;gap:6px;align-items:center;background:#f0fdf4;margin:0 -7px -7px -7px;padding:6px 7px;">
+                  <img src="${portalQrUrl}" style="width:44px;height:44px;border:1px solid #86efac;padding:1px;border-radius:4px;background:white;flex-shrink:0;">
+                  <div style="font-size:8px;line-height:1.4;color:#166534;">
+                    <div style="font-weight:900;font-size:9px;color:#065f46;margin-bottom:1px;">📱 View Your Bill Anytime</div>
+                    Scan QR or visit <span style="font-family:monospace;background:#dcfce7;padding:0 2px;border-radius:2px;font-weight:700;">${C.escapeHTML(baseUrl.replace(/^https?:\/\//, '').substring(0, 30))}</span><br>
+                    Shop Code: <strong>${C.escapeHTML(shopCode)}</strong> • Phone • IMEI/Invoice No
+                  </div>
+                </div>
+                <div style="border-top:1px solid #ddd6fe;padding-top:4px;font-size:8px;color:#475569;">
+                  <div style="font-weight:800;color:#0f172a;text-transform:uppercase;font-size:7.5px;letter-spacing:0.5px;margin-bottom:2px;">Terms & Conditions</div>
+                  <div style="white-space:pre-line;line-height:1.35;">${C.escapeHTML(p.terms || '1. Subject to Local Jurisdiction.')}</div>
+                </div>
+              </div>
+
+              <div style="display:flex;flex-direction:column;justify-content:space-between;background:#faf5ff;">
+                <div style="font-size:10.5px;">
+                  <div style="display:flex;justify-content:space-between;padding:6px 8px;border-bottom:1px solid #ddd6fe;"><span style="color:#334155;font-weight:600;">Subtotal</span><span style="font-family:monospace;font-weight:700;color:#0f172a;">${totalAmount.toFixed(2)}</span></div>
+                  ${discount > 0 ? `<div style="display:flex;justify-content:space-between;padding:6px 8px;border-bottom:1px solid #ddd6fe;color:#dc2626;font-weight:800;"><span>Discount (${discountPct}%)</span><span style="font-family:monospace;">-${discount.toFixed(2)}</span></div>` : ''}
+                  <div style="display:flex;justify-content:space-between;padding:11px 8px;background:#6d28d9;color:white;font-weight:900;font-size:13px;"><span style="letter-spacing:0.5px;">TOTAL</span><span style="font-family:monospace;">₹${finalPayable.toFixed(2)}</span></div>
+                </div>
+                <div style="padding:8px;text-align:right;">
+                  <div style="font-size:7.5px;color:#94a3b8;font-weight:700;">(E. & O.E.)</div>
+                  <div style="font-size:9px;color:#475569;margin-top:4px;line-height:1.3;">Goods sold are not returnable.</div>
+                  <div style="font-size:10px;font-weight:800;color:#0f172a;margin-top:8px;">For ${C.escapeHTML(p.name || 'Store')}</div>
+                  <div style="height:38px;"></div>
+                  <div style="border-top:1px solid #64748b;width:140px;margin-left:auto;font-size:8px;font-weight:800;padding-top:3px;text-align:center;color:#475569;">Authorised Signatory</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px;padding:5px 8px;background:linear-gradient(90deg,#f5f3ff,#ede9fe,#ddd6fe);border-radius:5px;font-size:8px;">
+            <div style="color:#6d28d9;font-weight:800;">⭐ SmartFix ERP — Cloud Edition</div>
+            <div style="color:#64748b;font-family:monospace;">Powered by Firebase • © 2026</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+
+  /* ============================================================
+     GST TEMPLATE (existing)
+     ============================================================ */
+  function renderGstHTML({ invNo, datePretty, custName, custPhone, custAddr, custGSTIN, taxType, discount, p, shopCode, items, baseUrl, portalQrUrl }) {
     let totalTaxable = 0, totalTax = 0, totalGross = 0, totalQty = 0;
 
     const rows = items.map((it, idx) => {
@@ -186,12 +435,10 @@
       const lineTaxable  = lineTotal / (1 + (it.gst || 0) / 100);
       const lineTax      = lineTotal - lineTaxable;
       const ratePerUnit  = lineTaxable / (it.qty || 1);
-
       totalTaxable += lineTaxable;
       totalTax     += lineTax;
       totalGross   += lineTotal;
       totalQty     += (it.qty || 1);
-
       return `
         <tr style="height:15mm">
           <td style="border:1px solid #0369a1;padding:4px;text-align:center;font-weight:700;color:#0f172a;">${idx + 1}</td>
@@ -219,19 +466,12 @@
     const discountPct   = totalGross > 0 ? ((discount / totalGross) * 100).toFixed(1) : 0;
     const finalTaxable  = totalTaxable * (totalGross > 0 ? finalPayable / totalGross : 1);
     const finalTax      = totalTax * (totalGross > 0 ? finalPayable / totalGross : 1);
-
     const words = C.numberToWords(finalPayable);
     const upiUri = `upi://pay?pa=${encodeURIComponent(p.upiId || '')}&pn=${encodeURIComponent(p.name || 'Store')}&am=${finalPayable.toFixed(2)}&cu=INR`;
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=${encodeURIComponent(upiUri)}`;
-    const datePretty = C.fmtDatePretty(new Date(invDateStr + 'T12:00:00'));
 
-    const baseUrl = window.location.origin + window.location.pathname.replace(/\/app\.html.*$/, '/').replace(/\/index\.html.*$/, '/');
-    const portalUrl = baseUrl + 'index.html#customer';
-    const portalQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${encodeURIComponent(portalUrl)}`;
-
-    el.innerHTML = `
+    return `
       <div style="display:flex;flex-direction:column;justify-content:space-between;min-height:270mm;height:100%;background:white;color:#0f172a;">
-
         <div>
           <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:2px solid #0369a1;">
             <div style="display:flex;gap:12px;align-items:flex-start;">
@@ -339,10 +579,9 @@
                   <div style="font-size:9px;line-height:1.45;flex:1;">
                     <div style="font-weight:800;color:#0369a1;text-transform:uppercase;font-size:8px;letter-spacing:0.5px;margin-bottom:2px;">Bank Details</div>
                     <div><span style="color:#64748b;">Name:</span> <strong style="color:#0f172a;">${C.escapeHTML(p.bankName || '—')}</strong></div>
-                    <div><span style="color:#64748b;">Branch:</span> <span style="color:#334155;">${C.escapeHTML(p.bankBranch || '—')}</span></div>
                     <div><span style="color:#64748b;">A/c No:</span> <span style="font-family:monospace;font-weight:700;color:#0f172a;">${C.escapeHTML(p.bankAcc || '—')}</span></div>
                     <div><span style="color:#64748b;">IFSC:</span> <span style="font-family:monospace;color:#0f172a;">${C.escapeHTML(p.bankIFSC || '—')}</span></div>
-                    <div><span style="color:#64748b;">UPI ID:</span> <span style="font-family:monospace;color:#0369a1;font-weight:700;">${C.escapeHTML(p.upiId || '—')}</span></div>
+                    <div><span style="color:#64748b;">UPI:</span> <span style="font-family:monospace;color:#0369a1;font-weight:700;">${C.escapeHTML(p.upiId || '—')}</span></div>
                   </div>
                   <div style="text-align:center;">
                     ${p.upiId ? `<img src="${qrUrl}" style="width:66px;height:66px;border:1px solid #cbd5e1;padding:2px;border-radius:5px;background:white;">` : ''}
@@ -353,8 +592,7 @@
                   <img src="${portalQrUrl}" style="width:44px;height:44px;border:1px solid #86efac;padding:1px;border-radius:4px;background:white;flex-shrink:0;">
                   <div style="font-size:8px;line-height:1.4;color:#166534;">
                     <div style="font-weight:900;font-size:9px;color:#065f46;margin-bottom:1px;">📱 View Your Bill Anytime</div>
-                    Scan this QR or visit <span style="font-family:monospace;background:#dcfce7;padding:0 2px;border-radius:2px;font-weight:700;">${C.escapeHTML(baseUrl.replace(/^https?:\/\//, '').substring(0, 30))}</span><br>
-                    Use <strong>Shop Code: ${C.escapeHTML(shopCode)}</strong> + your <strong>Phone</strong> + <strong>IMEI/Invoice No</strong> to view bills, warranty & service history.
+                    Shop Code: <strong>${C.escapeHTML(shopCode)}</strong> • Phone • IMEI/Invoice No
                   </div>
                 </div>
                 <div style="border-top:1px solid #bae6fd;padding-top:4px;font-size:8px;color:#475569;">
@@ -403,7 +641,7 @@
     if (cnt) cnt.textContent = items.length + ' item' + (items.length !== 1 ? 's' : '');
 
     if (items.length === 0) {
-      el.innerHTML = '<div class="text-center text-slate-500 text-xs py-4">No items yet. Scan or add.</div>';
+      el.innerHTML = '<div class="text-center text-slate-500 text-xs py-4">No items yet.</div>';
       return;
     }
 
@@ -412,7 +650,7 @@
         <div class="flex-1 min-w-0">
           <div class="font-bold text-white truncate">${C.escapeHTML(it.model || '')}</div>
           ${it.imei ? `<div class="text-[9px] text-sky-400 font-mono truncate">${C.escapeHTML(it.imei)}</div>` : ''}
-          <div class="text-[10px] text-slate-500">${it.qty} × ₹${(it.rate || 0).toFixed(2)} • GST ${it.gst}%</div>
+          <div class="text-[10px] text-slate-500">${it.qty} × ₹${(it.rate || 0).toFixed(2)}${billType === 'GST' ? ' • GST ' + it.gst + '%' : ''}</div>
         </div>
         <div class="text-right flex-shrink-0"><div class="font-black text-emerald-400 font-mono text-sm">₹${((it.rate || 0) * (it.qty || 1)).toFixed(2)}</div></div>
         <button type="button" onclick="SF.billing.removeItem(${idx})" class="w-6 h-6 flex items-center justify-center rounded-md bg-rose-950/60 text-rose-400 hover:bg-rose-900/60 hover:text-rose-300 font-bold text-xs flex-shrink-0">✕</button>
@@ -437,8 +675,8 @@
     if (!requirePerm('billing.create')) return;
     const model = (document.getElementById('billItemModel')?.value || '').trim();
     const imei  = (document.getElementById('billItemIMEI')?.value || '').trim();
-    const hsn   = (document.getElementById('billItemHSN')?.value || '8517').trim();
-    const gst   = parseFloat(document.getElementById('billItemGST')?.value) || 18;
+    const hsn   = billType === 'GST' ? (document.getElementById('billItemHSN')?.value || '8517').trim() : '';
+    const gst   = billType === 'GST' ? (parseFloat(document.getElementById('billItemGST')?.value) || 18) : 0;
     const qty   = parseInt(document.getElementById('billItemQty')?.value, 10) || 1;
     const rate  = parseFloat(document.getElementById('billItemRate')?.value) || 0;
 
@@ -487,14 +725,18 @@
     const stockItem = S.inventory.find((x) => (x.imei && C.normalizeIMEI(x.imei) === norm) || (x.model && x.model.toLowerCase() === code.toLowerCase()));
     if (stockItem) {
       if (stockItem.status === 'Sold') { C.toast('Already SOLD: ' + stockItem.model, 'error'); C.playErrorBeep(); return; }
-      pushItem({ stockId: stockItem.id, model: stockItem.model, imei: stockItem.imei || '', hsn: '8517', gst: stockItem.gst || 18, qty: 1, rate: stockItem.cost || 0, purchaseCost: stockItem.purchaseCost || 0 });
+      pushItem({
+        stockId: stockItem.id, model: stockItem.model, imei: stockItem.imei || '',
+        hsn: billType === 'GST' ? '8517' : '', gst: billType === 'GST' ? (stockItem.gst || 18) : 0,
+        qty: 1, rate: stockItem.cost || 0, purchaseCost: stockItem.purchaseCost || 0
+      });
       return;
     }
     C.playErrorBeep();
     const rate = prompt('"' + code + '" not in stock.\n\nEnter selling price (₹):', '0');
     if (!rate || isNaN(rate) || parseFloat(rate) <= 0) return;
     const model = prompt('Enter model name:', 'Mobile Device') || 'Device';
-    pushItem({ stockId: null, model, imei: code, hsn: '8517', gst: 18, qty: 1, rate: parseFloat(rate), purchaseCost: 0 });
+    pushItem({ stockId: null, model, imei: code, hsn: billType === 'GST' ? '8517' : '', gst: billType === 'GST' ? 18 : 0, qty: 1, rate: parseFloat(rate), purchaseCost: 0 });
   }
 
   function lookupIMEI(val) {
@@ -581,7 +823,7 @@
 
 
   /* ============================================================
-     FINALIZE — SAVE + PRINT
+     FINALIZE
      ============================================================ */
   async function finalize() {
     if (!requirePerm('billing.create', 'You cannot create invoices')) return;
@@ -606,9 +848,9 @@
     const custName  = (document.getElementById('billCustName')?.value || 'Cash Customer').trim() || 'Cash Customer';
     const custPhone = (document.getElementById('billCustPhone')?.value || '').trim();
     const custAddr  = (document.getElementById('billCustAddr')?.value || '').trim();
-    const custGSTIN = (document.getElementById('billCustGSTIN')?.value || '').trim();
+    const custGSTIN = billType === 'GST' ? (document.getElementById('billCustGSTIN')?.value || '').trim() : '';
     const ledger    = document.getElementById('billLedger')?.value || 'Cash-in-Hand';
-    const taxType   = document.getElementById('billGstType')?.value || 'INTRA';
+    const taxType   = billType === 'GST' ? (document.getElementById('billGstType')?.value || 'INTRA') : 'NONE';
     const discount  = parseFloat(document.getElementById('billDiscount')?.value) || 0;
 
     let tGross = 0, tTaxable = 0, tTax = 0, tPurchase = 0;
@@ -616,12 +858,20 @@
 
     items.forEach((it) => {
       const lineTotal = (it.rate || 0) * (it.qty || 1);
-      const lineTaxable = lineTotal / (1 + (it.gst || 0) / 100);
-      const lineTax = lineTotal - lineTaxable;
-      tGross += lineTotal; tTaxable += lineTaxable; tTax += lineTax;
-      tPurchase += (it.purchaseCost || 0) * (it.qty || 1);
-      if (taxType === 'INTRA') { tCGST += lineTax / 2; tSGST += lineTax / 2; }
-      else { tIGST += lineTax; }
+      if (billType === 'NON_GST') {
+        tGross += lineTotal;
+        tTaxable += lineTotal;
+        tPurchase += (it.purchaseCost || 0) * (it.qty || 1);
+      } else {
+        const lineTaxable = lineTotal / (1 + (it.gst || 0) / 100);
+        const lineTax = lineTotal - lineTaxable;
+        tGross += lineTotal;
+        tTaxable += lineTaxable;
+        tTax += lineTax;
+        tPurchase += (it.purchaseCost || 0) * (it.qty || 1);
+        if (taxType === 'INTRA') { tCGST += lineTax / 2; tSGST += lineTax / 2; }
+        else { tIGST += lineTax; }
+      }
     });
 
     if (discount < 0 || discount > tGross) { C.toast('Discount must be between ₹0 and total', 'warning'); return; }
@@ -636,6 +886,7 @@
 
     const record = {
       id: invNo, invoiceNo: invNo, date: invDate,
+      billType: billType,
       financialYear: C.getFY(new Date(invDate)).label,
       customerName: custName, customerPhone: custPhone,
       customerAddress: custAddr, customerGSTIN: custGSTIN,
@@ -668,9 +919,9 @@
           if (stk) await Cl.pushOne('inventory', stk);
         }
       }
-    } catch (e) { console.warn('Cloud push failed:', e); C.toast('Saved locally. Sync pending.', 'warning', 4000); }
+    } catch (e) { C.toast('Saved locally. Sync pending.', 'warning', 4000); }
 
-    try { window.SF.state.logAudit('INVOICE_CREATE', invNo + ' | ' + custName + ' | ₹' + finalPayable.toFixed(2)); } catch (e) {}
+    try { window.SF.state.logAudit('INVOICE_CREATE', (billType === 'NON_GST' ? '[NonGST] ' : '') + invNo + ' | ' + custName + ' | ₹' + finalPayable.toFixed(2)); } catch (e) {}
 
     printInvoice();
 
@@ -682,74 +933,51 @@
     document.getElementById('billCustName').value = '';
     document.getElementById('billCustPhone').value = '';
     document.getElementById('billCustAddr').value = '';
-    document.getElementById('billCustGSTIN').value = '';
+    const gstinEl = document.getElementById('billCustGSTIN');
+    if (gstinEl) gstinEl.value = '';
     document.getElementById('billDiscount').value = '0';
 
     renderPreview();
 
     setTimeout(() => {
-      try { C.toast('✅ Invoice ' + invNo + ' saved & printed', 'success', 2500); } catch (e) {}
+      try { C.toast('✅ ' + (billType === 'NON_GST' ? 'Bill' : 'Invoice') + ' ' + invNo + ' saved', 'success', 2500); } catch (e) {}
     }, 1200);
   }
 
 
   /* ============================================================
-     PRINT — iframe-based (mobile-safe)
+     PRINT — iframe
      ============================================================ */
   function printInvoice() {
     const srcEl = document.getElementById('billInvoicePreview');
-    if (!srcEl || !srcEl.innerHTML.trim()) {
-      C.toast('Nothing to print', 'warning');
-      return;
-    }
-
-    const invoiceHTML = srcEl.innerHTML;
+    if (!srcEl || !srcEl.innerHTML.trim()) { C.toast('Nothing to print', 'warning'); return; }
+    const html = srcEl.innerHTML;
 
     const iframe = document.createElement('iframe');
     iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;pointer-events:none;';
-    iframe.setAttribute('aria-hidden', 'true');
     document.body.appendChild(iframe);
-
     const doc = iframe.contentDocument || iframe.contentWindow.document;
-
     doc.open();
     doc.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invoice</title><style>
       @page { size: A4 portrait; margin: 4mm; }
       * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-      html, body { margin:0; padding:0; background:#fff; color:#0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; font-size:10px; }
+      html, body { margin:0; padding:0; background:#fff; color:#0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size:10px; }
       .print-wrapper { width:202mm; min-height:285mm; margin:0 auto; padding:2mm 3mm; }
       table { border-collapse: collapse; }
       tr { page-break-inside: avoid; }
       img { max-width:100%; }
       button { display:none !important; }
-    </style></head><body><div class="print-wrapper">${invoiceHTML}</div></body></html>`);
+    </style></head><body><div class="print-wrapper">${html}</div></body></html>`);
     doc.close();
-
     const triggerPrint = () => {
-      try {
-        iframe.contentWindow.focus();
-        iframe.contentWindow.print();
-      } catch (e) {
-        console.error('iframe.print failed:', e);
-        C.toast('Print dialog blocked. Allow popups.', 'error', 4000);
-      }
-      setTimeout(() => {
-        try { document.body.removeChild(iframe); } catch (e) {}
-      }, 1500);
+      try { iframe.contentWindow.focus(); iframe.contentWindow.print(); } catch (e) { C.toast('Print blocked. Allow popups.', 'error', 4000); }
+      setTimeout(() => { try { document.body.removeChild(iframe); } catch (e) {} }, 1500);
     };
-
-    if (iframe.contentWindow.document.readyState === 'complete') {
-      setTimeout(triggerPrint, 500);
-    } else {
-      iframe.onload = () => setTimeout(triggerPrint, 500);
-      setTimeout(triggerPrint, 1200);
-    }
+    if (iframe.contentWindow.document.readyState === 'complete') setTimeout(triggerPrint, 500);
+    else { iframe.onload = () => setTimeout(triggerPrint, 500); setTimeout(triggerPrint, 1200); }
   }
 
 
-  /* ============================================================
-     CUSTOMER LIST
-     ============================================================ */
   function populateCustomerList() {
     const dl = document.getElementById('billCustomerList');
     if (!dl) return;
@@ -762,11 +990,11 @@
      INIT
      ============================================================ */
   async function init_billingModule() {
-    console.log('%c🧾 Billing module initialized (v4.2.1)', 'color:#0ea5e9;font-weight:bold');
+    console.log('%c🧾 Billing module initialized (v4.4.0)', 'color:#0ea5e9;font-weight:bold');
 
     if (!window.SF?.perms?.can?.('billing.view')) {
-      const container = document.getElementById('moduleContainer');
-      if (container) container.innerHTML = '<div style="max-width:520px;margin:60px auto;padding:28px;background:#1e1b2e;border:1px solid #7f1d1d;border-radius:16px;text-align:center;"><div style="font-size:42px;margin-bottom:12px">🔒</div><div style="font-size:16px;font-weight:800;color:#fca5a5;">Access Denied</div></div>';
+      const c = document.getElementById('moduleContainer');
+      if (c) c.innerHTML = '<div style="max-width:520px;margin:60px auto;padding:28px;background:#1e1b2e;border:1px solid #7f1d1d;border-radius:16px;text-align:center;"><div style="font-size:42px;margin-bottom:12px">🔒</div><div style="font-size:16px;font-weight:800;color:#fca5a5;">Access Denied</div></div>';
       return { onUnload: () => {} };
     }
 
@@ -776,6 +1004,10 @@
     const fy = C.getFY(new Date());
     const badge = document.getElementById('billFyBadge');
     if (badge) badge.textContent = fy.label;
+
+    /* Default GST */
+    billType = 'GST';
+    setBillType('GST');
 
     await refreshInvoiceNo();
 
@@ -808,7 +1040,7 @@
     renderPreview, renderCart, addManualItem, removeItem,
     handleBarcodeKey, handleScannedCode, lookupIMEI,
     onDateChange, toggleScanner, finalize, refreshInvoiceNo,
-    printInvoice, init: init_billingModule
+    printInvoice, setBillType, init: init_billingModule
   };
 
   window.init_billingModule = init_billingModule;
