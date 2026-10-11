@@ -1,16 +1,13 @@
 <!-- ============================================================
-     SMARTFIX ERP — Mobile Repair / Job Card Module (v4.3.0)
+     SMARTFIX ERP — Mobile Repair / Job Card Module (v4.4.0)
      File: modules/repair.html
+     Self-contained: own storage + direct Firestore sync
      ============================================================ -->
 
 <section id="repairModule" class="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
-  <!-- ============================================================
-       LEFT PANEL — JOB FORM
-       ============================================================ -->
   <div class="lg:col-span-5 space-y-3">
 
-    <!-- Job header -->
     <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
       <div class="flex justify-between items-center border-b border-slate-800 pb-2">
         <h2 class="font-bold text-xs uppercase tracking-wider text-white" id="repFormTitle">🔧 New Job Card</h2>
@@ -32,7 +29,6 @@
       </div>
     </div>
 
-    <!-- Customer info -->
     <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
       <h3 class="text-[11px] font-bold uppercase tracking-wider text-sky-400 border-b border-slate-800 pb-2">👤 Customer</h3>
       <div class="grid grid-cols-2 gap-2">
@@ -55,7 +51,6 @@
       </div>
     </div>
 
-    <!-- Device info -->
     <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
       <h3 class="text-[11px] font-bold uppercase tracking-wider text-sky-400 border-b border-slate-800 pb-2">📱 Device</h3>
       <div class="grid grid-cols-2 gap-2">
@@ -96,16 +91,15 @@
       <div>
         <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Accessories Received</label>
         <div class="flex flex-wrap gap-3 text-[11px] text-slate-300">
-          <label class="flex items-center gap-1.5"><input type="checkbox" class="rep-acc" value="SIM" data-key="sim"> SIM</label>
-          <label class="flex items-center gap-1.5"><input type="checkbox" class="rep-acc" value="Memory Card" data-key="sdcard"> Memory Card</label>
-          <label class="flex items-center gap-1.5"><input type="checkbox" class="rep-acc" value="Cover" data-key="cover"> Cover</label>
-          <label class="flex items-center gap-1.5"><input type="checkbox" class="rep-acc" value="Charger" data-key="charger"> Charger</label>
-          <label class="flex items-center gap-1.5"><input type="checkbox" class="rep-acc" value="Box" data-key="box"> Box</label>
+          <label class="flex items-center gap-1.5"><input type="checkbox" class="rep-acc" value="SIM"> SIM</label>
+          <label class="flex items-center gap-1.5"><input type="checkbox" class="rep-acc" value="Memory Card"> Memory Card</label>
+          <label class="flex items-center gap-1.5"><input type="checkbox" class="rep-acc" value="Cover"> Cover</label>
+          <label class="flex items-center gap-1.5"><input type="checkbox" class="rep-acc" value="Charger"> Charger</label>
+          <label class="flex items-center gap-1.5"><input type="checkbox" class="rep-acc" value="Box"> Box</label>
         </div>
       </div>
     </div>
 
-    <!-- Issue + cost -->
     <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
       <h3 class="text-[11px] font-bold uppercase tracking-wider text-sky-400 border-b border-slate-800 pb-2">🛠 Issue & Cost</h3>
       <div>
@@ -128,7 +122,7 @@
           <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Warranty</label>
           <select id="repWarrantyDays"
                   class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs">
-            <option value="0">No warranty</option>
+            <option value="0">None</option>
             <option value="15">15 days</option>
             <option value="30" selected>30 days</option>
             <option value="60">60 days</option>
@@ -150,21 +144,19 @@
       </div>
     </div>
 
-    <!-- Save -->
     <button type="button" id="repSaveBtn" onclick="SF.repair.save()"
             class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-black py-3.5 rounded-2xl text-sm shadow-lg shadow-indigo-600/30 transition">
       💾 Save Job Card
     </button>
 
+    <div id="repDebugBox" class="bg-slate-950/60 border border-slate-800 rounded-lg p-2 text-[10px] font-mono text-slate-500 hidden">
+      <div id="repDebugText"></div>
+    </div>
+
   </div>
 
-
-  <!-- ============================================================
-       RIGHT PANEL — JOB LIST
-       ============================================================ -->
   <div class="lg:col-span-7 space-y-3">
 
-    <!-- Stats -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
       <div class="bg-sky-950/40 border border-sky-800/40 rounded-xl p-3">
         <div class="text-[9px] font-bold uppercase text-sky-400">Total Jobs</div>
@@ -184,7 +176,6 @@
       </div>
     </div>
 
-    <!-- Filter bar -->
     <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-3 flex flex-wrap gap-2 items-center">
       <input type="text" id="repSearchInput" oninput="SF.repair.renderList()"
              placeholder="🔍 Job no / Name / Phone / IMEI / Model..."
@@ -194,19 +185,16 @@
         <option value="ALL">All Status</option>
         <option value="RECEIVED">📥 Received</option>
         <option value="DIAGNOSED">🔬 Diagnosed</option>
-        <option value="WAITING_APPROVAL">⏳ Waiting Approval</option>
+        <option value="WAITING_APPROVAL">⏳ Waiting</option>
         <option value="IN_REPAIR">🔧 In Repair</option>
         <option value="READY">✅ Ready</option>
         <option value="DELIVERED">📦 Delivered</option>
         <option value="CANCELLED">❌ Cancelled</option>
       </select>
-      <select id="repTechFilter" onchange="SF.repair.renderList()"
-              class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200">
-        <option value="ALL">All Technicians</option>
-      </select>
+      <button type="button" onclick="SF.repair.reloadFromCloud()" title="Reload from cloud"
+              class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-3 py-2 rounded-lg text-xs transition">↻</button>
     </div>
 
-    <!-- Job list -->
     <div id="repJobList" class="space-y-2">
       <div class="text-center py-10 text-slate-500 text-xs">Loading...</div>
     </div>
@@ -216,9 +204,7 @@
 </section>
 
 
-<!-- ============================================================
-     JOB DETAIL MODAL
-     ============================================================ -->
+<!-- MODAL -->
 <div id="repDetailModal" class="fixed inset-0 z-[9999] hidden" style="background:rgba(0,0,0,0.8);backdrop-filter:blur(6px);">
   <div class="flex items-end sm:items-center justify-center h-full p-0 sm:p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-t-2xl sm:rounded-2xl max-w-3xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
@@ -233,11 +219,11 @@
       <div id="repModalBody" class="p-4 overflow-y-auto flex-1 space-y-3"></div>
       <div class="p-3 border-t border-slate-800 bg-slate-950/70 flex flex-wrap gap-2 flex-shrink-0">
         <button type="button" onclick="SF.repair.printSlip()"
-                class="flex-1 min-w-[120px] bg-sky-600 hover:bg-sky-500 text-white font-bold py-2.5 rounded-lg text-xs transition">🖨️ Print Slip</button>
+                class="flex-1 min-w-[110px] bg-sky-600 hover:bg-sky-500 text-white font-bold py-2.5 rounded-lg text-xs transition">🖨️ Print</button>
         <button type="button" onclick="SF.repair.shareWhatsApp()"
-                class="flex-1 min-w-[120px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-lg text-xs transition">📱 WhatsApp</button>
+                class="flex-1 min-w-[110px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-lg text-xs transition">📱 WhatsApp</button>
         <button type="button" onclick="SF.repair.deleteJob()"
-                class="bg-rose-950/60 hover:bg-rose-900/60 text-rose-300 font-bold py-2.5 px-3 rounded-lg text-xs border border-rose-800/60 transition">🗑 Delete</button>
+                class="bg-rose-950/60 hover:bg-rose-900/60 text-rose-300 font-bold py-2.5 px-3 rounded-lg text-xs border border-rose-800/60 transition">🗑</button>
       </div>
     </div>
   </div>
@@ -250,26 +236,179 @@
 
   const S  = window.SF?.state?.state;
   const C  = window.SF?.common;
-  const Cl = window.SF?.cloud;
 
-  if (!S || !C) { console.error('Repair: SF globals not ready'); return; }
+  if (!S || !C) {
+    console.error('Repair: SF globals not ready (state/common missing)');
+    return;
+  }
 
-  const STORE_ID_KEY = 'sfp_current_store';
+  const LOCAL_KEY = 'sfp_repairs';
+  const COLLECTION = 'repairs';
 
   const STATUS = {
-    RECEIVED:         { label: 'Received',          color: 'sky',     icon: '📥', bg: 'bg-sky-950/60',     text: 'text-sky-300',     border: 'border-sky-800/60' },
-    DIAGNOSED:        { label: 'Diagnosed',         color: 'purple',  icon: '🔬', bg: 'bg-purple-950/60',  text: 'text-purple-300',  border: 'border-purple-800/60' },
-    WAITING_APPROVAL: { label: 'Waiting Approval',  color: 'amber',   icon: '⏳', bg: 'bg-amber-950/60',   text: 'text-amber-300',   border: 'border-amber-800/60' },
-    IN_REPAIR:        { label: 'In Repair',         color: 'orange',  icon: '🔧', bg: 'bg-orange-950/60',  text: 'text-orange-300',  border: 'border-orange-800/60' },
-    READY:            { label: 'Ready',             color: 'emerald', icon: '✅', bg: 'bg-emerald-950/60', text: 'text-emerald-300', border: 'border-emerald-800/60' },
-    DELIVERED:        { label: 'Delivered',         color: 'violet',  icon: '📦', bg: 'bg-violet-950/60',  text: 'text-violet-300',  border: 'border-violet-800/60' },
-    CANCELLED:        { label: 'Cancelled',         color: 'rose',    icon: '❌', bg: 'bg-rose-950/60',    text: 'text-rose-300',    border: 'border-rose-800/60' }
+    RECEIVED:         { label: 'Received',          icon: '📥', text: 'text-sky-300',     bg: 'bg-sky-950/60',     border: 'border-sky-800/60' },
+    DIAGNOSED:        { label: 'Diagnosed',         icon: '🔬', text: 'text-purple-300',  bg: 'bg-purple-950/60',  border: 'border-purple-800/60' },
+    WAITING_APPROVAL: { label: 'Waiting Approval',  icon: '⏳', text: 'text-amber-300',   bg: 'bg-amber-950/60',   border: 'border-amber-800/60' },
+    IN_REPAIR:        { label: 'In Repair',         icon: '🔧', text: 'text-orange-300',  bg: 'bg-orange-950/60',  border: 'border-orange-800/60' },
+    READY:            { label: 'Ready',             icon: '✅', text: 'text-emerald-300', bg: 'bg-emerald-950/60', border: 'border-emerald-800/60' },
+    DELIVERED:        { label: 'Delivered',         icon: '📦', text: 'text-violet-300',  bg: 'bg-violet-950/60',  border: 'border-violet-800/60' },
+    CANCELLED:        { label: 'Cancelled',         icon: '❌', text: 'text-rose-300',    bg: 'bg-rose-950/60',    border: 'border-rose-800/60' }
   };
 
   const RM = {
     editingId: null,
-    currentJob: null
+    currentJob: null,
+    jobs: [],       // own array
+    unsub: null
   };
+
+
+  /* ============================================================
+     STORAGE HELPERS
+     ============================================================ */
+  function loadLocal() {
+    try {
+      const raw = localStorage.getItem(LOCAL_KEY);
+      if (raw) {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) return arr;
+      }
+    } catch (e) { console.warn('Repair: local load failed', e); }
+    return [];
+  }
+
+  function saveLocal(list) {
+    try {
+      localStorage.setItem(LOCAL_KEY, JSON.stringify(list));
+      return true;
+    } catch (e) {
+      console.error('Repair: local save failed', e);
+      C.toast('Storage full! Free up space.', 'error', 4000);
+      return false;
+    }
+  }
+
+  function debug(msg) {
+    console.log('%c🔧 [Repair]', 'color:#8b5cf6;font-weight:bold', msg);
+    const box = document.getElementById('repDebugBox');
+    const txt = document.getElementById('repDebugText');
+    if (box && txt) {
+      box.classList.remove('hidden');
+      txt.textContent = msg;
+    }
+  }
+
+
+  /* ============================================================
+     FIRESTORE SYNC
+     ============================================================ */
+  async function getFirestore() {
+    try {
+      const cfg = await import('./js/firebase-config.js');
+      const fs = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+      return { db: cfg.db, ...fs };
+    } catch (e) {
+      console.error('Firestore import failed:', e);
+      return null;
+    }
+  }
+
+  async function syncToCloud(job) {
+    const storeId = getStoreId();
+    if (!storeId || !job.id) return;
+    try {
+      const fb = await getFirestore();
+      if (!fb) return;
+      await fb.setDoc(
+        fb.doc(fb.db, 'stores', storeId, COLLECTION, job.id),
+        { ...job, _updatedAt: fb.serverTimestamp() },
+        { merge: true }
+      );
+      debug('☁️ Synced to cloud: ' + job.id);
+    } catch (e) {
+      console.warn('Cloud sync failed (will stay local):', e);
+      debug('⚠️ Cloud sync failed: ' + (e.code || e.message));
+    }
+  }
+
+  async function deleteFromCloud(jobId) {
+    const storeId = getStoreId();
+    if (!storeId || !jobId) return;
+    try {
+      const fb = await getFirestore();
+      if (!fb) return;
+      await fb.deleteDoc(fb.doc(fb.db, 'stores', storeId, COLLECTION, jobId));
+      debug('☁️ Deleted from cloud: ' + jobId);
+    } catch (e) {
+      console.warn('Cloud delete failed:', e);
+    }
+  }
+
+  async function loadFromCloud() {
+    const storeId = getStoreId();
+    if (!storeId) return;
+    try {
+      const fb = await getFirestore();
+      if (!fb) return;
+      const q = fb.query(
+        fb.collection(fb.db, 'stores', storeId, COLLECTION),
+        fb.orderBy('_updatedAt', 'desc')
+      );
+      const snap = await fb.getDocs(q);
+      const arr = [];
+      snap.forEach((d) => {
+        const data = d.data();
+        delete data._updatedAt;
+        arr.push(data);
+      });
+      if (arr.length > 0) {
+        RM.jobs = arr;
+        saveLocal(arr);
+        renderList();
+        debug('☁️ Loaded ' + arr.length + ' jobs from cloud');
+      }
+    } catch (e) {
+      console.warn('Cloud load failed:', e);
+    }
+  }
+
+  function subscribeCloud() {
+    const storeId = getStoreId();
+    if (!storeId) return;
+    (async () => {
+      try {
+        const fb = await getFirestore();
+        if (!fb) return;
+        if (RM.unsub) { try { RM.unsub(); } catch (e) {} }
+        RM.unsub = fb.onSnapshot(
+          fb.collection(fb.db, 'stores', storeId, COLLECTION),
+          (snap) => {
+            const arr = [];
+            snap.forEach((d) => {
+              const data = d.data();
+              delete data._updatedAt;
+              arr.push(data);
+            });
+            if (arr.length === 0 && RM.jobs.length > 0) return;
+            RM.jobs = arr;
+            saveLocal(arr);
+            renderList();
+          },
+          (err) => console.warn('Realtime listener error:', err.code)
+        );
+      } catch (e) {}
+    })();
+  }
+
+
+  /* ============================================================
+     HELPERS
+     ============================================================ */
+  function getStoreId() {
+    const meta = window.SF?.perms?.getUserMeta?.() || {};
+    const store = S.store || {};
+    return meta.storeId || store.storeId || store.uid || null;
+  }
 
   function requirePerm(perm, msg) {
     if (!window.SF?.perms?.can?.(perm)) {
@@ -279,24 +418,17 @@
     return true;
   }
 
-  function getStoreId() {
-    const meta = window.SF?.perms?.getUserMeta?.() || {};
-    const store = S.store || {};
-    return meta.storeId || store.storeId || store.uid;
-  }
-
-  async function nextJobNo() {
-    try {
-      const d = new Date();
-      const fy = C.getFY(d).short;
-      const storeId = getStoreId();
-      if (!storeId) return 'JOB-' + fy + '-TMP';
-      const no = await Cl.nextAtomicNumber('repair', fy);
-      if (no) return no.replace('SFP', 'JOB').replace('PUR', 'JOB').replace('CRN', 'JOB');
-      return 'JOB-' + fy + '-TMP';
-    } catch (e) {
-      return 'JOB-' + C.getFY(new Date()).short + '-TMP' + Date.now().toString().slice(-4);
-    }
+  function generateJobNo() {
+    const fy = C.getFY(new Date()).short;
+    const prefix = 'JOB-' + fy + '-';
+    let max = 0;
+    (RM.jobs || []).forEach((j) => {
+      if (j.jobNo && j.jobNo.startsWith(prefix)) {
+        const n = parseInt(j.jobNo.slice(prefix.length), 10) || 0;
+        if (n > max) max = n;
+      }
+    });
+    return prefix + String(max + 1).padStart(4, '0');
   }
 
 
@@ -304,7 +436,7 @@
      INIT
      ============================================================ */
   async function init_repairModule() {
-    console.log('%c🔧 Repair module initialized (v4.3.0)', 'color:#8b5cf6;font-weight:bold');
+    console.log('%c🔧 Repair module initialized (v4.4.0)', 'color:#8b5cf6;font-weight:bold');
 
     if (!window.SF?.perms?.can?.('repair.view')) {
       const c = document.getElementById('moduleContainer');
@@ -315,43 +447,48 @@
     RM.editingId = null;
     RM.currentJob = null;
 
-    /* Date + job no */
+    /* Load from local storage first */
+    RM.jobs = loadLocal();
+    debug('📦 Local jobs: ' + RM.jobs.length);
+
+    /* Setup form */
     const dEl = document.getElementById('repDate');
     if (dEl && !dEl.value) dEl.value = C.fmtDate(new Date());
     const jobNoEl = document.getElementById('repJobNo');
-    if (jobNoEl) jobNoEl.value = await nextJobNo();
+    if (jobNoEl) jobNoEl.value = generateJobNo();
 
-    /* Technicians */
     populateTechnicians();
     populateCustomerList();
-
-    /* Render */
     renderList();
 
-    /* Subscribe */
+    /* Sync from cloud in background */
+    setTimeout(() => {
+      loadFromCloud();
+      subscribeCloud();
+    }, 500);
+
+    /* Subscribe to staff/parties */
     if (window.SF?.state?.on) {
-      window.SF.state.on('change:repairs', () => renderList());
       window.SF.state.on('change:staff', () => populateTechnicians());
       window.SF.state.on('change:parties', () => populateCustomerList());
     }
 
-    return { onUnload: () => {} };
+    return {
+      onUnload: () => {
+        if (RM.unsub) { try { RM.unsub(); } catch (e) {} RM.unsub = null; }
+      }
+    };
   }
+
 
   function populateTechnicians() {
     const sel = document.getElementById('repTechnician');
-    const filterSel = document.getElementById('repTechFilter');
-    const staff = (S.staff || []).filter((s) => {
-      const d = (s.designation || '').toLowerCase();
-      return d.includes('tech') || d.includes('repair') || d.includes('service') || d === '';
-    });
-
-    const options = staff.map((s) => `<option value="${s.id}">${C.escapeHTML(s.name)}${s.designation ? ' — ' + C.escapeHTML(s.designation) : ''}</option>`).join('');
-
-    if (sel) sel.innerHTML = '<option value="">— Unassigned —</option>' + options;
-    if (filterSel) {
-      filterSel.innerHTML = '<option value="ALL">All Technicians</option>' + options;
-    }
+    if (!sel) return;
+    const staff = S.staff || [];
+    const current = sel.value;
+    sel.innerHTML = '<option value="">— Unassigned —</option>' +
+      staff.map((s) => `<option value="${s.id}">${C.escapeHTML(s.name)}${s.designation ? ' — ' + C.escapeHTML(s.designation) : ''}</option>`).join('');
+    if (current) sel.value = current;
   }
 
   function populateCustomerList() {
@@ -363,106 +500,152 @@
 
 
   /* ============================================================
-     SAVE JOB
+     SAVE
      ============================================================ */
   async function save() {
-    if (!requirePerm('repair.create', 'Cannot create job cards')) return;
+    debug('💾 Save called');
 
-    const jobNo = document.getElementById('repJobNo')?.value || '';
-    const date = document.getElementById('repDate')?.value || C.fmtDate(new Date());
-    const custName = (document.getElementById('repCustName')?.value || '').trim();
-    const custPhone = (document.getElementById('repCustPhone')?.value || '').trim();
-    const custAddr = (document.getElementById('repCustAddr')?.value || '').trim();
-    const brand = (document.getElementById('repBrand')?.value || '').trim();
-    const model = (document.getElementById('repModel')?.value || '').trim();
-    const imei = (document.getElementById('repIMEI')?.value || '').trim();
-    const color = (document.getElementById('repColor')?.value || '').trim();
-    const password = (document.getElementById('repPassword')?.value || '').trim();
-    const issue = (document.getElementById('repIssue')?.value || '').trim();
-    const estimate = parseFloat(document.getElementById('repEstimate')?.value) || 0;
-    const advance = parseFloat(document.getElementById('repAdvance')?.value) || 0;
-    const warrantyDays = parseInt(document.getElementById('repWarrantyDays')?.value, 10) || 0;
-    const techId = document.getElementById('repTechnician')?.value || '';
-    const notes = (document.getElementById('repNotes')?.value || '').trim();
-
-    /* Accessories */
-    const accessories = [];
-    document.querySelectorAll('.rep-acc:checked').forEach((cb) => {
-      accessories.push(cb.value);
-    });
-
-    /* Validation */
-    if (!custName || custName.length < 2) { C.toast('Enter customer name', 'warning'); return; }
-    if (!/^\d{10}$/.test(custPhone)) { C.toast('Enter valid 10-digit phone', 'warning'); return; }
-    if (!model) { C.toast('Enter device model', 'warning'); return; }
-    if (!issue || issue.length < 3) { C.toast('Describe the problem', 'warning'); return; }
-
-    /* Technician name */
-    let techName = '';
-    if (techId) {
-      const t = (S.staff || []).find((x) => x.id === techId);
-      if (t) techName = t.name;
+    if (!requirePerm('repair.create', 'Cannot create job cards')) {
+      debug('❌ Permission denied');
+      return;
     }
 
-    const storeId = getStoreId();
-    if (!storeId) { C.toast('Store not resolved', 'error'); return; }
+    try {
+      /* Read all fields */
+      const date = document.getElementById('repDate')?.value || C.fmtDate(new Date());
+      const custName = (document.getElementById('repCustName')?.value || '').trim();
+      const custPhone = (document.getElementById('repCustPhone')?.value || '').trim();
+      const custAddr = (document.getElementById('repCustAddr')?.value || '').trim();
+      const brand = (document.getElementById('repBrand')?.value || '').trim();
+      const model = (document.getElementById('repModel')?.value || '').trim();
+      const imei = (document.getElementById('repIMEI')?.value || '').trim();
+      const color = (document.getElementById('repColor')?.value || '').trim();
+      const password = (document.getElementById('repPassword')?.value || '').trim();
+      const issue = (document.getElementById('repIssue')?.value || '').trim();
+      const estimate = parseFloat(document.getElementById('repEstimate')?.value) || 0;
+      const advance = parseFloat(document.getElementById('repAdvance')?.value) || 0;
+      const warrantyDays = parseInt(document.getElementById('repWarrantyDays')?.value, 10) || 0;
+      const techId = document.getElementById('repTechnician')?.value || '';
+      const notes = (document.getElementById('repNotes')?.value || '').trim();
 
-    const record = {
-      id: RM.editingId || jobNo,
-      jobNo: RM.editingId ? (document.getElementById('repEditId')?.value || jobNo) : jobNo,
-      date,
-      customerName: custName,
-      customerPhone: custPhone,
-      customerAddress: custAddr,
-      deviceBrand: brand,
-      deviceModel: model,
-      deviceIMEI: ime,
-      deviceColor: color,
-      devicePassword: password,
-      accessories,
-      issueDescription: issue,
-      estimatedCost: +estimate.toFixed(2),
-      advancePaid: +advance.toFixed(2),
-      finalCost: 0,
-      balanceDue: 0,
-      status: RM.editingId ? (RM.currentJob?.status || 'RECEIVED') : 'RECEIVED',
-      technicianId: techId,
-      technicianName: techName,
-      notes,
-      warrantyDays,
-      partsUsed: RM.editingId ? (RM.currentJob?.partsUsed || []) : [],
-      statusHistory: RM.editingId
-        ? (RM.currentJob?.statusHistory || [])
-        : [{ status: 'RECEIVED', timestamp: new Date().toISOString(), by: (window.SF?.perms?.getUserMeta?.()?.name || 'Staff') }],
-      createdAt: RM.editingId ? (RM.currentJob?.createdAt || new Date().toISOString()) : new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+      /* Accessories */
+      const accessories = [];
+      document.querySelectorAll('.rep-acc:checked').forEach((cb) => {
+        accessories.push(cb.value);
+      });
 
-    /* If editing and status DELIVERED, keep final cost */
-    if (RM.editingId && RM.currentJob?.status === 'DELIVERED') {
-      record.finalCost = RM.currentJob.finalCost || 0;
-      record.balanceDue = record.finalCost - record.advancePaid;
+      /* Validation */
+      if (!custName || custName.length < 2) {
+        debug('❌ Customer name required');
+        C.toast('Enter customer name (min 2 chars)', 'warning');
+        return;
+      }
+      if (!/^\d{10}$/.test(custPhone)) {
+        debug('❌ Invalid phone: ' + custPhone);
+        C.toast('Enter valid 10-digit phone number', 'warning');
+        return;
+      }
+      if (!model) {
+        debug('❌ Device model required');
+        C.toast('Enter device model', 'warning');
+        return;
+      }
+      if (!issue || issue.length < 3) {
+        debug('❌ Issue description required');
+        C.toast('Describe the problem (min 3 chars)', 'warning');
+        return;
+      }
+
+      /* Technician name */
+      let techName = '';
+      if (techId) {
+        const t = (S.staff || []).find((x) => x.id === techId);
+        if (t) techName = t.name;
+      }
+
+      /* Job number — generate if empty */
+      let jobNo = document.getElementById('repJobNo')?.value || '';
+      if (!jobNo || jobNo.includes('TMP')) {
+        jobNo = generateJobNo();
+        const jobNoEl = document.getElementById('repJobNo');
+        if (jobNoEl) jobNoEl.value = jobNo;
+      }
+
+      const isEdit = !!RM.editingId;
+      const existing = isEdit ? RM.jobs.find((x) => x.id === RM.editingId) : null;
+
+      const record = {
+        id: isEdit ? RM.editingId : jobNo,
+        jobNo: isEdit ? (existing?.jobNo || jobNo) : jobNo,
+        date,
+        customerName: custName,
+        customerPhone: custPhone,
+        customerAddress: custAddr,
+        deviceBrand: brand,
+        deviceModel: model,
+        deviceIMEI: imei,
+        deviceColor: color,
+        devicePassword: password,
+        accessories,
+        issueDescription: issue,
+        estimatedCost: +estimate.toFixed(2),
+        advancePaid: +advance.toFixed(2),
+        finalCost: isEdit ? (existing?.finalCost || 0) : 0,
+        balanceDue: isEdit ? (existing?.balanceDue || 0) : 0,
+        status: isEdit ? (existing?.status || 'RECEIVED') : 'RECEIVED',
+        technicianId: techId,
+        technicianName: techName,
+        notes,
+        warrantyDays,
+        partsUsed: isEdit ? (existing?.partsUsed || []) : [],
+        statusHistory: isEdit
+          ? (existing?.statusHistory || [])
+          : [{ status: 'RECEIVED', timestamp: new Date().toISOString(), by: (window.SF?.perms?.getUserMeta?.()?.name || 'Staff') }],
+        createdAt: isEdit ? (existing?.createdAt || new Date().toISOString()) : new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      debug('📝 Record built: ' + record.jobNo);
+
+      /* Update local array */
+      if (isEdit) {
+        const idx = RM.jobs.findIndex((x) => x.id === RM.editingId);
+        if (idx !== -1) RM.jobs[idx] = record;
+        else RM.jobs.unshift(record);
+      } else {
+        RM.jobs.unshift(record);
+      }
+
+      /* Save locally */
+      const savedOk = saveLocal(RM.jobs);
+      debug(savedOk ? '✅ Saved locally' : '❌ Local save failed');
+
+      C.toast(isEdit ? '✅ Job updated: ' + record.jobNo : '✅ Job created: ' + record.jobNo, 'success', 3000);
+      C.playBeep();
+
+      /* Sync to cloud (async, non-blocking) */
+      syncToCloud(record);
+
+      /* Audit */
+      try {
+        if (window.SF?.state?.logAudit) {
+          window.SF.state.logAudit(
+            isEdit ? 'REPAIR_UPDATE' : 'REPAIR_CREATE',
+            record.jobNo + ' | ' + custName + ' | ' + model
+          );
+        }
+      } catch (e) {}
+
+      /* Reset and refresh */
+      resetForm();
+      renderList();
+      debug('✅ Job saved successfully');
+
+    } catch (err) {
+      console.error('Save error:', err);
+      debug('❌ Save error: ' + err.message);
+      C.toast('Save failed: ' + err.message, 'error', 4000);
     }
-
-    if (!Array.isArray(S.repairs)) S.repairs = [];
-
-    if (RM.editingId) {
-      const idx = S.repairs.findIndex((x) => x.id === RM.editingId);
-      if (idx !== -1) S.repairs[idx] = record;
-      C.toast('Job updated: ' + record.jobNo, 'success');
-    } else {
-      S.repairs.unshift(record);
-      C.toast('Job created: ' + record.jobNo, 'success');
-    }
-
-    C.safeSave('sfp_repairs', S.repairs);
-    C.playBeep();
-
-    try { await Cl.pushOne('repairs', record); } catch (e) { C.toast('Saved locally. Sync pending.', 'warning', 3000); }
-    try { window.SF.state.logAudit(RM.editingId ? 'REPAIR_UPDATE' : 'REPAIR_CREATE', record.jobNo + ' | ' + custName + ' | ' + model); } catch (e) {}
-
-    resetForm();
-    renderList();
   }
 
 
@@ -484,24 +667,21 @@
     const idEl = document.getElementById('repEditId');
     if (idEl) idEl.value = '';
 
+    const jobNoEl = document.getElementById('repJobNo');
+    if (jobNoEl) jobNoEl.value = generateJobNo();
+
     const titleEl = document.getElementById('repFormTitle');
     if (titleEl) titleEl.textContent = '🔧 New Job Card';
     const resetBtn = document.getElementById('repResetBtn');
     if (resetBtn) resetBtn.classList.add('hidden');
     const saveBtn = document.getElementById('repSaveBtn');
     if (saveBtn) saveBtn.textContent = '💾 Save Job Card';
-
-    /* Fresh job no */
-    nextJobNo().then((no) => {
-      const jn = document.getElementById('repJobNo');
-      if (jn) jn.value = no;
-    });
   }
 
 
   function editJob(jobId) {
     if (!requirePerm('repair.edit', 'Cannot edit')) return;
-    const job = (S.repairs || []).find((x) => x.id === jobId);
+    const job = RM.jobs.find((x) => x.id === jobId);
     if (!job) { C.toast('Not found', 'error'); return; }
 
     RM.editingId = job.id;
@@ -526,7 +706,6 @@
     setVal('repTechnician', job.technicianId);
     setVal('repNotes', job.notes);
 
-    /* Accessories */
     document.querySelectorAll('.rep-acc').forEach((cb) => {
       cb.checked = (job.accessories || []).includes(cb.value);
     });
@@ -544,32 +723,29 @@
 
 
   /* ============================================================
-     RENDER LIST
+     LIST
      ============================================================ */
   function renderList() {
     const listEl = document.getElementById('repJobList');
     if (!listEl) return;
 
-    const repairs = S.repairs || [];
+    const jobs = RM.jobs || [];
     const q = (document.getElementById('repSearchInput')?.value || '').trim().toLowerCase();
     const statusFilter = document.getElementById('repStatusFilter')?.value || 'ALL';
-    const techFilter = document.getElementById('repTechFilter')?.value || 'ALL';
 
     /* Stats */
-    const total = repairs.length;
-    const progress = repairs.filter((r) => ['RECEIVED','DIAGNOSED','WAITING_APPROVAL','IN_REPAIR'].includes(r.status)).length;
-    const ready = repairs.filter((r) => r.status === 'READY').length;
-    const delivered = repairs.filter((r) => r.status === 'DELIVERED').length;
-
+    const total = jobs.length;
+    const progress = jobs.filter((r) => ['RECEIVED','DIAGNOSED','WAITING_APPROVAL','IN_REPAIR'].includes(r.status)).length;
+    const ready = jobs.filter((r) => r.status === 'READY').length;
+    const delivered = jobs.filter((r) => r.status === 'DELIVERED').length;
     setText('repStatTotal', total);
     setText('repStatProgress', progress);
     setText('repStatReady', ready);
     setText('repStatDelivered', delivered);
 
     /* Filter */
-    let filtered = repairs;
+    let filtered = jobs;
     if (statusFilter !== 'ALL') filtered = filtered.filter((r) => r.status === statusFilter);
-    if (techFilter !== 'ALL') filtered = filtered.filter((r) => r.technicianId === techFilter);
     if (q) {
       filtered = filtered.filter((r) => {
         const blob = (
@@ -586,7 +762,7 @@
     }
 
     if (filtered.length === 0) {
-      listEl.innerHTML = '<div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-10 text-center text-slate-500 text-xs">No job cards found.</div>';
+      listEl.innerHTML = '<div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-10 text-center text-slate-500 text-xs">No job cards yet. Create one above.</div>';
       return;
     }
 
@@ -631,10 +807,10 @@
 
 
   /* ============================================================
-     DETAIL MODAL
+     DETAIL
      ============================================================ */
   function openDetail(jobId) {
-    const job = (S.repairs || []).find((x) => x.id === jobId);
+    const job = RM.jobs.find((x) => x.id === jobId);
     if (!job) return;
     RM.currentJob = job;
 
@@ -645,12 +821,11 @@
     const body = document.getElementById('repModalBody');
 
     if (titleEl) titleEl.textContent = job.jobNo + ' — ' + job.customerName;
-    if (subEl) subEl.textContent = job.date + ' • ' + job.deviceBrand + ' ' + job.deviceModel + ' • ' + st.label;
+    if (subEl) subEl.textContent = job.date + ' • ' + (job.deviceBrand || '') + ' ' + (job.deviceModel || '') + ' • ' + st.label;
 
     const balance = (job.finalCost || job.estimatedCost || 0) - (job.advancePaid || 0);
 
     body.innerHTML = `
-      <!-- Status change buttons -->
       <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-3">
         <div class="text-[10px] font-bold uppercase text-slate-500 mb-2">Update Status</div>
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
@@ -663,7 +838,6 @@
         </div>
       </div>
 
-      <!-- Customer + Device -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-3">
           <div class="text-[10px] font-bold uppercase text-sky-400 mb-2">👤 Customer</div>
@@ -685,56 +859,37 @@
         </div>
       </div>
 
-      <!-- Accessories -->
       ${(job.accessories || []).length > 0 ? `
         <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-3">
-          <div class="text-[10px] font-bold uppercase text-sky-400 mb-1.5">📦 Accessories Received</div>
+          <div class="text-[10px] font-bold uppercase text-sky-400 mb-1.5">📦 Accessories</div>
           <div class="flex flex-wrap gap-1.5">
             ${job.accessories.map((a) => `<span class="text-[10px] bg-slate-800 text-slate-200 px-2 py-0.5 rounded">${C.escapeHTML(a)}</span>`).join('')}
           </div>
         </div>
       ` : ''}
 
-      <!-- Issue -->
       <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-3">
         <div class="text-[10px] font-bold uppercase text-sky-400 mb-1.5">🛠 Problem</div>
         <div class="text-[11.5px] text-slate-200 leading-relaxed">${C.escapeHTML(job.issueDescription || '')}</div>
       </div>
 
-      <!-- Cost -->
       <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-3">
-        <div class="text-[10px] font-bold uppercase text-sky-400 mb-2">💰 Cost Breakdown</div>
+        <div class="text-[10px] font-bold uppercase text-sky-400 mb-2">💰 Cost</div>
         <div class="space-y-1 text-[11px]">
           <div class="flex justify-between"><span class="text-slate-500">Estimated:</span><span class="font-mono">₹${(job.estimatedCost || 0).toFixed(2)}</span></div>
-          <div class="flex justify-between"><span class="text-slate-500">Advance Paid:</span><span class="font-mono text-emerald-400">-₹${(job.advancePaid || 0).toFixed(2)}</span></div>
-          ${job.finalCost > 0 ? `<div class="flex justify-between border-t border-slate-800 pt-1 mt-1"><span class="text-slate-300 font-bold">Final Cost:</span><span class="font-mono font-bold text-sky-400">₹${job.finalCost.toFixed(2)}</span></div>` : ''}
+          <div class="flex justify-between"><span class="text-slate-500">Advance:</span><span class="font-mono text-emerald-400">-₹${(job.advancePaid || 0).toFixed(2)}</span></div>
+          ${job.finalCost > 0 ? `<div class="flex justify-between border-t border-slate-800 pt-1 mt-1"><span class="text-slate-300 font-bold">Final:</span><span class="font-mono font-bold text-sky-400">₹${job.finalCost.toFixed(2)}</span></div>` : ''}
           <div class="flex justify-between border-t border-slate-800 pt-1 mt-1">
-            <span class="font-bold text-white">Balance Due:</span>
+            <span class="font-bold text-white">Balance:</span>
             <span class="font-mono font-black text-${balance > 0 ? 'amber' : 'emerald'}-400">₹${Math.max(0, balance).toFixed(2)}</span>
           </div>
         </div>
       </div>
 
-      <!-- Warranty -->
-      ${job.warrantyDays > 0 ? `
-        <div class="bg-emerald-950/30 border border-emerald-800/60 rounded-lg p-3 text-[11px] text-emerald-200">
-          🛡️ <strong>Warranty:</strong> ${job.warrantyDays} days on repair
-        </div>
-      ` : ''}
+      ${job.warrantyDays > 0 ? `<div class="bg-emerald-950/30 border border-emerald-800/60 rounded-lg p-3 text-[11px] text-emerald-200">🛡️ <strong>Warranty:</strong> ${job.warrantyDays} days</div>` : ''}
+      ${job.technicianName ? `<div class="bg-slate-950/70 border border-slate-800 rounded-lg p-3 text-[11px]"><span class="text-slate-500">Assigned:</span> <strong class="text-sky-400">🔧 ${C.escapeHTML(job.technicianName)}</strong></div>` : ''}
+      ${job.notes ? `<div class="bg-amber-950/30 border border-amber-800/60 rounded-lg p-3 text-[11px] text-amber-200"><strong>📝 Note:</strong> ${C.escapeHTML(job.notes)}</div>` : ''}
 
-      <!-- Technician + Notes -->
-      ${job.technicianName ? `
-        <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-3 text-[11px]">
-          <span class="text-slate-500">Assigned to:</span> <strong class="text-sky-400">🔧 ${C.escapeHTML(job.technicianName)}</strong>
-        </div>
-      ` : ''}
-      ${job.notes ? `
-        <div class="bg-amber-950/30 border border-amber-800/60 rounded-lg p-3 text-[11px] text-amber-200">
-          <strong>📝 Notes:</strong> ${C.escapeHTML(job.notes)}
-        </div>
-      ` : ''}
-
-      <!-- Timeline -->
       ${(job.statusHistory || []).length > 1 ? `
         <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-3">
           <div class="text-[10px] font-bold uppercase text-sky-400 mb-2">📋 Timeline</div>
@@ -750,7 +905,6 @@
         </div>
       ` : ''}
 
-      <!-- Action buttons inside modal (edit) -->
       ${window.SF?.perms?.can?.('repair.edit') ? `
         <button type="button" onclick="SF.repair.editJob('${job.id}')"
                 class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-2 rounded-lg text-xs transition">
@@ -770,16 +924,14 @@
 
 
   /* ============================================================
-     CHANGE STATUS
+     STATUS CHANGE
      ============================================================ */
   async function changeStatus(newStatus) {
     if (!requirePerm('repair.edit', 'Cannot change status')) return;
     const job = RM.currentJob;
     if (!job) return;
-
     if (job.status === newStatus) return;
 
-    /* If DELIVERED → record final cost + balance */
     if (newStatus === 'DELIVERED') {
       const finalInput = prompt('Final repair cost (₹):', (job.finalCost || job.estimatedCost || 0).toFixed(2));
       if (finalInput === null) return;
@@ -790,28 +942,27 @@
       if (remaining > 0) {
         const collect = await C.confirmDialog(
           'Collect Payment?',
-          'Balance due: ₹' + remaining.toFixed(2) + '\n\nCollect now?',
+          'Balance: ₹' + remaining.toFixed(2) + '\n\nMark as collected?',
           'Collected',
           false
         );
         if (collect) {
-          /* Add to cash book via voucher */
           const voucher = {
             id: 'vch-rep-' + Date.now(),
-            type: 'RECEIPT',
-            date: C.fmtDate(new Date()),
-            amount: remaining,
+            type: 'RECEIPT', date: C.fmtDate(new Date()), amount: remaining,
             category: 'Repair Payment — ' + job.customerName,
             account: 'Cash-in-Hand',
             narration: 'Job ' + job.jobNo + ' — final payment',
             createdAt: new Date().toISOString(),
-            _autoGenerated: true,
-            _sourceRepairId: job.id
+            _autoGenerated: true, _sourceRepairId: job.id
           };
           if (!Array.isArray(S.vouchers)) S.vouchers = [];
           S.vouchers.unshift(voucher);
           C.safeSave('sfp_vouchers', S.vouchers);
-          try { await Cl.pushOne('vouchers', voucher); } catch (e) {}
+          try {
+            const fb = await getFirestore();
+            if (fb) await fb.setDoc(fb.doc(fb.db, 'stores', getStoreId(), 'vouchers', voucher.id), voucher, { merge: true });
+          } catch (e) {}
         }
       }
 
@@ -822,7 +973,6 @@
 
     job.status = newStatus;
     job.updatedAt = new Date().toISOString();
-
     if (!Array.isArray(job.statusHistory)) job.statusHistory = [];
     job.statusHistory.push({
       status: newStatus,
@@ -830,13 +980,12 @@
       by: window.SF?.perms?.getUserMeta?.()?.name || 'Staff'
     });
 
-    C.safeSave('sfp_repairs', S.repairs);
+    /* Update in RM.jobs array */
+    const idx = RM.jobs.findIndex((x) => x.id === job.id);
+    if (idx !== -1) RM.jobs[idx] = job;
 
-    try {
-      await Cl.pushOne('repairs', job);
-    } catch (e) { C.toast('Saved locally. Sync pending.', 'warning', 3000); }
-
-    try { window.SF.state.logAudit('REPAIR_STATUS', job.jobNo + ' → ' + (STATUS[newStatus]?.label || newStatus)); } catch (e) {}
+    saveLocal(RM.jobs);
+    syncToCloud(job);
 
     C.toast('✅ Status: ' + (STATUS[newStatus]?.label || newStatus), 'success', 2500);
     C.playBeep();
@@ -854,18 +1003,20 @@
     const job = RM.currentJob;
     if (!job) return;
 
-    const pin = prompt('🔒 Master PIN to delete:');
+    const pin = prompt('🔒 Master PIN:');
     if (!pin) return;
     if (pin !== (S.profile?.masterPin || '1234')) { C.toast('Incorrect PIN', 'error'); C.playBeep(); return; }
 
-    const ok = await C.confirmDialog('Delete Job Card?', job.jobNo + '\n' + job.customerName + '\n\nThis cannot be undone.', 'Delete', true);
+    const ok = await C.confirmDialog('Delete Job?', job.jobNo + '\n' + job.customerName, 'Delete', true);
     if (!ok) return;
 
-    S.repairs = (S.repairs || []).filter((r) => r.id !== job.id);
-    C.safeSave('sfp_repairs', S.repairs);
-    try { await Cl.deleteOne('repairs', job.id); } catch (e) {}
+    RM.jobs = RM.jobs.filter((r) => r.id !== job.id);
+    saveLocal(RM.jobs);
+    deleteFromCloud(job.id);
 
-    try { window.SF.state.logAudit('REPAIR_DELETE', job.jobNo + ' | ' + job.customerName); } catch (e) {}
+    try {
+      if (window.SF?.state?.logAudit) window.SF.state.logAudit('REPAIR_DELETE', job.jobNo);
+    } catch (e) {}
 
     C.toast('Job deleted', 'success');
     closeModal();
@@ -874,90 +1025,85 @@
 
 
   /* ============================================================
-     PRINT SLIP (A5)
+     PRINT
      ============================================================ */
   function printSlip() {
     const job = RM.currentJob;
-    if (!job) { C.toast('No job selected', 'warning'); return; }
+    if (!job) return;
     const prof = S.profile || {};
     const st = STATUS[job.status] || STATUS.RECEIVED;
     const balance = (job.finalCost || job.estimatedCost || 0) - (job.advancePaid || 0);
     const datePretty = C.fmtDatePretty(new Date(job.date + 'T12:00:00'));
 
-    const slipHTML = `
-      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#0f172a;width:100%;height:100%;display:flex;flex-direction:column;">
+    const html = `
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#0f172a;width:100%;padding:8mm;">
 
         <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #6366f1;padding-bottom:8px;margin-bottom:10px;">
-          <div style="display:flex;gap:12px;align-items:center;">
-            ${prof.logo ? `<img src="${prof.logo}" style="height:44px;width:44px;object-fit:contain;">` : `<div style="width:42px;height:42px;background:linear-gradient(135deg,#6366f1,#4338ca);border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-size:20px;">🔧</div>`}
-            <div>
-              <div style="font-size:18px;font-weight:900;color:#3730a3;line-height:1;">${C.escapeHTML(prof.name || 'Store')}</div>
-              <div style="font-size:8.5px;color:#475569;margin-top:3px;max-width:250px;line-height:1.3;">${C.escapeHTML(prof.address || '')}</div>
-              <div style="font-size:8.5px;font-weight:600;color:#334155;margin-top:1px;">${C.escapeHTML(prof.phone || '')}</div>
-            </div>
+          <div>
+            <div style="font-size:18px;font-weight:900;color:#3730a3;line-height:1;">${C.escapeHTML(prof.name || 'Store')}</div>
+            <div style="font-size:9px;color:#475569;margin-top:3px;max-width:250px;line-height:1.3;">${C.escapeHTML(prof.address || '')}</div>
+            <div style="font-size:9px;font-weight:600;color:#334155;margin-top:1px;">${C.escapeHTML(prof.phone || '')}</div>
           </div>
           <div style="text-align:right;">
-            <div style="background:linear-gradient(135deg,#6366f1,#4338ca);color:white;font-size:9px;font-weight:900;padding:5px 12px;border-radius:4px;letter-spacing:1.5px;text-transform:uppercase;">Job Card</div>
+            <div style="background:linear-gradient(135deg,#6366f1,#4338ca);color:white;font-size:10px;font-weight:900;padding:5px 14px;border-radius:4px;letter-spacing:1.5px;text-transform:uppercase;">Job Card</div>
             <div style="font-size:12px;font-weight:900;font-family:monospace;color:#3730a3;margin-top:5px;">${C.escapeHTML(job.jobNo)}</div>
-            <div style="font-size:8.5px;color:#64748b;font-family:monospace;">Date: ${datePretty}</div>
+            <div style="font-size:8.5px;color:#64748b;font-family:monospace;">${datePretty}</div>
           </div>
         </div>
 
-        <div style="background:linear-gradient(90deg,#eef2ff,#e0e7ff);border:1px solid #c7d2fe;padding:6px 10px;border-radius:6px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+        <div style="background:#eef2ff;border:1px solid #c7d2fe;padding:6px 10px;border-radius:6px;margin-bottom:10px;">
           <div style="font-size:10px;font-weight:800;color:#3730a3;">Status: ${st.icon} ${st.label}</div>
-          ${job.technicianName ? `<div style="font-size:10px;color:#4338ca;">Tech: ${C.escapeHTML(job.technicianName)}</div>` : ''}
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
           <div style="border:1px solid #cbd5e1;border-radius:6px;padding:8px;background:#f8fafc;">
-            <div style="font-size:8px;font-weight:900;color:#6366f1;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;border-bottom:1px solid #c7d2fe;padding-bottom:3px;">👤 Customer</div>
-            <div style="display:grid;grid-template-columns:60px 1fr;gap:3px 6px;font-size:9.5px;">
-              <span style="color:#64748b;font-weight:600;">Name:</span><strong>${C.escapeHTML(job.customerName)}</strong>
-              <span style="color:#64748b;font-weight:600;">Phone:</span><span style="font-family:monospace;">${C.escapeHTML(job.customerPhone)}</span>
-              ${job.customerAddress ? `<span style="color:#64748b;font-weight:600;">Address:</span><span>${C.escapeHTML(job.customerAddress)}</span>` : ''}
+            <div style="font-size:8px;font-weight:900;color:#6366f1;text-transform:uppercase;margin-bottom:4px;border-bottom:1px solid #c7d2fe;padding-bottom:3px;">👤 Customer</div>
+            <div style="font-size:10px;line-height:1.5;">
+              <div><strong>${C.escapeHTML(job.customerName)}</strong></div>
+              <div style="font-family:monospace;">${C.escapeHTML(job.customerPhone)}</div>
+              ${job.customerAddress ? `<div>${C.escapeHTML(job.customerAddress)}</div>` : ''}
             </div>
           </div>
           <div style="border:1px solid #cbd5e1;border-radius:6px;padding:8px;background:#f8fafc;">
-            <div style="font-size:8px;font-weight:900;color:#6366f1;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;border-bottom:1px solid #c7d2fe;padding-bottom:3px;">📱 Device</div>
-            <div style="display:grid;grid-template-columns:60px 1fr;gap:3px 6px;font-size:9.5px;">
-              <span style="color:#64748b;font-weight:600;">Brand:</span><strong>${C.escapeHTML(job.deviceBrand || '—')}</strong>
-              <span style="color:#64748b;font-weight:600;">Model:</span><strong>${C.escapeHTML(job.deviceModel || '—')}</strong>
-              ${job.deviceIMEI ? `<span style="color:#64748b;font-weight:600;">IMEI:</span><span style="font-family:monospace;font-size:9px;">${C.escapeHTML(job.deviceIMEI)}</span>` : ''}
-              ${job.deviceColor ? `<span style="color:#64748b;font-weight:600;">Color:</span><span>${C.escapeHTML(job.deviceColor)}</span>` : ''}
+            <div style="font-size:8px;font-weight:900;color:#6366f1;text-transform:uppercase;margin-bottom:4px;border-bottom:1px solid #c7d2fe;padding-bottom:3px;">📱 Device</div>
+            <div style="font-size:10px;line-height:1.5;">
+              <div><strong>${C.escapeHTML(job.deviceBrand || '')} ${C.escapeHTML(job.deviceModel || '')}</strong></div>
+              ${job.deviceIMEI ? `<div style="font-family:monospace;font-size:9px;">${C.escapeHTML(job.deviceIMEI)}</div>` : ''}
+              ${job.deviceColor ? `<div>Color: ${C.escapeHTML(job.deviceColor)}</div>` : ''}
             </div>
           </div>
         </div>
 
         <div style="border:1px solid #cbd5e1;border-radius:6px;padding:8px;background:#fef3c7;margin-bottom:10px;">
-          <div style="font-size:8px;font-weight:900;color:#92400e;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">🛠 Reported Problem</div>
+          <div style="font-size:8px;font-weight:900;color:#92400e;text-transform:uppercase;margin-bottom:3px;">🛠 Problem</div>
           <div style="font-size:10.5px;color:#78350f;line-height:1.4;">${C.escapeHTML(job.issueDescription || '')}</div>
         </div>
 
         ${(job.accessories || []).length > 0 ? `
           <div style="border:1px solid #cbd5e1;border-radius:6px;padding:6px 8px;background:#f8fafc;margin-bottom:10px;font-size:10px;">
-            <strong style="color:#475569;">📦 Accessories:</strong> ${job.accessories.map((a) => C.escapeHTML(a)).join(', ')}
+            <strong>📦 Accessories:</strong> ${job.accessories.map((a) => C.escapeHTML(a)).join(', ')}
           </div>
         ` : ''}
 
         <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:10px;">
           <thead>
             <tr style="background:linear-gradient(90deg,#6366f1,#4338ca);color:white;">
-              <th style="padding:7px 10px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:0.5px;">Particulars</th>
-              <th style="padding:7px 10px;text-align:right;font-size:9px;text-transform:uppercase;letter-spacing:0.5px;width:120px;">Amount (₹)</th>
+              <th style="padding:7px 10px;text-align:left;font-size:9px;text-transform:uppercase;">Particulars</th>
+              <th style="padding:7px 10px;text-align:right;font-size:9px;text-transform:uppercase;width:120px;">Amount (₹)</th>
             </tr>
           </thead>
           <tbody>
             <tr style="border-bottom:1px solid #e2e8f0;">
-              <td style="padding:7px 10px;color:#334155;">Estimated Repair Cost</td>
+              <td style="padding:7px 10px;">Estimated Cost</td>
               <td style="padding:7px 10px;text-align:right;font-family:monospace;font-weight:700;">${(job.estimatedCost || 0).toFixed(2)}</td>
             </tr>
             <tr style="border-bottom:1px solid #e2e8f0;">
-              <td style="padding:7px 10px;color:#334155;">Advance Paid</td>
+              <td style="padding:7px 10px;">Advance Paid</td>
               <td style="padding:7px 10px;text-align:right;font-family:monospace;color:#059669;font-weight:700;">-${(job.advancePaid || 0).toFixed(2)}</td>
             </tr>
             ${job.finalCost > 0 ? `
               <tr style="border-bottom:1px solid #e2e8f0;">
-                <td style="padding:7px 10px;color:#334155;">Final Repair Cost</td>
+                <td style="padding:7px 10px;">Final Cost</td>
                 <td style="padding:7px 10px;text-align:right;font-family:monospace;font-weight:700;">${job.finalCost.toFixed(2)}</td>
               </tr>
             ` : ''}
@@ -968,22 +1114,18 @@
           </tbody>
         </table>
 
-        ${job.warrantyDays > 0 ? `
-          <div style="background:#ecfdf5;border:1px solid #86efac;border-radius:6px;padding:6px 10px;margin-bottom:8px;font-size:10px;color:#065f46;">
-            🛡️ <strong>Warranty on this repair: ${job.warrantyDays} days</strong> (from delivery date)
-          </div>
-        ` : ''}
+        ${job.warrantyDays > 0 ? `<div style="background:#ecfdf5;border:1px solid #86efac;border-radius:6px;padding:6px 10px;margin-bottom:8px;font-size:10px;color:#065f46;">🛡️ <strong>Warranty: ${job.warrantyDays} days</strong> from delivery</div>` : ''}
 
         <div style="background:#f8fafc;border-left:3px solid #6366f1;padding:6px 10px;font-size:9px;color:#475569;line-height:1.5;border-radius:3px;">
-          <strong style="color:#0f172a;">Terms:</strong><br>
-          1. Please bring this receipt when collecting the device.<br>
-          2. Warranty covers the repaired part only, not physical damage or liquid.<br>
-          3. Devices not collected within 30 days may attract storage charges.<br>
+          <strong>Terms:</strong><br>
+          1. Bring this receipt when collecting the device.<br>
+          2. Warranty covers repaired part only — not physical damage or liquid.<br>
+          3. Devices not collected in 30 days may attract storage charges.<br>
           4. Shop is not responsible for data loss during repair.
         </div>
 
-        <div style="margin-top:auto;padding-top:15px;display:flex;justify-content:space-between;align-items:flex-end;">
-          <div style="font-size:8px;color:#94a3b8;font-family:monospace;">SmartFix ERP © 2026 • ${C.escapeHTML(prof.name || '')}</div>
+        <div style="margin-top:20px;display:flex;justify-content:space-between;align-items:flex-end;">
+          <div style="font-size:8px;color:#94a3b8;font-family:monospace;">SmartFix ERP © 2026</div>
           <div style="text-align:center;">
             <div style="height:30px;"></div>
             <div style="border-top:1px solid #94a3b8;padding-top:3px;font-size:9px;font-weight:700;color:#475569;width:150px;">Customer Signature</div>
@@ -993,10 +1135,8 @@
       </div>
     `;
 
-    /* iframe print */
     const iframe = document.createElement('iframe');
     iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;pointer-events:none;';
-    iframe.setAttribute('aria-hidden', 'true');
     document.body.appendChild(iframe);
     const doc = iframe.contentDocument || iframe.contentWindow.document;
     doc.open();
@@ -1004,20 +1144,21 @@
       @page { size: A5 portrait; margin: 6mm; }
       * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
       html, body { margin:0; padding:0; background:#fff; color:#0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size:10px; }
-      .slip-wrapper { width:148mm; min-height:210mm; margin:0 auto; padding:6mm 8mm; display:flex; flex-direction:column; }
-    </style></head><body><div class="slip-wrapper">${slipHTML}</div></body></html>`);
+      .wrap { width:148mm; min-height:210mm; margin:0 auto; }
+    </style></head><body><div class="wrap">${html}</div></body></html>`);
     doc.close();
-    const triggerPrint = () => {
-      try { iframe.contentWindow.focus(); iframe.contentWindow.print(); } catch (e) { C.toast('Print blocked', 'error'); }
+    const go = () => {
+      try { iframe.contentWindow.focus(); iframe.contentWindow.print(); }
+      catch (e) { C.toast('Print blocked', 'error'); }
       setTimeout(() => { try { document.body.removeChild(iframe); } catch (e) {} }, 1500);
     };
-    if (iframe.contentWindow.document.readyState === 'complete') setTimeout(triggerPrint, 500);
-    else { iframe.onload = () => setTimeout(triggerPrint, 500); setTimeout(triggerPrint, 1200); }
+    if (iframe.contentWindow.document.readyState === 'complete') setTimeout(go, 500);
+    else { iframe.onload = () => setTimeout(go, 500); setTimeout(go, 1200); }
   }
 
 
   /* ============================================================
-     WHATSAPP SHARE
+     WHATSAPP
      ============================================================ */
   function shareWhatsApp() {
     const job = RM.currentJob;
@@ -1027,8 +1168,7 @@
     const balance = (job.finalCost || job.estimatedCost || 0) - (job.advancePaid || 0);
 
     const msg =
-      `*${prof.name || 'Store'}*\n` +
-      `🔧 *Repair Job Card*\n` +
+      `*${prof.name || 'Store'}*\n🔧 *Repair Job Card*\n` +
       `━━━━━━━━━━━━━━━\n` +
       `📋 Job No: *${job.jobNo}*\n` +
       `📅 Date: ${job.date}\n` +
@@ -1038,43 +1178,3 @@
       `\n🛠 Issue: ${job.issueDescription}\n\n` +
       `💰 Estimate: ₹${(job.estimatedCost || 0).toFixed(2)}\n` +
       `✅ Advance: ₹${(job.advancePaid || 0).toFixed(2)}\n` +
-      `💵 Balance: ₹${Math.max(0, balance).toFixed(2)}\n\n` +
-      `📌 Status: ${st.icon} ${st.label}\n` +
-      `${job.warrantyDays > 0 ? '🛡️ Warranty: ' + job.warrantyDays + ' days\n' : ''}` +
-      `\n${prof.phone ? '📞 ' + prof.phone : ''}\n` +
-      `🙏 Thank you!`;
-
-    const phone = job.customerPhone.replace(/\D/g, '');
-    const url = phone.length === 10
-      ? 'https://wa.me/91' + phone + '?text=' + encodeURIComponent(msg)
-      : 'https://wa.me/?text=' + encodeURIComponent(msg);
-
-    window.open(url, '_blank');
-  }
-
-
-  /* ============================================================
-     EXPOSE
-     ============================================================ */
-  window.SF = window.SF || {};
-  window.SF.repair = {
-    init: init_repairModule,
-    save,
-    resetForm,
-    editJob,
-    renderList,
-    openDetail,
-    closeModal,
-    changeStatus,
-    deleteJob,
-    printSlip,
-    shareWhatsApp
-  };
-
-  window.init_repairModule = init_repairModule;
-
-  if (document.getElementById('repairModule')) {
-    init_repairModule();
-  }
-})();
-</script>
