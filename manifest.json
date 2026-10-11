@@ -2,7 +2,6 @@
   "name": "SmartFix ERP — Cloud POS",
   "short_name": "SmartFix",
   "description": "Complete cloud-based ERP & POS for mobile shops and retail businesses.",
-  "version": "4.3.1",
   "start_url": "./app.html",
   "scope": "./",
   "id": "./",
@@ -17,25 +16,25 @@
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "./android-chrome-192x192.png",
+      "src": "https://placehold.co/192x192/0284c7/ffffff.png?text=SF",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "./android-chrome-512x512.png",
+      "src": "https://placehold.co/512x512/0284c7/ffffff.png?text=SF",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "./android-chrome-192x192.png",
+      "src": "https://placehold.co/192x192/0284c7/ffffff.png?text=SF",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "./android-chrome-512x512.png",
+      "src": "https://placehold.co/512x512/0284c7/ffffff.png?text=SF",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
