@@ -1,6 +1,7 @@
 /* ============================================================
-   SMARTFIX ERP — App Bootstrap (v4.1.0)
+   SMARTFIX ERP — App Bootstrap (v4.2.2)
    File: js/app-init.js
+   Purpose: Role-aware boot + import all side-effect modules
    ============================================================ */
 
 import { auth, db, PATHS, APP_VERSION, APP_NAME, APP_AUTHOR } from './firebase-config.js';
@@ -10,6 +11,9 @@ import { Router } from './router.js';
 import * as Cloud from './cloud.js';
 import * as Perms from './permissions.js';
 import { ROLES, ROLE_LABELS } from './permissions.js';
+
+/* ⭐ NEW: Import attendance.js so window.SF.attendance is registered */
+import './attendance.js';
 
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -48,11 +52,10 @@ async function handleAuthState(user) {
   }
 
   try {
-    /* Try owner flow first */
     const ownerSnap = await getDoc(doc(db, PATHS.stores, user.uid));
 
     if (ownerSnap.exists()) {
-      /* ============ OWNER ============ */
+      /* OWNER */
       const storeData = ownerSnap.data();
       Perms.setRole(ROLES.OWNER, { uid: user.uid, storeId: user.uid, name: storeData.shopName });
 
@@ -71,7 +74,7 @@ async function handleAuthState(user) {
       await loadProfile(user.uid);
 
     } else {
-      /* ============ STAFF ============ */
+      /* STAFF */
       const cached = localStorage.getItem('sfp_current_store');
       let staffStoreId = null;
       let staffRole = 'PROMOTER';
@@ -95,7 +98,6 @@ async function handleAuthState(user) {
         return;
       }
 
-      /* Verify staff doc exists */
       const staffSnap = await getDoc(doc(db, PATHS.stores, staffStoreId, 'staffUsers', user.uid));
       if (!staffSnap.exists() || staffSnap.data().disabled === true) {
         toast('Account disabled. Contact owner.', 'error', 5000);
@@ -111,7 +113,6 @@ async function handleAuthState(user) {
         name: staffData.name || staffName
       });
 
-      /* Load store info */
       const storeSnap = await getDoc(doc(db, PATHS.stores, staffStoreId));
       const storeData = storeSnap.exists() ? storeSnap.data() : {};
 
@@ -131,7 +132,6 @@ async function handleAuthState(user) {
       await loadProfile(staffStoreId);
     }
 
-    /* Wire everything */
     initializeRouterAndTabs();
     wireLogoutButton();
     wireQuickActions();
@@ -142,6 +142,12 @@ async function handleAuthState(user) {
     console.log(
       `%c✅ App ready — Role: ${meta.role} | Store: ${state.store?.shopName}`,
       'color:#10b981;font-weight:bold'
+    );
+
+    /* Verify attendance module loaded */
+    console.log(
+      '%c📸 Attendance module: ' + (window.SF?.attendance ? '✅ Loaded' : '❌ Missing'),
+      'color:#8b5cf6;font-weight:bold'
     );
 
     setTimeout(() => {
@@ -208,7 +214,6 @@ function initializeRouterAndTabs() {
   Router.renderTabs(allowed);
   Router.init('#moduleContainer');
 
-  /* If current route not allowed → redirect to first allowed */
   setTimeout(() => {
     const cur = Router.current();
     if (cur && !Perms.canAccessRoute(cur)) {
@@ -388,4 +393,4 @@ window.SF.app = {
   logout: async () => { await signOut(auth); redirectToLogin(); }
 };
 
-console.log('%c⚡ App bootstrap ready (v4.1.0)', 'color:#8b5cf6;font-weight:bold;font-size:11px');
+console.log('%c⚡ App bootstrap ready (v4.2.2)', 'color:#8b5cf6;font-weight:bold;font-size:11px');
