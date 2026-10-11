@@ -1,0 +1,861 @@
+<!-- ============================================================
+     SMARTFIX ERP — Attendance Report (Owner / Manager View)
+     File: modules/attendance-report.html
+     Version: 4.2.0
+     ============================================================ -->
+
+<section id="attendanceReportModule" class="space-y-4">
+
+  <!-- HEADER -->
+  <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 flex flex-wrap justify-between items-center gap-3">
+    <div>
+      <h2 class="text-lg font-black text-white">📊 Attendance Report</h2>
+      <p class="text-[11px] text-slate-400 mt-0.5">Team attendance summary, selfies, hours & exports</p>
+    </div>
+    <div class="flex gap-2">
+      <button type="button" onclick="SF.attendanceReport.exportExcel()"
+              class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-2 rounded-lg text-xs transition flex items-center gap-1.5">
+        <span>📥</span><span>Excel</span>
+      </button>
+      <button type="button" onclick="SF.attendanceReport.printAll()"
+              class="bg-sky-600 hover:bg-sky-500 text-white font-bold px-3 py-2 rounded-lg text-xs transition flex items-center gap-1.5">
+        <span>🖨️</span><span>Print All</span>
+      </button>
+      <button type="button" onclick="SF.attendanceReport.reload()"
+              class="bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold px-3 py-2 rounded-lg text-xs transition flex items-center gap-1.5">
+        <span>↻</span><span>Reload</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ACCESS DENIED -->
+  <div id="attRepAccessDenied" style="display:none" class="bg-rose-950/60 border-2 border-rose-800/60 rounded-2xl p-8 text-center">
+    <div style="font-size:44px;margin-bottom:10px">🔒</div>
+    <div class="text-lg font-black text-rose-300 mb-1">Access Restricted</div>
+    <div class="text-sm text-slate-300">Only owner and manager can view attendance reports.</div>
+  </div>
+
+  <div id="attRepContent" class="space-y-4">
+
+    <!-- FILTERS -->
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
+      <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+        <div>
+          <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Month</label>
+          <select id="attRepMonth" onchange="SF.attendanceReport.reload()"
+                  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-100">
+            <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+            <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+            <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+            <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Year</label>
+          <input type="number" id="attRepYear" onchange="SF.attendanceReport.reload()"
+                 class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-100 font-mono">
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Staff</label>
+          <select id="attRepStaffFilter" onchange="SF.attendanceReport.reload()"
+                  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-100">
+            <option value="ALL">All Staff</option>
+          </select>
+        </div>
+        <div class="flex items-end">
+          <div class="text-[10px] text-slate-500">
+            <div>Working days: <span id="attRepWorkingDays" class="font-bold text-slate-300">—</span></div>
+            <div>Records: <span id="attRepRecordCount" class="font-bold text-sky-400">0</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATS CARDS -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="bg-gradient-to-br from-emerald-900 to-slate-900 border border-emerald-800/60 rounded-2xl p-4">
+        <div class="text-[10px] uppercase font-bold text-emerald-300 tracking-wider">Total Present</div>
+        <div id="attRepStatPresent" class="text-2xl font-black text-white mt-1">0</div>
+        <div class="text-[10px] text-emerald-300/70 mt-1">check-ins this month</div>
+      </div>
+      <div class="bg-gradient-to-br from-sky-900 to-slate-900 border border-sky-800/60 rounded-2xl p-4">
+        <div class="text-[10px] uppercase font-bold text-sky-300 tracking-wider">Total Hours</div>
+        <div id="attRepStatHours" class="text-2xl font-black text-white mt-1">0</div>
+        <div class="text-[10px] text-sky-300/70 mt-1">across all staff</div>
+      </div>
+      <div class="bg-gradient-to-br from-violet-900 to-slate-900 border border-violet-800/60 rounded-2xl p-4">
+        <div class="text-[10px] uppercase font-bold text-violet-300 tracking-wider">Active Staff</div>
+        <div id="attRepStatStaff" class="text-2xl font-black text-white mt-1">0</div>
+        <div class="text-[10px] text-violet-300/70 mt-1">with attendance</div>
+      </div>
+      <div class="bg-gradient-to-br from-amber-900 to-slate-900 border border-amber-800/60 rounded-2xl p-4">
+        <div class="text-[10px] uppercase font-bold text-amber-300 tracking-wider">Avg Hours/Day</div>
+        <div id="attRepStatAvgHrs" class="text-2xl font-black text-white mt-1">0.0</div>
+        <div class="text-[10px] text-amber-300/70 mt-1">per staff</div>
+      </div>
+    </div>
+
+    <!-- STAFF SUMMARY TABLE -->
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden">
+      <div class="p-4 border-b border-slate-800 flex flex-wrap justify-between items-center gap-2">
+        <h3 class="font-bold text-xs uppercase tracking-wider text-slate-300">👥 Staff Summary</h3>
+        <span class="text-[10px] text-slate-500">Click any row to see daily details</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse min-w-[800px]">
+          <thead class="bg-slate-950/70 text-slate-500 uppercase text-[10px]">
+            <tr>
+              <th class="p-3 border-b border-slate-800">Staff</th>
+              <th class="p-3 border-b border-slate-800 text-center">Present</th>
+              <th class="p-3 border-b border-slate-800 text-center">Absent</th>
+              <th class="p-3 border-b border-slate-800 text-center">Total Hrs</th>
+              <th class="p-3 border-b border-slate-800 text-center">Avg In</th>
+              <th class="p-3 border-b border-slate-800 text-center">Avg Out</th>
+              <th class="p-3 border-b border-slate-800 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="attRepSummaryBody" class="divide-y divide-slate-800/60">
+            <tr><td colspan="7" class="text-center py-10 text-slate-500 text-xs">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- DAILY DETAIL (expandable) -->
+    <div id="attRepDetailBox" class="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden" style="display:none">
+      <div class="p-4 border-b border-slate-800 flex flex-wrap justify-between items-center gap-2">
+        <div>
+          <h3 id="attRepDetailTitle" class="font-bold text-xs uppercase tracking-wider text-slate-300">Daily Details</h3>
+          <p id="attRepDetailSubtitle" class="text-[10px] text-slate-500 mt-0.5">—</p>
+        </div>
+        <div class="flex gap-2">
+          <button type="button" onclick="SF.attendanceReport.printSingle()"
+                  class="text-[10px] bg-sky-600 hover:bg-sky-500 text-white font-bold px-3 py-1.5 rounded-lg transition">
+            🖨️ Print Slip
+          </button>
+          <button type="button" onclick="SF.attendanceReport.closeDetail()"
+                  class="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-3 py-1.5 rounded-lg transition">
+            ✕ Close
+          </button>
+        </div>
+      </div>
+      <div id="attRepDetailBody" class="divide-y divide-slate-800/60 max-h-[600px] overflow-y-auto">
+        <!-- injected -->
+      </div>
+    </div>
+
+  </div>
+
+</section>
+
+
+<script>
+(function () {
+  'use strict';
+
+  const S = window.SF?.state?.state;
+  const C = window.SF?.common;
+  const ATT = window.SF?.attendance;
+
+  if (!S || !C || !ATT) { console.error('Attendance Report: SF globals not ready'); return; }
+
+  /* ============================================================
+     STATE
+     ============================================================ */
+  const R = {
+    storeId: null,
+    month: null,
+    year: null,
+    staffFilter: 'ALL',
+    data: [],           // [{ staffId, staffName, days[], present, totalHours, avgIn, avgOut }]
+    currentDetail: null // expanded staff
+  };
+
+
+  /* ============================================================
+     INIT
+     ============================================================ */
+  function init_attendanceReportModule() {
+    console.log('%c📊 Attendance Report initialized', 'color:#0ea5e9;font-weight:bold');
+
+    const canView = window.SF?.perms?.can?.('staff.view') || window.SF?.perms?.can?.('accounting.view');
+    if (!canView) {
+      const denied = document.getElementById('attRepAccessDenied');
+      const content = document.getElementById('attRepContent');
+      if (denied) denied.style.display = 'block';
+      if (content) content.style.display = 'none';
+      return { onUnload: () => {} };
+    }
+
+    const store = S.store || {};
+    const meta = window.SF?.perms?.getUserMeta?.() || {};
+    R.storeId = meta.storeId || store.storeId || store.uid;
+
+    if (!R.storeId) {
+      C.toast('Store not resolved', 'error', 4000);
+      return { onUnload: () => {} };
+    }
+
+    /* Defaults */
+    const today = new Date();
+    R.month = today.getMonth() + 1;
+    R.year = today.getFullYear();
+
+    const mEl = document.getElementById('attRepMonth');
+    if (mEl) mEl.value = R.month;
+    const yEl = document.getElementById('attRepYear');
+    if (yEl) yEl.value = R.year;
+
+    populateStaffFilter();
+    reload();
+
+    return { onUnload: () => {} };
+  }
+
+
+  /* ============================================================
+     STAFF FILTER DROPDOWN
+     ============================================================ */
+  function populateStaffFilter() {
+    const sel = document.getElementById('attRepStaffFilter');
+    if (!sel) return;
+    const staff = S.staff || [];
+    sel.innerHTML = '<option value="ALL">All Staff</option>' +
+      staff.map((s) => `<option value="${s.id}">${C.escapeHTML(s.name)}</option>`).join('');
+  }
+
+
+  /* ============================================================
+     RELOAD / FETCH DATA
+     ============================================================ */
+  async function reload() {
+    R.month = parseInt(document.getElementById('attRepMonth')?.value, 10) || (new Date().getMonth() + 1);
+    R.year = parseInt(document.getElementById('attRepYear')?.value, 10) || new Date().getFullYear();
+    R.staffFilter = document.getElementById('attRepStaffFilter')?.value || 'ALL';
+
+    const body = document.getElementById('attRepSummaryBody');
+    if (body) body.innerHTML = '<tr><td colspan="7" class="text-center py-10 text-slate-500 text-xs">Loading...</td></tr>';
+
+    try {
+      const rows = await ATT.getMonthlyAttendance(R.storeId, R.month, R.year,
+        R.staffFilter === 'ALL' ? null : R.staffFilter);
+
+      /* Group by staff */
+      const byStaff = {};
+      rows.forEach((r) => {
+        const sid = r.staffId || 'unknown';
+        if (!byStaff[sid]) {
+          byStaff[sid] = {
+            staffId: sid,
+            staffName: r.staffName || 'Unknown',
+            days: [],
+            present: 0, totalHours: 0
+          };
+        }
+        byStaff[sid].days.push(r);
+        if (r.checkInTime) byStaff[sid].present++;
+        if (r.hoursWorked) byStaff[sid].totalHours += r.hoursWorked;
+      });
+
+      /* If staff filter is ALL, we need to include staff with no attendance */
+      if (R.staffFilter === 'ALL') {
+        (S.staff || []).forEach((s) => {
+          if (!byStaff[s.id]) {
+            byStaff[s.id] = {
+              staffId: s.id, staffName: s.name,
+              days: [], present: 0, totalHours: 0
+            };
+          }
+        });
+      }
+
+      /* Compute averages + sort */
+      R.data = Object.values(byStaff).map((s) => {
+        s.days.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+        const ins = s.days.map((d) => d.checkInTime).filter(Boolean);
+        const outs = s.days.map((d) => d.checkOutTime).filter(Boolean);
+        s.avgIn = avgTime(ins);
+        s.avgOut = avgTime(outs);
+        return s;
+      });
+      R.data.sort((a, b) => (a.staffName || '').localeCompare(b.staffName || ''));
+
+      /* Stats */
+      const totalPresent = R.data.reduce((a, s) => a + s.present, 0);
+      const totalHours = R.data.reduce((a, s) => a + s.totalHours, 0);
+      const activeStaff = R.data.filter((s) => s.present > 0).length;
+      const avgHrs = activeStaff > 0 ? (totalHours / activeStaff).toFixed(1) : '0.0';
+
+      setText('attRepStatPresent', totalPresent);
+      setText('attRepStatHours', totalHours.toFixed(1));
+      setText('attRepStatStaff', activeStaff);
+      setText('attRepStatAvgHrs', avgHrs);
+      setText('attRepRecordCount', rows.length);
+
+      /* Working days (days with at least one check-in) */
+      const uniqueDays = new Set(rows.filter((r) => r.checkInTime).map((r) => r.date));
+      setText('attRepWorkingDays', uniqueDays.size);
+
+      renderSummary();
+
+    } catch (e) {
+      console.error('Reload failed:', e);
+      if (body) body.innerHTML = '<tr><td colspan="7" class="text-center py-10 text-rose-400 text-xs">Failed to load. Check connection.</td></tr>';
+    }
+  }
+
+
+  /* ============================================================
+     RENDER SUMMARY
+     ============================================================ */
+  function renderSummary() {
+    const body = document.getElementById('attRepSummaryBody');
+    if (!body) return;
+
+    if (R.data.length === 0) {
+      body.innerHTML = '<tr><td colspan="7" class="text-center py-10 text-slate-500 text-xs">No staff or records found.</td></tr>';
+      return;
+    }
+
+    body.innerHTML = R.data.map((s) => {
+      const absent = 0; // could compute from working days - present
+      const totalDays = new Date(R.year, R.month, 0).getDate();
+      const absentDays = Math.max(0, totalDays - s.present);
+
+      return `
+        <tr class="hover:bg-slate-800/30 transition cursor-pointer"
+            onclick="SF.attendanceReport.openDetail('${s.staffId}')">
+          <td class="p-3 border-b border-slate-800/60">
+            <div class="font-bold text-white text-[12px]">${C.escapeHTML(s.staffName)}</div>
+            <div class="text-[10px] text-slate-500 font-mono">${C.escapeHTML(s.staffId.slice(-8))}</div>
+          </td>
+          <td class="p-3 border-b border-slate-800/60 text-center">
+            <span class="bg-emerald-950/60 text-emerald-400 border border-emerald-800/60 px-2 py-0.5 rounded font-bold text-[11px]">${s.present}</span>
+          </td>
+          <td class="p-3 border-b border-slate-800/60 text-center">
+            <span class="text-[11px] ${absentDays > 0 ? 'text-amber-400 font-bold' : 'text-slate-500'}">${absentDays}</span>
+          </td>
+          <td class="p-3 border-b border-slate-800/60 text-center font-mono font-bold text-sky-400 text-[11.5px]">
+            ${s.totalHours.toFixed(1)}h
+          </td>
+          <td class="p-3 border-b border-slate-800/60 text-center font-mono text-[11px] text-slate-300">
+            ${s.avgIn || '--:--'}
+          </td>
+          <td class="p-3 border-b border-slate-800/60 text-center font-mono text-[11px] text-slate-300">
+            ${s.avgOut || '--:--'}
+          </td>
+          <td class="p-3 border-b border-slate-800/60 text-center">
+            <button type="button" onclick="event.stopPropagation();SF.attendanceReport.openDetail('${s.staffId}')"
+                    class="text-[10px] bg-sky-950/60 hover:bg-sky-900/60 text-sky-400 font-bold px-2 py-1 rounded">
+              👁 View
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+
+  /* ============================================================
+     OPEN DETAIL
+     ============================================================ */
+  function openDetail(staffId) {
+    const staff = R.data.find((s) => s.staffId === staffId);
+    if (!staff) return;
+
+    R.currentDetail = staff;
+
+    const box = document.getElementById('attRepDetailBox');
+    const title = document.getElementById('attRepDetailTitle');
+    const subtitle = document.getElementById('attRepDetailSubtitle');
+    const body = document.getElementById('attRepDetailBody');
+
+    if (title) title.textContent = '📅 ' + staff.staffName + ' — Daily Details';
+    if (subtitle) subtitle.textContent =
+      monthName(R.month) + ' ' + R.year + ' • ' +
+      staff.present + ' days present • ' + staff.totalHours.toFixed(1) + ' hours total';
+    if (box) box.style.display = 'block';
+
+    if (!body) return;
+    if (staff.days.length === 0) {
+      body.innerHTML = '<div class="text-center py-10 text-slate-500 text-xs">No attendance records this month.</div>';
+      box?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+
+    body.innerHTML = staff.days.slice().reverse().map((r) => {
+      const day = r.date?.split('-')[2] || '';
+      const dow = ATT.formatDayOfWeek(r.date);
+      const hours = (r.hoursWorked || 0).toFixed(2);
+      const selfieThumb = r.selfie
+        ? `<img src="${r.selfie}" class="w-14 h-16 object-cover rounded border-2 border-slate-700 flex-shrink-0 cursor-pointer hover:border-sky-600 transition"
+                onclick="SF.attendanceReport.viewSelfie('${r.date}')" alt="selfie">`
+        : `<div class="w-14 h-16 rounded border-2 border-slate-700 flex items-center justify-center text-slate-600 text-[9px] flex-shrink-0 bg-slate-950">No pic</div>`;
+
+      const inBadge = r.checkInTime
+        ? `<span class="bg-emerald-950/60 text-emerald-400 border border-emerald-800/60 px-2 py-0.5 rounded font-bold text-[10px]">IN ${C.escapeHTML(r.checkInTime)}</span>`
+        : '';
+      const outBadge = r.checkOutTime
+        ? `<span class="bg-rose-950/60 text-rose-400 border border-rose-800/60 px-2 py-0.5 rounded font-bold text-[10px]">OUT ${C.escapeHTML(r.checkOutTime)}</span>`
+        : `<span class="bg-amber-950/60 text-amber-400 border border-amber-800/60 px-2 py-0.5 rounded font-bold text-[10px]">NOT OUT</span>`;
+
+      return `
+        <div class="flex items-center gap-3 p-3 hover:bg-slate-800/30">
+          ${selfieThumb}
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-[12px] font-bold text-white">${day} ${dow}</span>
+              ${inBadge}
+              ${outBadge}
+            </div>
+            <div class="text-[10px] text-slate-500 mt-1 truncate">
+              ${r.checkInLocation ? '📍 ' + C.escapeHTML(r.checkInLocation) : '📍 —'}
+            </div>
+            <div class="text-[10px] text-slate-600 font-mono mt-0.5">
+              Selfie: ${(r.selfieSizeKB || 0).toFixed(1)} KB
+            </div>
+          </div>
+          <div class="text-right flex-shrink-0">
+            <div class="text-[13px] font-bold text-sky-400 font-mono">${hours}h</div>
+            <div class="text-[9px] text-slate-500">${dow}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    box?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function closeDetail() {
+    const box = document.getElementById('attRepDetailBox');
+    if (box) box.style.display = 'none';
+    R.currentDetail = null;
+  }
+
+  function viewSelfie(date) {
+    if (!R.currentDetail) return;
+    const rec = R.currentDetail.days.find((d) => d.date === date);
+    if (!rec || !rec.selfie) { C.toast('No selfie for this day', 'warning'); return; }
+
+    /* Modal */
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;padding:20px;';
+    overlay.innerHTML = `
+      <div style="max-width:400px;width:100%;text-align:center;">
+        <img src="${rec.selfie}" style="max-width:100%;border-radius:12px;border:2px solid #334155;">
+        <div style="color:#e2e8f0;font-size:12px;margin-top:12px;font-family:monospace;">
+          <div style="font-weight:bold;color:#38bdf8;">${C.escapeHTML(rec.staffName || R.currentDetail.staffName)}</div>
+          <div>${rec.date} • In: ${rec.checkInTime || '—'} • Out: ${rec.checkOutTime || '—'}</div>
+          <div style="color:#94a3b8;margin-top:4px;">📍 ${C.escapeHTML(rec.checkInLocation || '—')}</div>
+          <div style="color:#64748b;margin-top:2px;font-size:10px;">Selfie size: ${(rec.selfieSizeKB || 0).toFixed(2)} KB</div>
+        </div>
+        <button type="button" style="margin-top:16px;padding:10px 24px;background:#0ea5e9;color:white;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:13px;">Close</button>
+      </div>
+    `;
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay || e.target.tagName === 'BUTTON') overlay.remove();
+    });
+    document.body.appendChild(overlay);
+  }
+
+
+  /* ============================================================
+     PRINT SINGLE STAFF SLIP (A4 landscape)
+     ============================================================ */
+  function printSingle() {
+    if (!R.currentDetail) { C.toast('Open a staff detail first', 'warning'); return; }
+    const staff = R.currentDetail;
+    const prof = S.profile || {};
+    const target = document.getElementById('isolatedPrintContainer');
+    if (!target) return;
+
+    const rows = staff.days.map((r) => {
+      const day = r.date?.split('-')[2] || '';
+      const dow = ATT.formatDayOfWeek(r.date);
+      return `
+        <tr style="border-bottom:1px solid #e2e8f0;">
+          <td style="padding:5px 6px;font-family:monospace;font-size:10px;">${r.date}</td>
+          <td style="padding:5px 6px;text-align:center;font-size:10px;">${dow}</td>
+          <td style="padding:5px 6px;text-align:center;font-family:monospace;font-size:10px;color:#059669;font-weight:700;">${r.checkInTime || '—'}</td>
+          <td style="padding:5px 6px;text-align:center;font-family:monospace;font-size:10px;color:#dc2626;font-weight:700;">${r.checkOutTime || '—'}</td>
+          <td style="padding:5px 6px;text-align:center;font-family:monospace;font-size:10px;font-weight:700;">${(r.hoursWorked || 0).toFixed(2)}</td>
+          <td style="padding:5px 6px;font-size:9.5px;color:#475569;">${C.escapeHTML(r.checkInLocation || '—')}</td>
+        </tr>
+      `;
+    }).join('');
+
+    target.innerHTML = `
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#0f172a;padding:8mm 10mm;height:100%;display:flex;flex-direction:column;">
+
+        <!-- Header -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0369a1;padding-bottom:8px;margin-bottom:10px;">
+          <div>
+            <div style="font-size:18px;font-weight:900;color:#075985;line-height:1;">${C.escapeHTML(prof.name || 'Store')}</div>
+            <div style="font-size:9px;color:#475569;margin-top:3px;max-width:300px;line-height:1.3;">${C.escapeHTML(prof.address || '')}</div>
+            <div style="font-size:9px;font-weight:600;color:#334155;margin-top:1px;">${C.escapeHTML(prof.phone || '')}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="background:linear-gradient(135deg,#0369a1,#075985);color:white;font-size:10px;font-weight:900;padding:5px 14px;border-radius:4px;letter-spacing:1.5px;text-transform:uppercase;">Attendance Report</div>
+            <div style="font-size:10px;color:#64748b;font-family:monospace;margin-top:5px;">${monthName(R.month)} ${R.year}</div>
+          </div>
+        </div>
+
+        <!-- Staff Info -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;font-size:10.5px;">
+          <div style="border:1px solid #cbd5e1;border-radius:6px;padding:8px;background:#f8fafc;">
+            <div style="font-size:8px;font-weight:900;color:#0369a1;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;padding-bottom:3px;border-bottom:1px solid #dbeafe;">Employee</div>
+            <div style="display:grid;grid-template-columns:70px 1fr;gap:3px 6px;">
+              <span style="color:#64748b;font-weight:600;">Name:</span><strong>${C.escapeHTML(staff.staffName)}</strong>
+              <span style="color:#64748b;font-weight:600;">Total Present:</span><strong style="color:#059669;">${staff.present} days</strong>
+              <span style="color:#64748b;font-weight:600;">Total Hours:</span><strong style="color:#0369a1;">${staff.totalHours.toFixed(2)} hrs</strong>
+              <span style="color:#64748b;font-weight:600;">Avg In:</span><span style="font-family:monospace;">${staff.avgIn || '—'}</span>
+              <span style="color:#64748b;font-weight:600;">Avg Out:</span><span style="font-family:monospace;">${staff.avgOut || '—'}</span>
+            </div>
+          </div>
+          <div style="border:1px solid #cbd5e1;border-radius:6px;padding:8px;background:#eff6ff;">
+            <div style="font-size:8px;font-weight:900;color:#0369a1;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;padding-bottom:3px;border-bottom:1px solid #dbeafe;">Summary</div>
+            <div style="display:grid;grid-template-columns:100px 1fr;gap:3px 6px;">
+              <span style="color:#64748b;font-weight:600;">Working Days:</span><strong>${new Set(staff.days.filter(d => d.checkInTime).map(d => d.date)).size}</strong>
+              <span style="color:#64748b;font-weight:600;">Records:</span><strong>${staff.days.length}</strong>
+              <span style="color:#64748b;font-weight:600;">Generated:</span><span style="font-family:monospace;font-size:9.5px;">${C.fmtDatePretty(new Date())}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detail Table -->
+        <table style="width:100%;border-collapse:collapse;font-size:10px;flex:1;">
+          <thead>
+            <tr style="background:#0369a1;color:white;">
+              <th style="padding:6px 8px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:0.5px;">Date</th>
+              <th style="padding:6px 8px;text-align:center;font-size:9px;text-transform:uppercase;letter-spacing:0.5px;width:50px;">Day</th>
+              <th style="padding:6px 8px;text-align:center;font-size:9px;text-transform:uppercase;letter-spacing:0.5px;width:70px;">Check In</th>
+              <th style="padding:6px 8px;text-align:center;font-size:9px;text-transform:uppercase;letter-spacing:0.5px;width:70px;">Check Out</th>
+              <th style="padding:6px 8px;text-align:center;font-size:9px;text-transform:uppercase;letter-spacing:0.5px;width:60px;">Hours</th>
+              <th style="padding:6px 8px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:0.5px;">Location</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows || '<tr><td colspan="6" style="padding:20px;text-align:center;color:#94a3b8;">No records</td></tr>'}
+          </tbody>
+          <tfoot>
+            <tr style="background:#eff6ff;font-weight:900;border-top:2px solid #0369a1;">
+              <td colspan="4" style="padding:7px 8px;text-align:right;text-transform:uppercase;font-size:10px;">Total</td>
+              <td style="padding:7px 8px;text-align:center;font-family:monospace;color:#0369a1;font-size:11px;">${staff.totalHours.toFixed(2)}h</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <!-- Signature -->
+        <div style="margin-top:20px;display:flex;justify-content:space-between;align-items:flex-end;">
+          <div style="font-size:8px;color:#94a3b8;font-family:monospace;">SmartFix ERP © 2026 • Generated ${C.fmtDatePretty(new Date())}</div>
+          <div style="text-align:center;">
+            <div style="height:35px;"></div>
+            <div style="border-top:1px solid #94a3b8;padding-top:3px;font-size:9px;font-weight:700;color:#475569;width:180px;">For ${C.escapeHTML(prof.name || 'Store')}</div>
+          </div>
+        </div>
+
+      </div>
+    `;
+
+    target.style.cssText = `
+      display: flex !important; flex-direction: column !important;
+      width: 287mm !important; height: 200mm !important; min-height: 200mm !important;
+      max-width: 287mm !important; margin: 0 auto !important;
+      padding: 0 !important; box-sizing: border-box !important;
+      background: white !important; color: #000 !important;
+      -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
+      page-break-inside: avoid !important;
+    `;
+
+    /* A4 Landscape print CSS */
+    let styleEl = document.getElementById('sfAttRepPrintStyle');
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = 'sfAttRepPrintStyle';
+      styleEl.textContent = `
+        @media print {
+          @page { size: A4 landscape; margin: 5mm; }
+          body > *:not(#isolatedPrintContainer) { display: none !important; }
+          #isolatedPrintContainer {
+            display: flex !important;
+            width: 287mm !important; height: 200mm !important;
+            min-height: 200mm !important; max-width: 287mm !important;
+            margin: 0 auto !important; padding: 8mm 10mm !important;
+            box-sizing: border-box !important; background: white !important;
+            page-break-inside: avoid !important; page-break-after: avoid !important;
+          }
+        }
+      `;
+      document.head.appendChild(styleEl);
+    }
+
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => {
+        target.innerHTML = '';
+        target.style.cssText = '';
+      }, 800);
+    }, 300);
+  }
+
+
+  /* ============================================================
+     PRINT ALL STAFF SLIPS
+     ============================================================ */
+  function printAll() {
+    if (R.data.length === 0) { C.toast('No data to print', 'warning'); return; }
+    const prof = S.profile || {};
+    const target = document.getElementById('isolatedPrintContainer');
+    if (!target) return;
+
+    /* One page per staff */
+    const pages = R.data.map((staff) => {
+      const rows = staff.days.map((r) => {
+        const day = r.date?.split('-')[2] || '';
+        const dow = ATT.formatDayOfWeek(r.date);
+        return `
+          <tr style="border-bottom:1px solid #e2e8f0;">
+            <td style="padding:4px 6px;font-family:monospace;font-size:9.5px;">${r.date}</td>
+            <td style="padding:4px 6px;text-align:center;font-size:9.5px;">${dow}</td>
+            <td style="padding:4px 6px;text-align:center;font-family:monospace;font-size:9.5px;color:#059669;font-weight:700;">${r.checkInTime || '—'}</td>
+            <td style="padding:4px 6px;text-align:center;font-family:monospace;font-size:9.5px;color:#dc2626;font-weight:700;">${r.checkOutTime || '—'}</td>
+            <td style="padding:4px 6px;text-align:center;font-family:monospace;font-size:9.5px;font-weight:700;">${(r.hoursWorked || 0).toFixed(2)}</td>
+            <td style="padding:4px 6px;font-size:9px;color:#475569;">${C.escapeHTML(r.checkInLocation || '—')}</td>
+          </tr>
+        `;
+      }).join('');
+
+      return `
+        <div style="page-break-after: always;height:100%;display:flex;flex-direction:column;padding:6mm 8mm;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0369a1;padding-bottom:6px;margin-bottom:8px;">
+            <div>
+              <div style="font-size:16px;font-weight:900;color:#075985;line-height:1;">${C.escapeHTML(prof.name || 'Store')}</div>
+              <div style="font-size:8.5px;color:#475569;margin-top:3px;max-width:280px;line-height:1.3;">${C.escapeHTML(prof.address || '')}</div>
+              <div style="font-size:8.5px;font-weight:600;color:#334155;margin-top:1px;">${C.escapeHTML(prof.phone || '')}</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="background:#0369a1;color:white;font-size:9px;font-weight:900;padding:4px 12px;border-radius:4px;letter-spacing:1.5px;text-transform:uppercase;">Attendance Report</div>
+              <div style="font-size:9px;color:#64748b;font-family:monospace;margin-top:4px;">${monthName(R.month)} ${R.year}</div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;font-size:10px;">
+            <div style="border:1px solid #cbd5e1;border-radius:5px;padding:6px;background:#f8fafc;">
+              <div style="font-size:7.5px;font-weight:900;color:#0369a1;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;border-bottom:1px solid #dbeafe;padding-bottom:2px;">Employee</div>
+              <div style="display:grid;grid-template-columns:80px 1fr;gap:2px 6px;">
+                <span style="color:#64748b;font-weight:600;">Name:</span><strong>${C.escapeHTML(staff.staffName)}</strong>
+                <span style="color:#64748b;font-weight:600;">Present:</span><strong style="color:#059669;">${staff.present} days</strong>
+                <span style="color:#64748b;font-weight:600;">Hours:</span><strong style="color:#0369a1;">${staff.totalHours.toFixed(2)}h</strong>
+                <span style="color:#64748b;font-weight:600;">Avg In/Out:</span><span style="font-family:monospace;">${staff.avgIn || '—'} / ${staff.avgOut || '—'}</span>
+              </div>
+            </div>
+            <div style="border:1px solid #cbd5e1;border-radius:5px;padding:6px;background:#eff6ff;">
+              <div style="font-size:7.5px;font-weight:900;color:#0369a1;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;border-bottom:1px solid #dbeafe;padding-bottom:2px;">Month Info</div>
+              <div style="display:grid;grid-template-columns:80px 1fr;gap:2px 6px;">
+                <span style="color:#64748b;font-weight:600;">Period:</span><strong>${monthName(R.month)} ${R.year}</strong>
+                <span style="color:#64748b;font-weight:600;">Records:</span><strong>${staff.days.length}</strong>
+                <span style="color:#64748b;font-weight:600;">Generated:</span><span style="font-family:monospace;font-size:9px;">${C.fmtDatePretty(new Date())}</span>
+              </div>
+            </div>
+          </div>
+
+          <table style="width:100%;border-collapse:collapse;font-size:9.5px;flex:1;">
+            <thead>
+              <tr style="background:#0369a1;color:white;">
+                <th style="padding:5px 6px;text-align:left;font-size:8.5px;text-transform:uppercase;">Date</th>
+                <th style="padding:5px 6px;text-align:center;font-size:8.5px;text-transform:uppercase;width:45px;">Day</th>
+                <th style="padding:5px 6px;text-align:center;font-size:8.5px;text-transform:uppercase;width:65px;">In</th>
+                <th style="padding:5px 6px;text-align:center;font-size:8.5px;text-transform:uppercase;width:65px;">Out</th>
+                <th style="padding:5px 6px;text-align:center;font-size:8.5px;text-transform:uppercase;width:55px;">Hours</th>
+                <th style="padding:5px 6px;text-align:left;font-size:8.5px;text-transform:uppercase;">Location</th>
+              </tr>
+            </thead>
+            <tbody>${rows || '<tr><td colspan="6" style="padding:15px;text-align:center;color:#94a3b8;">No records</td></tr>'}</tbody>
+            <tfoot>
+              <tr style="background:#eff6ff;font-weight:900;border-top:2px solid #0369a1;">
+                <td colspan="4" style="padding:6px;text-align:right;text-transform:uppercase;font-size:9.5px;">Total</td>
+                <td style="padding:6px;text-align:center;font-family:monospace;color:#0369a1;">${staff.totalHours.toFixed(2)}h</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+
+          <div style="margin-top:15px;display:flex;justify-content:space-between;align-items:flex-end;">
+            <div style="font-size:7.5px;color:#94a3b8;font-family:monospace;">SmartFix ERP © 2026</div>
+            <div style="text-align:center;">
+              <div style="height:30px;"></div>
+              <div style="border-top:1px solid #94a3b8;padding-top:3px;font-size:8.5px;font-weight:700;color:#475569;width:160px;">Authorised Signatory</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    target.innerHTML = pages;
+    target.style.cssText = `
+      display: block !important;
+      background: white !important;
+      color: #000 !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    `;
+
+    let styleEl = document.getElementById('sfAttRepPrintStyle');
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = 'sfAttRepPrintStyle';
+      styleEl.textContent = `
+        @media print {
+          @page { size: A4 landscape; margin: 5mm; }
+          body > *:not(#isolatedPrintContainer) { display: none !important; }
+          #isolatedPrintContainer {
+            display: block !important;
+            width: 287mm !important;
+            margin: 0 auto !important;
+            background: white !important;
+          }
+          #isolatedPrintContainer > div {
+            width: 287mm !important;
+            height: 200mm !important;
+            page-break-after: always !important;
+            page-break-inside: avoid !important;
+          }
+        }
+      `;
+      document.head.appendChild(styleEl);
+    }
+
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => {
+        target.innerHTML = '';
+        target.style.cssText = '';
+      }, 800);
+    }, 300);
+  }
+
+
+  /* ============================================================
+     EXCEL EXPORT
+     ============================================================ */
+  async function exportExcel() {
+    if (typeof XLSX === 'undefined') {
+      try {
+        await new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+          s.onload = resolve; s.onerror = reject;
+          document.head.appendChild(s);
+        });
+      } catch (e) { C.toast('Excel library failed', 'error'); return; }
+    }
+
+    if (R.data.length === 0) { C.toast('No data to export', 'warning'); return; }
+
+    C.toast('Building Excel...', 'info', 2000);
+
+    try {
+      const wb = XLSX.utils.book_new();
+
+      /* Sheet 1: Summary */
+      const summaryRows = R.data.map((s) => ({
+        'Staff Name': s.staffName,
+        'Staff ID': s.staffId,
+        'Present Days': s.present,
+        'Total Hours': +s.totalHours.toFixed(2),
+        'Avg Check-In': s.avgIn || '',
+        'Avg Check-Out': s.avgOut || '',
+        'Records': s.days.length
+      }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryRows), 'Summary');
+
+      /* Sheet 2: Daily Details */
+      const dailyRows = [];
+      R.data.forEach((staff) => {
+        staff.days.forEach((r) => {
+          dailyRows.push({
+            'Staff': staff.staffName,
+            'Date': r.date,
+            'Day': ATT.formatDayOfWeek(r.date),
+            'Check In': r.checkInTime || '',
+            'Check Out': r.checkOutTime || '',
+            'Hours': +(r.hoursWorked || 0).toFixed(2),
+            'Location': r.checkInLocation || '',
+            'Selfie KB': +(r.selfieSizeKB || 0).toFixed(2)
+          });
+        });
+      });
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dailyRows), 'Daily Details');
+
+      /* Sheet 3: Metadata */
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([{
+        'Report': 'Attendance',
+        'Month': monthName(R.month),
+        'Year': R.year,
+        'Store': S.profile?.name || '',
+        'Generated': new Date().toLocaleString(),
+        'Total Staff': R.data.length,
+        'Total Records': dailyRows.length
+      }]), 'Info');
+
+      const fname = `Attendance_${monthName(R.month)}_${R.year}.xlsx`;
+      XLSX.writeFile(wb, fname);
+      C.toast('Excel downloaded: ' + fname, 'success', 3500);
+      try { window.SF?.state?.logAudit?.('ATTENDANCE_EXPORT', `${monthName(R.month)} ${R.year}`); } catch (e) {}
+
+    } catch (e) {
+      console.error('Excel export failed:', e);
+      C.toast('Excel export failed', 'error');
+    }
+  }
+
+
+  /* ============================================================
+     HELPERS
+     ============================================================ */
+  function setText(id, text) { const el = document.getElementById(id); if (el) el.textContent = text; }
+
+  function avgTime(times) {
+    if (!times || times.length === 0) return '';
+    let total = 0, count = 0;
+    times.forEach((t) => {
+      try {
+        const [h, m] = t.split(':').map(Number);
+        total += h * 60 + m;
+        count++;
+      } catch (e) {}
+    });
+    if (!count) return '';
+    const avg = Math.round(total / count);
+    return String(Math.floor(avg / 60)).padStart(2, '0') + ':' + String(avg % 60).padStart(2, '0');
+  }
+
+  function monthName(m) {
+    return ['', 'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'][m] || '';
+  }
+
+
+  /* ============================================================
+     EXPOSE
+     ============================================================ */
+  window.SF = window.SF || {};
+  window.SF.attendanceReport = {
+    init: init_attendanceReportModule,
+    reload,
+    openDetail,
+    closeDetail,
+    viewSelfie,
+    printSingle,
+    printAll,
+    exportExcel
+  };
+
+  window.init_attendanceReportModule = init_attendanceReportModule;
+
+  if (document.getElementById('attendanceReportModule')) {
+    init_attendanceReportModule();
+  }
+})();
+</script>
