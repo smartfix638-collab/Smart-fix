@@ -1,5 +1,5 @@
 /* ============================================================
-   SMARTFIX ERP — Permissions & Role Engine (v4.2.0)
+   SMARTFIX ERP — Permissions & Role Engine (v4.3.0)
    File: js/permissions.js
    ============================================================ */
 
@@ -21,68 +21,53 @@ export const ROLE_LABELS = {
   CA:         '📊 CA'
 };
 
-/* ============================================================
-   PERMISSIONS MATRIX
-   ============================================================ */
 const PERMISSIONS = {
 
   OWNER: ['*'],
 
   MANAGER: [
-    /* Billing */
     'billing.view', 'billing.create', 'billing.reprint',
-    /* Returns */
     'returns.view', 'returns.create',
-    /* Purchase */
     'purchase.view', 'purchase.create',
-    /* Vouchers */
     'vouchers.view', 'vouchers.create',
-    /* Parties */
     'parties.view', 'parties.create',
-    /* Inventory */
     'inventory.view', 'inventory.create', 'inventory.sell', 'inventory.price.edit',
-    /* Staff — view only */
     'staff.view',
-    /* Accounting + Books — view only */
     'accounting.view', 'books.view',
-    /* Attendance */
-    'attendance.view', 'attendance.mark', 'attendance.report'
+    'attendance.view', 'attendance.mark', 'attendance.report',
+    /* Repair — full operational access */
+    'repair.view', 'repair.create', 'repair.edit', 'repair.print'
+    /* NO repair.delete */
   ],
 
   PROMOTER: [
-    /* Billing */
     'billing.view', 'billing.create', 'billing.reprint',
-    /* Returns */
     'returns.view', 'returns.create',
-    /* Parties */
     'parties.view', 'parties.create',
-    /* Inventory */
     'inventory.view', 'inventory.sell',
-    /* Attendance — own only */
-    'attendance.view', 'attendance.mark'
+    'attendance.view', 'attendance.mark',
+    /* Repair — view + create only */
+    'repair.view', 'repair.create'
   ],
 
   TECHNICIAN: [
-    /* Service (future) */
     'service.view', 'service.create', 'service.update',
-    /* Inventory — view */
     'inventory.view',
-    /* Attendance — own only */
-    'attendance.view', 'attendance.mark'
+    'attendance.view', 'attendance.mark',
+    /* Repair — full access */
+    'repair.view', 'repair.create', 'repair.edit', 'repair.print'
   ],
 
   CA: [
-    /* Read-only financial */
     'accounting.view', 'books.view',
     'billing.view', 'returns.view', 'purchase.view', 'vouchers.view',
     'parties.view', 'inventory.view', 'staff.view',
-    'export.ca'
+    'export.ca',
+    /* Read-only repair view */
+    'repair.view'
   ]
 };
 
-/* ============================================================
-   STATE
-   ============================================================ */
 const PERM_STATE = {
   role: 'OWNER',
   uid: null,
@@ -91,9 +76,6 @@ const PERM_STATE = {
   isStaff: false
 };
 
-/* ============================================================
-   PUBLIC API
-   ============================================================ */
 export function setRole(role, meta = {}) {
   PERM_STATE.role = (ROLES[role] ? role : 'OWNER');
   PERM_STATE.uid = meta.uid || null;
@@ -114,15 +96,11 @@ export function can(perm) {
   if (!perms) return false;
   if (perms.includes('*')) return true;
   if (perms.includes(perm)) return true;
-
   const parts = perm.split('.');
   if (parts.length === 2 && perms.includes(parts[0] + '.*')) return true;
   return false;
 }
 
-/**
- * Route → required permission mapping
- */
 export function canAccessRoute(routeKey) {
   const ROUTE_PERMS = {
     billing:               'billing.view',
@@ -136,7 +114,8 @@ export function canAccessRoute(routeKey) {
     staff:                 'staff.view',
     settings:              'settings.view',
     attendance:            'attendance.view',
-    'attendance-report':   'attendance.report'
+    'attendance-report':   'attendance.report',
+    repair:                'repair.view'
   };
   const perm = ROUTE_PERMS[routeKey];
   if (!perm) return true;
@@ -154,9 +133,6 @@ export function getAccessibleRoutes(allRoutes) {
   return allRoutes.filter((key) => canAccessRoute(key));
 }
 
-/* ============================================================
-   GLOBAL
-   ============================================================ */
 window.SF = window.SF || {};
 window.SF.perms = {
   ROLES, ROLE_LABELS,
@@ -164,4 +140,4 @@ window.SF.perms = {
   isOwner, can, guard, canAccessRoute, getAccessibleRoutes
 };
 
-console.log('%c🔐 Permissions engine ready (v4.2.0)', 'color:#f59e0b;font-weight:bold;font-size:11px');
+console.log('%c🔐 Permissions engine ready (v4.3.0)', 'color:#f59e0b;font-weight:bold;font-size:11px');
