@@ -20,11 +20,7 @@
 
 <style>
   * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-  html, body {
-    margin: 0; padding: 0; min-height: 100vh;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-    background: #020617; color: #e2e8f0; overflow-x: hidden;
-  }
+  html, body { margin: 0; padding: 0; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; background: #020617; color: #e2e8f0; overflow-x: hidden; }
   .bg-blob { position: fixed; border-radius: 50%; filter: blur(90px); opacity: 0.4; pointer-events: none; z-index: 0; }
   .blob-1 { width: 420px; height: 420px; top: -140px; left: -140px; background: radial-gradient(circle, #0ea5e9 0%, transparent 70%); animation: float1 18s ease-in-out infinite; }
   .blob-2 { width: 380px; height: 380px; bottom: -120px; right: -120px; background: radial-gradient(circle, #6366f1 0%, transparent 70%); animation: float2 22s ease-in-out infinite; }
@@ -67,7 +63,7 @@
       <h1 class="mt-3 text-2xl font-black tracking-tight text-white leading-none">
         SMARTFIX<span class="text-sky-400">ERP</span>
       </h1>
-      <p class="text-[11px] text-slate-400 mt-1.5 tracking-wide">Cloud Edition • Multi-Device Sync • v4.3</p>
+      <p class="text-[11px] text-slate-400 mt-1.5 tracking-wide">Cloud Edition • Multi-Device Sync • v4.4</p>
     </div>
 
     <!-- Tabs -->
@@ -131,8 +127,8 @@
       <!-- CUSTOMER PORTAL -->
       <section id="panel-customer" class="space-y-3 hidden">
         <header class="mb-3">
-          <h2 class="text-base font-bold text-white">Find your bill or warranty</h2>
-          <p class="text-[11px] text-slate-400 mt-0.5">Enter your mobile number plus last 6 digits of IMEI or invoice number.</p>
+          <h2 class="text-base font-bold text-white">Find your bill or repair</h2>
+          <p class="text-[11px] text-slate-400 mt-0.5">Enter your mobile number plus IMEI last 6 digits, Invoice No, or Job No.</p>
         </header>
         <div>
           <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1.5 tracking-wider">Shop Code <span class="text-slate-600 font-normal normal-case">(ask your dealer)</span></label>
@@ -143,13 +139,13 @@
           <input id="custPhone" type="tel" placeholder="9876543210" inputmode="numeric" maxlength="10" class="input-field" style="font-family: ui-monospace, monospace;">
         </div>
         <div>
-          <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1.5 tracking-wider">IMEI (last 6) <span class="text-slate-600 font-normal">or</span> Invoice No</label>
-          <input id="custCode" type="text" placeholder="e.g. 345678 OR SFP-2425-0001" onkeydown="if(event.key==='Enter'){event.preventDefault();customerLookup();}" class="input-field" style="font-family: ui-monospace, monospace; text-transform: uppercase;">
+          <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1.5 tracking-wider">IMEI (last 6) <span class="text-slate-600 font-normal">or</span> Invoice / Job No</label>
+          <input id="custCode" type="text" placeholder="e.g. 345678 OR SFP-2425-0001 OR JOB-2425-0001" onkeydown="if(event.key==='Enter'){event.preventDefault();customerLookup();}" class="input-field" style="font-family: ui-monospace, monospace; text-transform: uppercase;">
         </div>
         <button id="custBtn" type="button" onclick="customerLookup()" class="btn-primary mt-1">Find My Bill →</button>
         <div id="custError" class="err-text"></div>
         <div class="border-t border-slate-800 pt-3 mt-3">
-          <p class="text-[10px] text-slate-500 text-center leading-relaxed">💡 The Shop Code appears on your printed invoice.</p>
+          <p class="text-[10px] text-slate-500 text-center leading-relaxed">💡 The Shop Code appears on your printed invoice or job card.</p>
         </div>
       </section>
 
@@ -212,10 +208,8 @@
 
 <script type="module" src="./js/auth.js"></script>
 
-<!-- PWA Install helper -->
 <script type="module" src="./js/pwa-install.js"></script>
 
-<!-- Service Worker registration -->
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
