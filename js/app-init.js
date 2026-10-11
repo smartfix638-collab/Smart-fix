@@ -1,7 +1,7 @@
 /* ============================================================
-   SMARTFIX ERP — App Bootstrap (v4.2.2)
+   SMARTFIX ERP — App Bootstrap (v4.3.0)
    File: js/app-init.js
-   Purpose: Role-aware boot + import all side-effect modules
+   Purpose: Role-aware boot + Attendance gate
    ============================================================ */
 
 import { auth, db, PATHS, APP_VERSION, APP_NAME, APP_AUTHOR } from './firebase-config.js';
@@ -12,7 +12,6 @@ import * as Cloud from './cloud.js';
 import * as Perms from './permissions.js';
 import { ROLES, ROLE_LABELS } from './permissions.js';
 
-/* ⭐ NEW: Import attendance.js so window.SF.attendance is registered */
 import './attendance.js';
 
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -21,6 +20,7 @@ import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase
 
 let booted = false;
 let heartbeatTimer = null;
+let gateApplied = false;
 
 
 /* ============================================================
@@ -35,6 +35,7 @@ export function bootApp() {
 
   wireNetworkIndicator();
   wireGlobalErrorHandlers();
+  wireGateListener();
 
   onAuthStateChanged(auth, handleAuthState);
   booted = true;
@@ -144,23 +145,102 @@ async function handleAuthState(user) {
       'color:#10b981;font-weight:bold'
     );
 
-    /* Verify attendance module loaded */
-    console.log(
-      '%c📸 Attendance module: ' + (window.SF?.attendance ? '✅ Loaded' : '❌ Missing'),
-      'color:#8b5cf6;font-weight:bold'
-    );
-
-    setTimeout(() => {
-      const label = Perms.isOwner()
-        ? state.store.shopName
-        : (meta.name + ' • ' + Perms.getRoleLabel());
-      toast('Welcome, ' + label + '!', 'success', 2500);
-    }, 700);
+    /* ⭐ ATTENDANCE GATE — staff must check in first */
+    if (!Perms.isOwner() && Perms.can('attendance.mark') && !gateApplied) {
+      gateApplied = true;
+      setTimeout(() => applyAttendanceGate().catch((e) => console.warn('Gate failed:', e)), 900);
+    } else {
+      setTimeout(() => {
+        const label = Perms.isOwner()
+          ? state.store.shopName
+          : (meta.name + ' • ' + Perms.getRoleLabel());
+        toast('Welcome, ' + label + '!', 'success', 2500);
+      }, 700);
+    }
 
   } catch (err) {
     console.error('Boot failed:', err);
     toast('Failed to load. Check connection.', 'error', 5000);
   }
+}
+
+
+/* ============================================================
+   ATTENDANCE GATE
+   ============================================================ */
+async function applyAttendanceGate() {
+  const meta = Perms.getUserMeta();
+  const storeId = meta.storeId;
+  const staffId = meta.uid;
+  const ATT = window.SF?.attendance;
+
+  if (!storeId || !staffId || !ATT) {
+    console.warn('Gate skipped — missing info', { storeId, staffId, hasATT: !!ATT });
+    window.SF.attendanceGate = false;
+    return;
+  }
+
+  let rec = null;
+  try {
+    rec = await ATT.getTodayRecord(storeId, staffId);
+  } catch (e) {
+    console.warn('Gate: attendance read failed, allowing access', e);
+    window.SF.attendanceGate = false;
+    return;
+  }
+
+  /* Already checked in → gate OFF */
+  if (rec && rec.checkInTime) {
+    window.SF.attendanceGate = false;
+    console.log('%c✅ Attendance gate: already checked in', 'color:#10b981');
+    setTimeout(() => {
+      toast('Welcome, ' + (meta.name || '') + '!', 'success', 2500);
+    }, 400);
+    return;
+  }
+
+  /* Gate ON — restrict to attendance only */
+  window.SF.attendanceGate = true;
+  console.log('%c🔒 Attendance gate: ACTIVE — staff must check in', 'color:#f59e0b;font-weight:bold');
+
+  /* Show only Attendance tab in tab bar */
+  try {
+    if (typeof Router.renderTabs === 'function') {
+      Router.renderTabs(['attendance']);
+    }
+  } catch (e) {}
+
+  toast('📸 Check in to unlock all features', 'warning', 5000);
+
+  /* Force navigate to attendance */
+  setTimeout(() => {
+    try {
+      if (typeof Router.go === 'function') {
+        Router.go('attendance', { force: true, replace: true });
+      } else {
+        window.location.hash = '#attendance';
+      }
+    } catch (e) {}
+  }, 700);
+}
+
+
+function wireGateListener() {
+  window.addEventListener('attendance:checkedin', () => {
+    window.SF.attendanceGate = false;
+    console.log('%c🔓 Attendance gate: UNLOCKED', 'color:#10b981;font-weight:bold');
+
+    try {
+      const allowed = Router.order.filter((key) => Perms.canAccessRoute(key));
+      if (typeof Router.renderTabs === 'function') {
+        Router.renderTabs(allowed);
+      }
+    } catch (e) {}
+
+    setTimeout(() => {
+      toast('✅ All features unlocked', 'success', 3000);
+    }, 500);
+  });
 }
 
 
@@ -203,7 +283,7 @@ function showRoleBadge() {
 
 
 /* ============================================================
-   ROUTER + ROLE-AWARE TABS
+   ROUTER + TABS
    ============================================================ */
 function initializeRouterAndTabs() {
   const allRoutes = Router.order;
@@ -309,16 +389,11 @@ async function quickBackup() {
     const data = {
       version: APP_VERSION,
       exportedAt: new Date().toISOString(),
-      store: state.store,
-      profile: state.profile,
-      invoices: state.invoices,
-      creditNotes: state.creditNotes,
-      vouchers: state.vouchers,
-      inventory: state.inventory,
-      purchases: state.purchases,
-      parties: state.parties,
-      staff: state.staff,
-      salaryPayments: state.salaryPayments,
+      store: state.store, profile: state.profile,
+      invoices: state.invoices, creditNotes: state.creditNotes,
+      vouchers: state.vouchers, inventory: state.inventory,
+      purchases: state.purchases, parties: state.parties,
+      staff: state.staff, salaryPayments: state.salaryPayments,
       categories: state.categories
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -390,7 +465,8 @@ window.SF.app = {
   version: APP_VERSION,
   author: APP_AUTHOR,
   isBooted: () => booted,
+  isGated: () => !!window.SF?.attendanceGate,
   logout: async () => { await signOut(auth); redirectToLogin(); }
 };
 
-console.log('%c⚡ App bootstrap ready (v4.2.2)', 'color:#8b5cf6;font-weight:bold;font-size:11px');
+console.log('%c⚡ App bootstrap ready (v4.3.0)', 'color:#8b5cf6;font-weight:bold;font-size:11px');
