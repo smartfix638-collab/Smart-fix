@@ -1,6 +1,7 @@
 /* ============================================================
-   SMARTFIX ERP — SPA Router (v4.2.0)
+   SMARTFIX ERP — SPA Router (v4.3.0)
    File: js/router.js
+   Purpose: Route management + Attendance gate check
    ============================================================ */
 
 import { emit, on } from './state.js';
@@ -8,17 +9,17 @@ import { toast } from './common.js';
 
 
 export const ROUTES = {
-  billing:              { id: 'billingTab',         label: 'Sales',       icon: '🧾', file: './modules/billing.html',              shortcut: 'F1',  description: 'POS Sales Invoice' },
-  returns:              { id: 'returnsTab',         label: 'Returns',     icon: '↩️', file: './modules/returns.html',              shortcut: 'F2',  description: 'Credit Notes & Refunds' },
-  purchase:             { id: 'purchaseTab',        label: 'Purchase',    icon: '🛒', file: './modules/purchase.html',             shortcut: 'F3',  description: 'Supplier Bills & Stock In' },
-  vouchers:             { id: 'vouchersTab',        label: 'Vouchers',    icon: '📒', file: './modules/vouchers.html',             shortcut: 'F4',  description: 'Payment / Receipt / Journal' },
-  accounting:           { id: 'accountingTab',      label: 'P&L',         icon: '📊', file: './modules/accounting.html',           shortcut: 'F5',  description: 'Profit & Loss, GST, Audit' },
-  books:                { id: 'booksTab',           label: 'Books',       icon: '📚', file: './modules/books.html',                shortcut: 'F6',  description: 'Cash Book, Bank Book, Trial Balance' },
-  parties:              { id: 'partiesTab',         label: 'Parties',     icon: '👥', file: './modules/parties.html',              shortcut: 'F7',  description: 'Customers & Suppliers' },
-  inventory:            { id: 'inventoryTab',       label: 'Stock',       icon: '📦', file: './modules/inventory.html',            shortcut: 'F8',  description: 'Inventory Management' },
-  staff:                { id: 'staffTab',           label: 'Staff',       icon: '👨‍💼', file: './modules/staff.html',              shortcut: 'F9',  description: 'Staff & Salary' },
-  settings:             { id: 'settingsTab',        label: 'Settings',    icon: '⚙️', file: './modules/settings.html',             shortcut: 'F10', description: 'Store Settings & Backup' },
-  attendance:           { id: 'attendanceTab',      label: 'Attendance',  icon: '📸', file: './modules/attendance.html',           shortcut: 'F11', description: 'Selfie Check-In / Check-Out' },
+  billing:              { id: 'billingTab',          label: 'Sales',       icon: '🧾', file: './modules/billing.html',            shortcut: 'F1',  description: 'POS Sales Invoice' },
+  returns:              { id: 'returnsTab',          label: 'Returns',     icon: '↩️', file: './modules/returns.html',            shortcut: 'F2',  description: 'Credit Notes & Refunds' },
+  purchase:             { id: 'purchaseTab',         label: 'Purchase',    icon: '🛒', file: './modules/purchase.html',           shortcut: 'F3',  description: 'Supplier Bills & Stock In' },
+  vouchers:             { id: 'vouchersTab',         label: 'Vouchers',    icon: '📒', file: './modules/vouchers.html',           shortcut: 'F4',  description: 'Payment / Receipt / Journal' },
+  accounting:           { id: 'accountingTab',       label: 'P&L',         icon: '📊', file: './modules/accounting.html',         shortcut: 'F5',  description: 'Profit & Loss, GST, Audit' },
+  books:                { id: 'booksTab',            label: 'Books',       icon: '📚', file: './modules/books.html',              shortcut: 'F6',  description: 'Cash Book, Bank Book, Trial Balance' },
+  parties:              { id: 'partiesTab',          label: 'Parties',     icon: '👥', file: './modules/parties.html',            shortcut: 'F7',  description: 'Customers & Suppliers' },
+  inventory:            { id: 'inventoryTab',        label: 'Stock',       icon: '📦', file: './modules/inventory.html',          shortcut: 'F8',  description: 'Inventory Management' },
+  staff:                { id: 'staffTab',            label: 'Staff',       icon: '👨‍💼', file: './modules/staff.html',            shortcut: 'F9',  description: 'Staff & Salary' },
+  settings:             { id: 'settingsTab',         label: 'Settings',    icon: '⚙️', file: './modules/settings.html',           shortcut: 'F10', description: 'Store Settings & Backup' },
+  attendance:           { id: 'attendanceTab',       label: 'Attendance',  icon: '📸', file: './modules/attendance.html',         shortcut: 'F11', description: 'Selfie Check-In / Check-Out' },
   'attendance-report':  { id: 'attendanceReportTab', label: 'Att. Report', icon: '📈', file: './modules/attendance-report.html',  shortcut: 'F12', description: 'Team Attendance Summary' }
 };
 
@@ -63,7 +64,18 @@ export function initRouter(containerSelector = '#moduleContainer') {
    NAVIGATE
    ============================================================ */
 export async function navigateTo(routeKey, opts = {}) {
-  /* Role guard */
+  /* 🔒 Attendance gate check */
+  if (window.SF?.attendanceGate && routeKey !== 'attendance') {
+    console.warn('🚫 Blocked by attendance gate:', routeKey);
+    toast('📸 Check in first to unlock all features', 'error', 3000);
+    if (ROUTER.currentRoute !== 'attendance') {
+      history.replaceState(null, '', '#attendance');
+      return navigateTo('attendance', { replace: true, force: true });
+    }
+    return;
+  }
+
+  /* 🔐 Permission guard */
   try {
     const perms = window.SF?.perms;
     if (perms && typeof perms.canAccessRoute === 'function') {
@@ -105,7 +117,6 @@ export async function navigateTo(routeKey, opts = {}) {
     const html = await loadModuleHTML(routeKey);
     ROUTER.container.innerHTML = html;
 
-    /* Re-execute injected <script> tags */
     reExecuteScripts(ROUTER.container);
 
     updateTabBar(routeKey);
@@ -122,7 +133,6 @@ export async function navigateTo(routeKey, opts = {}) {
       }
     }
 
-    /* Refresh UI hooks */
     setTimeout(() => {
       const refreshFns = [
         'renderLiveInvoicePreview', 'renderStockTable', 'renderCreditNotesTable',
@@ -180,7 +190,7 @@ function onHashChange() {
 
 
 /* ============================================================
-   KEYBOARD SHORTCUTS (F1-F12)
+   KEYBOARD SHORTCUTS
    ============================================================ */
 function onGlobalKeydown(e) {
   const tag = (e.target && e.target.tagName) || '';
@@ -196,6 +206,12 @@ function onGlobalKeydown(e) {
   e.preventDefault();
   const routeKey = ROUTE_ORDER[num - 1];
 
+  /* Attendance gate — block shortcuts too */
+  if (window.SF?.attendanceGate && routeKey !== 'attendance') {
+    toast('📸 Check in first', 'error', 2500);
+    return;
+  }
+
   if (window.SF?.perms && !window.SF.perms.canAccessRoute(routeKey)) return;
 
   navigateTo(routeKey);
@@ -203,7 +219,7 @@ function onGlobalKeydown(e) {
 
 
 /* ============================================================
-   LOAD MODULE HTML
+   LOAD MODULE
    ============================================================ */
 async function loadModuleHTML(routeKey) {
   if (ROUTER.moduleCache[routeKey]) return ROUTER.moduleCache[routeKey];
@@ -325,4 +341,4 @@ window.addEventListener('popstate', () => {
   }
 });
 
-console.log('%c🧭 Router ready (v4.2.0)', 'color:#06b6d4;font-weight:bold;font-size:11px', `| ${ROUTE_ORDER.length} routes`);
+console.log('%c🧭 Router ready (v4.3.0)', 'color:#06b6d4;font-weight:bold;font-size:11px', `| ${ROUTE_ORDER.length} routes`);
