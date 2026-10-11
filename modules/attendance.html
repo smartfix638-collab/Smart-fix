@@ -1,7 +1,7 @@
 <!-- ============================================================
      SMARTFIX ERP — Attendance Module (Staff View)
      File: modules/attendance.html
-     Version: 4.2.0
+     Version: 4.2.2
      ============================================================ -->
 
 <section id="attendanceModule" class="space-y-4">
@@ -19,7 +19,7 @@
   </div>
 
   <!-- TODAY'S STATUS -->
-  <div id="attTodayStatus" class="rounded-2xl p-4 border-2 transition-all">
+  <div id="attTodayStatus" class="rounded-2xl p-4 border-2 border-amber-800/60 bg-amber-950/30 transition-all">
     <div class="flex justify-between items-center flex-wrap gap-3">
       <div class="flex items-center gap-3">
         <div id="attStatusIcon" class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0">⏳</div>
@@ -33,6 +33,12 @@
         <div id="attStatusTime" class="text-xs font-mono font-bold text-slate-300 mt-0.5">—</div>
       </div>
     </div>
+  </div>
+
+  <!-- INIT ERROR (only shown if something failed) -->
+  <div id="attInitError" style="display:none" class="bg-rose-950/60 border-2 border-rose-800/60 rounded-2xl p-4">
+    <div class="font-bold text-rose-300 text-sm mb-1">⚠️ Module Load Error</div>
+    <div id="attInitErrorText" class="text-[11px] text-rose-200 font-mono"></div>
   </div>
 
   <!-- MAIN GRID -->
@@ -51,11 +57,12 @@
         </div>
 
         <div class="relative rounded-xl overflow-hidden bg-black aspect-[4/3] flex items-center justify-center border-2 border-slate-700">
-          <video id="attVideo" playsinline muted class="w-full h-full object-cover" style="display:none"></video>
-          <div id="attCamPlaceholder" class="text-center px-6">
+          <video id="attVideo" playsinline muted autoplay class="w-full h-full object-cover" style="display:none;background:#000;"></video>
+          <div id="attCamPlaceholder" class="text-center px-6 absolute inset-0 flex flex-col items-center justify-center">
             <div class="text-5xl mb-3">📸</div>
             <div class="text-sm font-bold text-slate-400">Camera is off</div>
             <div class="text-[11px] text-slate-500 mt-1">Click "Start Camera" to begin</div>
+            <div id="attCamError" class="text-[10px] text-rose-400 font-mono mt-3 max-w-[280px] leading-tight" style="display:none"></div>
           </div>
           <div id="attCamHint" class="absolute bottom-2 left-2 right-2 text-center text-[10px] text-white/80 bg-black/50 rounded py-1" style="display:none">
             Position your face in the center
@@ -84,7 +91,7 @@
         </button>
       </div>
 
-      <!-- PREVIEW MODAL (captured selfie) -->
+      <!-- PREVIEW CARD -->
       <div id="attPreviewCard" class="bg-slate-900/70 border-2 border-emerald-700/60 rounded-2xl p-4 space-y-3" style="display:none">
         <h3 class="text-[11px] font-bold uppercase tracking-wider text-emerald-400">✅ Captured Selfie</h3>
         <div class="flex justify-center">
@@ -108,7 +115,6 @@
     <!-- RIGHT: HISTORY -->
     <div class="lg:col-span-5 space-y-3">
 
-      <!-- Stats -->
       <div class="grid grid-cols-3 gap-2">
         <div class="bg-emerald-950/40 border border-emerald-800/50 rounded-xl p-3">
           <div class="text-[9px] font-bold uppercase text-emerald-400">Present</div>
@@ -124,7 +130,6 @@
         </div>
       </div>
 
-      <!-- Monthly filter -->
       <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-3">
         <div class="flex gap-2 items-center">
           <select id="attHistMonth" onchange="SF.attendanceUI.loadHistory()"
@@ -139,7 +144,6 @@
         </div>
       </div>
 
-      <!-- History list -->
       <div class="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden">
         <div class="p-3 border-b border-slate-800 flex justify-between items-center">
           <h3 class="text-[11px] font-bold uppercase tracking-wider text-slate-300">📅 History</h3>
@@ -163,47 +167,65 @@
 
   const S = window.SF?.state?.state;
   const C = window.SF?.common;
-  const ATT = window.SF?.attendance;
 
-  if (!S || !C || !ATT) {
-    console.error('Attendance UI: SF globals not ready');
+  if (!S || !C) {
+    console.error('Attendance UI: SF.state or SF.common missing');
+    showInitError('SF.state or SF.common not loaded');
     return;
   }
 
-  /* ============================================================
-     STATE
-     ============================================================ */
   const UI = {
     cameraActive: false,
-    capturedSelfie: null,      // { dataUrl, sizeKB }
-    currentLocation: null,     // { available, lat, lng, city }
+    capturedSelfie: null,
+    currentLocation: null,
     todayRecord: null,
-    checkInMode: 'in',         // 'in' | 'out'
+    checkInMode: 'in',
     storeId: null,
     staffId: null,
     staffName: '',
-    clockTimer: null
+    clockTimer: null,
+    ATT: null
   };
 
+  function showInitError(msg) {
+    const box = document.getElementById('attInitError');
+    const txt = document.getElementById('attInitErrorText');
+    if (box) box.style.display = 'block';
+    if (txt) txt.textContent = msg;
+  }
 
   /* ============================================================
      INIT
      ============================================================ */
-  function init_attendanceModule() {
-    console.log('%c📸 Attendance UI initialized', 'color:#10b981;font-weight:bold');
+  async function init_attendanceModule() {
+    console.log('%c📸 Attendance UI initialized (v4.2.2)', 'color:#10b981;font-weight:bold');
 
-    /* Resolve store + staff identity */
+    /* Ensure attendance.js is loaded (fallback for safety) */
+    if (!window.SF?.attendance) {
+      try {
+        await import('./js/attendance.js');
+      } catch (e) {
+        console.error('Failed to import attendance.js:', e);
+      }
+    }
+
+    UI.ATT = window.SF?.attendance;
+
+    if (!UI.ATT) {
+      showInitError('attendance.js could not be loaded. Please hard refresh (Ctrl+Shift+R).');
+      return { onUnload: stopCameraCleanup };
+    }
+
     const store = S.store || {};
     const perms = window.SF?.perms;
     const meta = perms?.getUserMeta?.() || {};
 
-    /* Owner: use own uid as staffId; Staff: use their uid */
     UI.storeId = meta.storeId || store.storeId || store.uid;
     UI.staffId = meta.uid || (window.SF?.cloud?.getStoreId?.()) || 'unknown';
     UI.staffName = meta.name || store.staffName || 'Me';
 
     if (!UI.storeId) {
-      C.toast('Store not resolved. Please re-login.', 'error', 5000);
+      showInitError('Store not resolved. Please log out and log in again.');
       return { onUnload: stopCameraCleanup };
     }
 
@@ -218,32 +240,28 @@
     const yrEl = document.getElementById('attHistYear');
     if (yrEl) yrEl.value = today.getFullYear();
 
-    /* Start live clock */
     startClock();
 
-    /* Load today + history */
-    loadToday();
-    loadHistory();
+    /* Run async tasks in background */
+    loadToday().catch((e) => console.warn('loadToday failed:', e));
+    loadHistory().catch((e) => console.warn('loadHistory failed:', e));
+    refreshLocation().catch((e) => console.warn('refreshLocation failed:', e));
 
-    /* Fetch location */
-    refreshLocation();
-
-    /* Cleanup old attendance (silent, once per 24h) */
     setTimeout(() => {
-      ATT.cleanupOldAttendance(UI.storeId).catch((e) => console.warn('Cleanup failed:', e));
+      UI.ATT.cleanupOldAttendance(UI.storeId).catch((e) => console.warn('Cleanup failed:', e));
     }, 4000);
 
     return { onUnload: stopCameraCleanup };
   }
 
   function stopCameraCleanup() {
-    try { ATT.stopCamera(); } catch (e) {}
+    try { UI.ATT?.stopCamera?.(); } catch (e) {}
     if (UI.clockTimer) clearInterval(UI.clockTimer);
   }
 
 
   /* ============================================================
-     LIVE CLOCK
+     CLOCK
      ============================================================ */
   function startClock() {
     if (UI.clockTimer) clearInterval(UI.clockTimer);
@@ -262,37 +280,79 @@
 
 
   /* ============================================================
-     CAMERA
+     CAMERA — with better error handling
      ============================================================ */
   async function toggleCamera() {
+    if (!UI.ATT) { showInitError('Attendance module not ready'); return; }
+
     const btn = document.getElementById('attCamToggleBtn');
     const video = document.getElementById('attVideo');
     const placeholder = document.getElementById('attCamPlaceholder');
     const hint = document.getElementById('attCamHint');
+    const errBox = document.getElementById('attCamError');
     const actionBtn = document.getElementById('attActionBtn');
 
     if (UI.cameraActive) {
-      try { ATT.stopCamera(); } catch (e) {}
+      try { UI.ATT.stopCamera(); } catch (e) {}
       UI.cameraActive = false;
-      if (video) video.style.display = 'none';
-      if (placeholder) placeholder.style.display = 'block';
+      if (video) { video.style.display = 'none'; video.srcObject = null; }
+      if (placeholder) placeholder.style.display = 'flex';
       if (hint) hint.style.display = 'none';
-      if (btn) { btn.textContent = '▶ Start Camera'; btn.classList.remove('bg-rose-600','hover:bg-rose-500'); btn.classList.add('bg-sky-600','hover:bg-sky-500'); }
+      if (errBox) errBox.style.display = 'none';
+      if (btn) {
+        btn.textContent = '▶ Start Camera';
+        btn.classList.remove('bg-rose-600','hover:bg-rose-500');
+        btn.classList.add('bg-sky-600','hover:bg-sky-500');
+      }
       if (actionBtn) actionBtn.disabled = true;
       return;
     }
 
+    if (btn) {
+      btn.textContent = 'Starting...';
+      btn.disabled = true;
+    }
+    if (errBox) errBox.style.display = 'none';
+
+    /* Make video visible FIRST — some browsers won't play hidden video */
+    if (video) video.style.display = 'block';
+
     try {
-      await ATT.startCamera(video);
+      await UI.ATT.startCamera(video);
       UI.cameraActive = true;
-      if (video) video.style.display = 'block';
       if (placeholder) placeholder.style.display = 'none';
       if (hint) hint.style.display = 'block';
-      if (btn) { btn.textContent = '✕ Stop Camera'; btn.classList.remove('bg-sky-600','hover:bg-sky-500'); btn.classList.add('bg-rose-600','hover:bg-rose-500'); }
+      if (btn) {
+        btn.textContent = '✕ Stop Camera';
+        btn.classList.remove('bg-sky-600','hover:bg-sky-500');
+        btn.classList.add('bg-rose-600','hover:bg-rose-500');
+      }
       if (actionBtn) actionBtn.disabled = false;
-      C.playBeep();
+      try { C.playBeep(); } catch (e) {}
     } catch (e) {
-      C.toast(e.message || 'Camera failed', 'error', 4000);
+      console.error('Camera start failed:', e);
+      UI.cameraActive = false;
+      if (video) video.style.display = 'none';
+      if (placeholder) placeholder.style.display = 'flex';
+      if (errBox) {
+        errBox.style.display = 'block';
+        const msg = (e && e.message) ? e.message : 'Camera error';
+        errBox.textContent = '❌ ' + msg;
+        /* Give helpful hint for permission issues */
+        if (msg.toLowerCase().includes('permission') || msg.toLowerCase().includes('denied')) {
+          errBox.textContent += '\n\n👉 Fix: Chrome address bar → 🔒 icon → Camera → Allow → Reload';
+        } else if (msg.toLowerCase().includes('not available')) {
+          errBox.textContent += '\n\n👉 Check if another app is using the camera.';
+        }
+      }
+      if (btn) {
+        btn.textContent = '▶ Start Camera';
+        btn.classList.remove('bg-rose-600','hover:bg-rose-500');
+        btn.classList.add('bg-sky-600','hover:bg-sky-500');
+      }
+      if (actionBtn) actionBtn.disabled = true;
+    } finally {
+      if (btn) btn.disabled = false;
     }
   }
 
@@ -301,27 +361,35 @@
      LOCATION
      ============================================================ */
   async function refreshLocation() {
+    if (!UI.ATT) return;
     const el = document.getElementById('attLocationText');
     if (el) el.textContent = 'Fetching location...';
 
-    const loc = await ATT.getLocation();
-    if (loc.available) {
-      const city = await ATT.getCityName(loc.lat, loc.lng);
-      UI.currentLocation = { available: true, lat: loc.lat, lng: loc.lng, city };
-      if (el) el.textContent = city + ' (' + loc.lat + ', ' + loc.lng + ')';
-    } else {
+    try {
+      const loc = await UI.ATT.getLocation();
+      if (loc.available) {
+        const city = await UI.ATT.getCityName(loc.lat, loc.lng);
+        UI.currentLocation = { available: true, lat: loc.lat, lng: loc.lng, city };
+        if (el) el.textContent = city + ' (' + loc.lat + ', ' + loc.lng + ')';
+      } else {
+        UI.currentLocation = { available: false, city: 'Location unavailable' };
+        if (el) el.textContent = 'Location unavailable (permission denied) — check-in will still work';
+      }
+    } catch (e) {
+      console.warn('Location failed:', e);
       UI.currentLocation = { available: false, city: 'Location unavailable' };
-      if (el) el.textContent = 'Location unavailable (permission denied)';
+      if (el) el.textContent = 'Location unavailable — check-in will still work';
     }
   }
 
 
   /* ============================================================
-     LOAD TODAY'S RECORD
+     LOAD TODAY
      ============================================================ */
   async function loadToday() {
+    if (!UI.ATT) return;
     try {
-      const rec = await ATT.getTodayRecord(UI.storeId, UI.staffId);
+      const rec = await UI.ATT.getTodayRecord(UI.storeId, UI.staffId);
       UI.todayRecord = rec;
 
       const statusBox = document.getElementById('attTodayStatus');
@@ -332,7 +400,6 @@
       const actionBtn = document.getElementById('attActionBtn');
 
       if (!rec || !rec.checkInTime) {
-        /* Not checked in */
         if (statusBox) statusBox.className = 'rounded-2xl p-4 border-2 border-amber-800/60 bg-amber-950/30';
         if (icon) icon.textContent = '⏳';
         if (title) title.textContent = 'Not Checked In';
@@ -348,7 +415,6 @@
       }
 
       if (rec.checkInTime && !rec.checkOutTime) {
-        /* Checked in, not out */
         if (statusBox) statusBox.className = 'rounded-2xl p-4 border-2 border-emerald-800/60 bg-emerald-950/30';
         if (icon) icon.textContent = '✅';
         if (title) title.textContent = 'Checked In';
@@ -364,7 +430,6 @@
         return;
       }
 
-      /* Checked in and out */
       if (statusBox) statusBox.className = 'rounded-2xl p-4 border-2 border-sky-800/60 bg-sky-950/30';
       if (icon) icon.textContent = '🎯';
       if (title) title.textContent = 'Completed Today';
@@ -376,7 +441,6 @@
         actionBtn.className = 'w-full bg-slate-700 text-slate-300 font-black py-4 rounded-xl text-sm cursor-not-allowed flex items-center justify-center gap-2';
       }
       UI.checkInMode = 'done';
-
     } catch (e) {
       console.warn('loadToday failed:', e);
     }
@@ -384,13 +448,14 @@
 
 
   /* ============================================================
-     CAPTURE + CHECK IN
+     CHECK IN
      ============================================================ */
   async function checkIn() {
+    if (!UI.ATT) { C.toast('Module not ready', 'error'); return; }
     if (!UI.cameraActive) { C.toast('Start camera first', 'warning'); return; }
 
     const video = document.getElementById('attVideo');
-    if (!video) return;
+    if (!video || !video.videoWidth) { C.toast('Camera not ready yet', 'warning'); return; }
 
     const now = new Date();
     const meta = {
@@ -400,10 +465,9 @@
     };
 
     try {
-      const result = await ATT.captureAndCompress(video, meta);
+      const result = await UI.ATT.captureAndCompress(video, meta);
       UI.capturedSelfie = result;
 
-      /* Show preview card */
       const card = document.getElementById('attPreviewCard');
       const img = document.getElementById('attPreviewImg');
       const info = document.getElementById('attPreviewInfo');
@@ -413,8 +477,6 @@
 
       C.toast('Selfie captured — confirm to check in', 'info', 3000);
       C.playBeep();
-
-      /* Scroll to preview */
       card?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     } catch (e) {
       C.toast(e.message || 'Capture failed', 'error', 3000);
@@ -429,13 +491,14 @@
   }
 
   async function confirmCheckIn() {
+    if (!UI.ATT) return;
     if (!UI.capturedSelfie) { C.toast('No selfie captured', 'warning'); return; }
 
     const btn = document.querySelector('#attPreviewCard button:last-child');
     if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
 
     try {
-      await ATT.checkIn(UI.storeId, UI.staffId, UI.staffName, {
+      await UI.ATT.checkIn(UI.storeId, UI.staffId, UI.staffName, {
         selfie: UI.capturedSelfie,
         location: UI.currentLocation?.city || 'Location unavailable',
         lat: UI.currentLocation?.lat || null,
@@ -445,18 +508,16 @@
       C.toast('✅ Checked in successfully', 'success', 3000);
       C.playBeep();
 
-      /* Reset */
       UI.capturedSelfie = null;
       const card = document.getElementById('attPreviewCard');
       if (card) card.style.display = 'none';
 
-      /* Stop camera */
-      try { ATT.stopCamera(); } catch (e) {}
+      try { UI.ATT.stopCamera(); } catch (e) {}
       UI.cameraActive = false;
       const videoEl = document.getElementById('attVideo');
-      if (videoEl) videoEl.style.display = 'none';
+      if (videoEl) { videoEl.style.display = 'none'; videoEl.srcObject = null; }
       const placeholder = document.getElementById('attCamPlaceholder');
-      if (placeholder) placeholder.style.display = 'block';
+      if (placeholder) placeholder.style.display = 'flex';
       const hint = document.getElementById('attCamHint');
       if (hint) hint.style.display = 'none';
       const camBtn = document.getElementById('attCamToggleBtn');
@@ -466,7 +527,6 @@
         camBtn.classList.add('bg-sky-600','hover:bg-sky-500');
       }
 
-      /* Reload */
       await loadToday();
       await loadHistory();
 
@@ -481,11 +541,12 @@
      CHECK OUT
      ============================================================ */
   async function checkOut() {
+    if (!UI.ATT) return;
     const ok = await C.confirmDialog('Check Out?', 'This will mark your departure time.', 'Check Out');
     if (!ok) return;
 
     try {
-      await ATT.checkOut(UI.storeId, UI.staffId);
+      await UI.ATT.checkOut(UI.storeId, UI.staffId);
       C.toast('✅ Checked out', 'success', 3000);
       C.playBeep();
       await loadToday();
@@ -500,6 +561,7 @@
      HISTORY
      ============================================================ */
   async function loadHistory() {
+    if (!UI.ATT) return;
     const month = parseInt(document.getElementById('attHistMonth')?.value, 10) || (new Date().getMonth() + 1);
     const year = parseInt(document.getElementById('attHistYear')?.value, 10) || new Date().getFullYear();
     const listEl = document.getElementById('attHistList');
@@ -508,9 +570,8 @@
     if (listEl) listEl.innerHTML = '<div class="text-center py-10 text-slate-500 text-xs">Loading...</div>';
 
     try {
-      const rows = await ATT.getMonthlyAttendance(UI.storeId, month, year, UI.staffId);
+      const rows = await UI.ATT.getMonthlyAttendance(UI.storeId, month, year, UI.staffId);
 
-      /* Stats */
       let present = 0, totalHours = 0;
       const inTimes = [];
       rows.forEach((r) => {
@@ -518,16 +579,16 @@
         if (r.hoursWorked) totalHours += r.hoursWorked;
       });
 
-      const avgIn = (() => {
-        if (inTimes.length === 0) return '--:--';
+      let avgIn = '--:--';
+      if (inTimes.length > 0) {
         let tot = 0;
         inTimes.forEach((t) => {
           const [h, m] = t.split(':').map(Number);
           tot += h * 60 + m;
         });
         const avg = Math.round(tot / inTimes.length);
-        return String(Math.floor(avg / 60)).padStart(2,'0') + ':' + String(avg % 60).padStart(2,'0');
-      })();
+        avgIn = String(Math.floor(avg / 60)).padStart(2,'0') + ':' + String(avg % 60).padStart(2,'0');
+      }
 
       const pEl = document.getElementById('attStatPresent');
       if (pEl) pEl.textContent = present;
@@ -537,7 +598,6 @@
       if (aEl) aEl.textContent = avgIn;
       if (countEl) countEl.textContent = rows.length + ' day' + (rows.length !== 1 ? 's' : '');
 
-      /* List */
       if (!listEl) return;
       if (rows.length === 0) {
         listEl.innerHTML = '<div class="text-center py-10 text-slate-500 text-xs">No records this month.</div>';
@@ -546,7 +606,7 @@
 
       listEl.innerHTML = rows.slice().reverse().map((r) => {
         const day = r.date?.split('-')[2] || '';
-        const dow = ATT.formatDayOfWeek(r.date);
+        const dow = UI.ATT.formatDayOfWeek(r.date);
         const hours = (r.hoursWorked || 0).toFixed(2);
         const selfieThumb = r.selfie
           ? `<img src="${r.selfie}" class="w-10 h-12 object-cover rounded border border-slate-700 flex-shrink-0" alt="selfie">`
@@ -556,7 +616,7 @@
           <div class="flex items-center gap-3 p-2.5 hover:bg-slate-800/30">
             ${selfieThumb}
             <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 flex-wrap">
                 <span class="text-[11px] font-bold text-white">${day} ${dow}</span>
                 ${r.checkInTime ? `<span class="text-[9px] bg-emerald-950/60 text-emerald-400 border border-emerald-800/60 px-1.5 py-0.5 rounded font-bold">IN ${C.escapeHTML(r.checkInTime)}</span>` : ''}
                 ${r.checkOutTime ? `<span class="text-[9px] bg-rose-950/60 text-rose-400 border border-rose-800/60 px-1.5 py-0.5 rounded font-bold">OUT ${C.escapeHTML(r.checkOutTime)}</span>` : ''}
