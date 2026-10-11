@@ -1178,3 +1178,48 @@
       `\n🛠 Issue: ${job.issueDescription}\n\n` +
       `💰 Estimate: ₹${(job.estimatedCost || 0).toFixed(2)}\n` +
       `✅ Advance: ₹${(job.advancePaid || 0).toFixed(2)}\n` +
+      `💵 Balance: ₹${Math.max(0, balance).toFixed(2)}\n\n` +
+      `📌 Status: ${st.icon} ${st.label}\n` +
+      `${job.warrantyDays > 0 ? '🛡️ Warranty: ' + job.warrantyDays + ' days\n' : ''}` +
+      `\n${prof.phone ? '📞 ' + prof.phone : ''}\n🙏 Thank you!`;
+
+    const phone = (job.customerPhone || '').replace(/\D/g, '');
+    const url = phone.length === 10
+      ? 'https://wa.me/91' + phone + '?text=' + encodeURIComponent(msg)
+      : 'https://wa.me/?text=' + encodeURIComponent(msg);
+    window.open(url, '_blank');
+  }
+
+
+  /* ============================================================
+     EXPOSE
+     ============================================================ */
+  window.SF = window.SF || {};
+  window.SF.repair = {
+    init: init_repairModule,
+    save,
+    resetForm,
+    editJob,
+    renderList,
+    openDetail,
+    closeModal,
+    changeStatus,
+    deleteJob,
+    printSlip,
+    shareWhatsApp,
+    reloadFromCloud: async () => {
+      RM.jobs = loadLocal();
+      renderList();
+      await loadFromCloud();
+      C.toast('🔄 Reloaded from cloud', 'success', 2000);
+    },
+    getJobs: () => RM.jobs
+  };
+
+  window.init_repairModule = init_repairModule;
+
+  if (document.getElementById('repairModule')) {
+    init_repairModule();
+  }
+})();
+</script>
