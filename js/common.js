@@ -1,17 +1,8 @@
 /* ============================================================
-   SMARTFIX ERP — Common Utilities (v4.0.1)
+   SMARTFIX ERP — Common Utilities (v4.1.0)
    File: js/common.js
-   Purpose: Shared helper functions used across all modules
-   FIXED: All functions now exposed on window.SF.common
    ============================================================ */
 
-/* ============================================================
-   1. DATE & FINANCIAL YEAR
-   ============================================================ */
-
-/**
- * Format a Date object as "YYYY-MM-DD"
- */
 export function fmtDate(d) {
   if (!d) d = new Date();
   const y  = d.getFullYear();
@@ -20,9 +11,6 @@ export function fmtDate(d) {
   return `${y}-${m}-${dd}`;
 }
 
-/**
- * Format as "DD-MMM-YYYY" (e.g. 11-Oct-2026)
- */
 export function fmtDatePretty(d) {
   if (!d) d = new Date();
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -30,9 +18,6 @@ export function fmtDatePretty(d) {
   return `${dd}-${months[d.getMonth()]}-${d.getFullYear()}`;
 }
 
-/**
- * Get Indian Financial Year (April 1 → March 31)
- */
 export function getFY(dt) {
   dt = dt || new Date();
   const y = dt.getFullYear();
@@ -53,17 +38,7 @@ export function getFY(dt) {
   };
 }
 
-/**
- * Today's date string "YYYY-MM-DD"
- */
-export function today() {
-  return fmtDate(new Date());
-}
-
-
-/* ============================================================
-   2. CURRENCY & NUMBER
-   ============================================================ */
+export function today() { return fmtDate(new Date()); }
 
 export function money(n) {
   const v = Number(n) || 0;
@@ -92,11 +67,9 @@ export function numberToWords(num) {
              'SEVENTEEN ', 'EIGHTEEN ', 'NINETEEN '];
   const b = ['', '', 'TWENTY ', 'THIRTY ', 'FORTY ', 'FIFTY ',
              'SIXTY ', 'SEVENTY ', 'EIGHTY ', 'NINETY '];
-
   const n = ('000000000' + Math.floor(Number(num) || 0)).slice(-9);
   const match = n.match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
   if (!match) return '';
-
   let str = '';
   str += (match[1] != 0) ? (a[Number(match[1])] || b[match[1][0]] + a[match[1][1]]) + 'CRORE '   : '';
   str += (match[2] != 0) ? (a[Number(match[2])] || b[match[2][0]] + a[match[2][1]]) + 'LAKH '    : '';
@@ -105,14 +78,8 @@ export function numberToWords(num) {
   str += (match[5] != 0)
     ? ((str !== '') ? 'AND ' : '') + (a[Number(match[5])] || b[match[5][0]] + a[match[5][1]]) + 'RUPEES ONLY'
     : 'RUPEES ONLY';
-
   return str.trim();
 }
-
-
-/* ============================================================
-   3. BARCODE / SCANNER HELPERS
-   ============================================================ */
 
 export function playBeep() {
   try {
@@ -121,15 +88,10 @@ export function playBeep() {
     const ctx = new AudioCtx();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.type = 'sine';
-    osc.frequency.value = 1350;
-    gain.gain.value = 0.12;
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'sine'; osc.frequency.value = 1350; gain.gain.value = 0.12;
     osc.start();
-    setTimeout(() => {
-      try { osc.stop(); ctx.close(); } catch (e) {}
-    }, 70);
+    setTimeout(() => { try { osc.stop(); ctx.close(); } catch (e) {} }, 70);
   } catch (e) {}
 }
 
@@ -140,26 +102,16 @@ export function playErrorBeep() {
     const ctx = new AudioCtx();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.type = 'square';
-    osc.frequency.value = 320;
-    gain.gain.value = 0.15;
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'square'; osc.frequency.value = 320; gain.gain.value = 0.15;
     osc.start();
-    setTimeout(() => {
-      try { osc.stop(); ctx.close(); } catch (e) {}
-    }, 220);
+    setTimeout(() => { try { osc.stop(); ctx.close(); } catch (e) {} }, 220);
   } catch (e) {}
 }
 
 export function normalizeIMEI(str) {
   return (str || '').toString().trim().toUpperCase().replace(/[\s\-_]/g, '');
 }
-
-
-/* ============================================================
-   4. IMAGE HANDLING
-   ============================================================ */
 
 export function resizeImage(file, maxDim = 400) {
   return new Promise((resolve) => {
@@ -171,14 +123,10 @@ export function resizeImage(file, maxDim = 400) {
         let w = img.width, h = img.height;
         if (w > h && w > maxDim) { h = Math.round(h * maxDim / w); w = maxDim; }
         else if (h > maxDim)     { w = Math.round(w * maxDim / h); h = maxDim; }
-        cv.width = w;
-        cv.height = h;
+        cv.width = w; cv.height = h;
         cv.getContext('2d').drawImage(img, 0, 0, w, h);
-        try {
-          resolve(cv.toDataURL('image/jpeg', 0.85));
-        } catch (e) {
-          resolve('');
-        }
+        try { resolve(cv.toDataURL('image/jpeg', 0.85)); }
+        catch (e) { resolve(''); }
       };
       img.onerror = () => resolve('');
       img.src = e.target.result;
@@ -188,18 +136,13 @@ export function resizeImage(file, maxDim = 400) {
   });
 }
 
-
-/* ============================================================
-   5. LOCALSTORAGE WRAPPER
-   ============================================================ */
-
 export function safeSave(key, data) {
   try {
     localStorage.setItem(key, JSON.stringify(data));
     return true;
   } catch (e) {
     console.error('safeSave failed for', key, e);
-    toast('Storage full! Delete old records or export backup.', 'error', 5000);
+    toast('Storage full! Export backup.', 'error', 5000);
     return false;
   }
 }
@@ -219,11 +162,6 @@ export function safeRemove(key) {
   catch (e) { return false; }
 }
 
-
-/* ============================================================
-   6. UI — TOAST NOTIFICATIONS
-   ============================================================ */
-
 let toastContainer = null;
 
 function ensureToastContainer() {
@@ -231,15 +169,9 @@ function ensureToastContainer() {
   toastContainer = document.createElement('div');
   toastContainer.id = 'sfToastContainer';
   toastContainer.style.cssText = `
-    position: fixed;
-    top: 16px;
-    right: 16px;
-    z-index: 99999;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    pointer-events: none;
-    max-width: 360px;
+    position: fixed; top: 16px; right: 16px; z-index: 99999;
+    display: flex; flex-direction: column; gap: 8px;
+    pointer-events: none; max-width: 360px;
   `;
   document.body.appendChild(toastContainer);
   return toastContainer;
@@ -254,38 +186,24 @@ export function toast(msg, type = 'info', duration = 3000) {
     warning: { bg: '#78350f', border: '#f59e0b', icon: '⚠️' }
   };
   const c = colors[type] || colors.info;
-
   const el = document.createElement('div');
   el.style.cssText = `
-    pointer-events: auto;
-    background: ${c.bg};
-    border: 1px solid ${c.border};
-    color: #f1f5f9;
-    padding: 12px 14px;
-    border-radius: 10px;
-    font-size: 13px;
-    font-weight: 600;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    opacity: 0;
-    transform: translateX(20px);
-    transition: all 0.25s ease;
-    line-height: 1.4;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    pointer-events: auto; background: ${c.bg}; border: 1px solid ${c.border};
+    color: #f1f5f9; padding: 12px 14px; border-radius: 10px;
+    font-size: 13px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    display: flex; align-items: flex-start; gap: 10px;
+    opacity: 0; transform: translateX(20px); transition: all 0.25s ease;
+    line-height: 1.4; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   `;
   el.innerHTML = `
     <span style="font-size:15px;line-height:1">${c.icon}</span>
     <span style="flex:1">${escapeHTML(msg)}</span>
   `;
   container.appendChild(el);
-
   requestAnimationFrame(() => {
     el.style.opacity = '1';
     el.style.transform = 'translateX(0)';
   });
-
   setTimeout(() => {
     el.style.opacity = '0';
     el.style.transform = 'translateX(20px)';
@@ -293,49 +211,32 @@ export function toast(msg, type = 'info', duration = 3000) {
   }, duration);
 }
 
-
-/* ============================================================
-   7. UI — MODAL / CONFIRM
-   ============================================================ */
-
 export function confirmDialog(title, message, okLabel = 'Confirm', dangerous = false) {
   return new Promise((resolve) => {
     const overlay = document.createElement('div');
     overlay.style.cssText = `
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.75);
-      z-index: 99998;
-      display: flex; align-items: center; justify-content: center;
-      padding: 16px;
-      opacity: 0;
-      transition: opacity 0.2s;
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+      z-index: 99998; display: flex; align-items: center; justify-content: center;
+      padding: 16px; opacity: 0; transition: opacity 0.2s;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     `;
     overlay.innerHTML = `
       <div style="
-        background: #0b1220;
-        border: 1px solid #1e293b;
-        border-radius: 16px;
-        padding: 22px;
-        max-width: 420px;
-        width: 100%;
-        color: #e2e8f0;
+        background: #0b1220; border: 1px solid #1e293b; border-radius: 16px;
+        padding: 22px; max-width: 420px; width: 100%; color: #e2e8f0;
         box-shadow: 0 24px 80px rgba(0,0,0,0.7);
-        transform: scale(0.95);
-        transition: transform 0.2s;
+        transform: scale(0.95); transition: transform 0.2s;
       ">
         <div style="font-size:16px;font-weight:800;margin-bottom:8px;color:#fff">${escapeHTML(title)}</div>
         <div style="font-size:13px;color:#94a3b8;line-height:1.5;white-space:pre-line">${escapeHTML(message)}</div>
         <div style="display:flex;gap:8px;margin-top:20px;justify-content:flex-end">
           <button type="button" data-act="cancel" style="
-            padding: 9px 16px; border-radius: 8px;
-            border: 1px solid #334155; background: transparent;
-            color: #cbd5e1; font-weight: 700; font-size: 13px; cursor: pointer;
-            font-family: inherit;
+            padding: 9px 16px; border-radius: 8px; border: 1px solid #334155;
+            background: transparent; color: #cbd5e1; font-weight: 700;
+            font-size: 13px; cursor: pointer; font-family: inherit;
           ">Cancel</button>
           <button type="button" data-act="ok" style="
-            padding: 9px 16px; border-radius: 8px;
-            border: none;
+            padding: 9px 16px; border-radius: 8px; border: none;
             background: ${dangerous ? 'linear-gradient(135deg,#ef4444,#b91c1c)' : 'linear-gradient(135deg,#0ea5e9,#0369a1)'};
             color: #fff; font-weight: 700; font-size: 13px; cursor: pointer;
             font-family: inherit;
@@ -344,19 +245,16 @@ export function confirmDialog(title, message, okLabel = 'Confirm', dangerous = f
       </div>
     `;
     document.body.appendChild(overlay);
-
     requestAnimationFrame(() => {
       overlay.style.opacity = '1';
       const card = overlay.querySelector('div > div');
       if (card) card.style.transform = 'scale(1)';
     });
-
     const close = (result) => {
       overlay.style.opacity = '0';
       setTimeout(() => { try { overlay.remove(); } catch (e) {} }, 200);
       resolve(result);
     };
-
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) close(false);
       const act = e.target.dataset?.act;
@@ -366,18 +264,10 @@ export function confirmDialog(title, message, okLabel = 'Confirm', dangerous = f
   });
 }
 
-
-/* ============================================================
-   8. STRING HELPERS
-   ============================================================ */
-
 export function escapeHTML(str) {
   return String(str || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 export function truncate(str, n = 30) {
@@ -386,17 +276,9 @@ export function truncate(str, n = 30) {
 }
 
 export function slugify(str) {
-  return String(str || '')
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
+  return String(str || '').toLowerCase().trim()
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
-
-
-/* ============================================================
-   9. FUNCTION HELPERS
-   ============================================================ */
 
 export function debounce(fn, wait = 300) {
   let timer;
@@ -410,10 +292,7 @@ export function throttle(fn, wait = 200) {
   let last = 0;
   return function (...args) {
     const now = Date.now();
-    if (now - last >= wait) {
-      last = now;
-      fn.apply(this, args);
-    }
+    if (now - last >= wait) { last = now; fn.apply(this, args); }
   };
 }
 
@@ -422,21 +301,11 @@ export function uid() {
 }
 
 export function clone(obj) {
-  try {
-    return JSON.parse(JSON.stringify(obj));
-  } catch (e) {
-    return obj;
-  }
+  try { return JSON.parse(JSON.stringify(obj)); }
+  catch (e) { return obj; }
 }
 
-export function sleep(ms) {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
-
-/* ============================================================
-   10. VALIDATION
-   ============================================================ */
+export function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
 export function isEmail(str) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str || '');
@@ -454,11 +323,6 @@ export function isIMEI15(str) {
   return /^\d{15}$/.test(normalizeIMEI(str));
 }
 
-
-/* ============================================================
-   11. NUMBER PARSING
-   ============================================================ */
-
 export function toNum(v, fallback = 0) {
   const n = Number(v);
   return Number.isFinite(n) ? n : fallback;
@@ -469,11 +333,23 @@ export function toInt(v, fallback = 0) {
   return Number.isFinite(n) ? n : fallback;
 }
 
+export default {
+  fmtDate, fmtDatePretty, getFY, today,
+  money, numFmt, round2, numberToWords,
+  playBeep, playErrorBeep, normalizeIMEI, resizeImage,
+  safeSave, safeLoad, safeRemove,
+  toast, confirmDialog,
+  escapeHTML, truncate, slugify,
+  debounce, throttle, uid, clone, sleep,
+  isEmail, isPhone10, isGSTIN, isIMEI15,
+  toNum, toInt
+};
 
 /* ============================================================
-   12. DEFAULT EXPORT
+   GLOBAL EXPOSURE — all functions available on window.SF.common
    ============================================================ */
-export default {
+window.SF = window.SF || {};
+window.SF.common = {
   fmtDate, fmtDatePretty, getFY, today,
   money, numFmt, round2, numberToWords,
   playBeep, playErrorBeep, normalizeIMEI,
@@ -486,70 +362,7 @@ export default {
   toNum, toInt
 };
 
-
-/* ============================================================
-   13. GLOBAL CONSOLE ACCESS — FIXED v4.0.1
-   ⚠️ CRITICAL: ALL functions exposed. Modules rely on this.
-   ============================================================ */
-window.SF = window.SF || {};
-window.SF.common = {
-  /* Dates */
-  fmtDate,
-  fmtDatePretty,
-  getFY,
-  today,
-
-  /* Numbers */
-  money,
-  numFmt,
-  round2,
-  numberToWords,
-
-  /* Scanner */
-  playBeep,
-  playErrorBeep,
-  normalizeIMEI,
-
-  /* Image */
-  resizeImage,
-
-  /* Storage */
-  safeSave,
-  safeLoad,
-  safeRemove,
-
-  /* UI */
-  toast,
-  confirmDialog,
-
-  /* Strings */
-  escapeHTML,
-  truncate,
-  slugify,
-
-  /* Functions */
-  debounce,
-  throttle,
-  uid,
-  clone,
-  sleep,
-
-  /* Validation */
-  isEmail,
-  isPhone10,
-  isGSTIN,
-  isIMEI15,
-
-  /* Numbers */
-  toNum,
-  toInt
-};
-
-
-/* ============================================================
-   14. BOOT LOG
-   ============================================================ */
 console.log(
-  '%c🧰 Common utilities loaded (v4.0.1 — ' + Object.keys(window.SF.common).length + ' functions exposed)',
+  '%c🧰 Common utilities loaded (v4.1.0 — ' + Object.keys(window.SF.common).length + ' functions)',
   'color:#a78bfa;font-weight:bold;font-size:11px'
 );
