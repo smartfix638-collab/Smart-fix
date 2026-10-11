@@ -1,265 +1,114 @@
 <!-- ============================================================
-     SMARTFIX ERP — Staff & Salary Module
+     SMARTFIX ERP — Staff & Salary Module (v4.1.0)
      File: modules/staff.html
-     Version: 4.0.0
      ============================================================ -->
 
 <section id="staffModule" class="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
-  <!-- ============================================================
-       LEFT PANEL — STAFF MASTER + PAY SALARY
-       ============================================================ -->
+  <!-- LEFT PANEL -->
   <div class="lg:col-span-4 space-y-3">
 
-    <!-- ============ STAFF MASTER ============ -->
     <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
       <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-        <h2 class="font-bold text-xs uppercase tracking-wider text-white" id="stfFormTitle">
-          👨‍💼 New Staff
-        </h2>
-        <button type="button" onclick="SF.staff.resetForm()" id="stfResetBtn"
-                class="text-[10px] text-slate-500 hover:text-slate-300 font-bold hidden">
-          ✕ Cancel
-        </button>
+        <h2 class="font-bold text-xs uppercase tracking-wider text-white" id="stfFormTitle">👨‍💼 New Staff</h2>
+        <button type="button" onclick="SF.staff.resetForm()" id="stfResetBtn" class="text-[10px] text-slate-500 hover:text-slate-300 font-bold hidden">✕ Cancel</button>
       </div>
-
       <input type="hidden" id="stfEditId" value="">
-
-      <div>
-        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Full Name *</label>
-        <input type="text" id="stfName" placeholder="e.g. Ramesh Kumar"
-               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs font-semibold">
-      </div>
-
-      <div>
-        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Designation</label>
-        <input type="text" id="stfDesignation" placeholder="e.g. Salesman, Technician"
-               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs">
-      </div>
-
-      <div>
-        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Phone</label>
-        <input type="tel" id="stfPhone" placeholder="10-digit" maxlength="10"
-               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs font-mono">
-      </div>
-
+      <div><label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Full Name *</label><input type="text" id="stfName" placeholder="Full name" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs font-semibold"></div>
+      <div><label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Designation</label><input type="text" id="stfDesignation" placeholder="e.g. Salesman" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs"></div>
+      <div><label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Phone</label><input type="tel" id="stfPhone" placeholder="10-digit" maxlength="10" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs font-mono"></div>
       <div class="grid grid-cols-2 gap-2">
-        <div>
-          <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Monthly Salary ₹ *</label>
-          <input type="number" id="stfSalary" placeholder="0" step="0.01"
-                 class="w-full bg-slate-950 border border-emerald-700/60 rounded-lg px-2.5 py-2 text-xs font-bold text-emerald-300 text-right">
-        </div>
-        <div>
-          <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Joining Date</label>
-          <input type="date" id="stfJoining"
-                 class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs">
-        </div>
+        <div><label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Monthly ₹ *</label><input type="number" id="stfSalary" placeholder="0" step="0.01" class="w-full bg-slate-950 border border-emerald-700/60 rounded-lg px-2.5 py-2 text-xs font-bold text-emerald-300 text-right"></div>
+        <div><label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Joining</label><input type="date" id="stfJoining" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs"></div>
       </div>
-
-      <div>
-        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Address (Optional)</label>
-        <textarea id="stfAddress" rows="2" placeholder="Address"
-                  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs resize-none"></textarea>
-      </div>
-
-      <button type="button" id="stfSaveBtn" onclick="SF.staff.save()"
-              class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-black py-3 rounded-xl text-sm shadow-lg shadow-indigo-600/30 transition">
-        💾 Save Staff
-      </button>
+      <div><label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Address</label><textarea id="stfAddress" rows="2" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs resize-none"></textarea></div>
+      <button type="button" id="stfSaveBtn" onclick="SF.staff.save()" class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-black py-3 rounded-xl text-sm shadow-lg transition">💾 Save Staff</button>
     </div>
 
-    <!-- ============ PAY SALARY ============ -->
     <div class="bg-emerald-950/30 border border-emerald-800/60 rounded-2xl p-4 space-y-3">
-      <h3 class="text-[11px] font-bold uppercase tracking-wider text-emerald-300 border-b border-emerald-800/60 pb-2">
-        💰 Pay Salary
-      </h3>
-
+      <h3 class="text-[11px] font-bold uppercase tracking-wider text-emerald-300 border-b border-emerald-800/60 pb-2">💰 Pay Salary</h3>
       <div>
         <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Select Staff *</label>
-        <select id="stfSalaryStaff" onchange="SF.staff.onStaffSelected()"
-                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs font-bold">
+        <select id="stfSalaryStaff" onchange="SF.staff.onStaffSelected()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs font-bold">
           <option value="">— Choose staff —</option>
         </select>
       </div>
-
       <div class="grid grid-cols-2 gap-2">
-        <div>
-          <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Month</label>
-          <select id="stfSalaryMonth"
-                  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs">
-            <option value="1">January</option>
-            <option value="2">February</option>
-            <option value="3">March</option>
-            <option value="4">April</option>
-            <option value="5">May</option>
-            <option value="6">June</option>
-            <option value="7">July</option>
-            <option value="8">August</option>
-            <option value="9">September</option>
-            <option value="10">October</option>
-            <option value="11">November</option>
-            <option value="12">December</option>
+        <div><label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Month</label>
+          <select id="stfSalaryMonth" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs">
+            <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+            <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+            <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+            <option value="10">October</option><option value="11">November</option><option value="12">December</option>
           </select>
         </div>
-        <div>
-          <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Year</label>
-          <input type="number" id="stfSalaryYear"
-                 class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs font-bold">
-        </div>
+        <div><label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Year</label><input type="number" id="stfSalaryYear" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs font-bold"></div>
       </div>
-
       <div class="grid grid-cols-2 gap-2">
-        <div>
-          <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Amount ₹ *</label>
-          <input type="number" id="stfSalaryAmount" placeholder="0" step="0.01"
-                 class="w-full bg-slate-950 border border-emerald-700/60 rounded-lg px-2.5 py-2 text-xs font-bold text-emerald-300 text-right">
-        </div>
-        <div>
-          <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Pay Date</label>
-          <input type="date" id="stfSalaryPayDate"
-                 class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs">
-        </div>
+        <div><label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Amount ₹ *</label><input type="number" id="stfSalaryAmount" placeholder="0" step="0.01" class="w-full bg-slate-950 border border-emerald-700/60 rounded-lg px-2.5 py-2 text-xs font-bold text-emerald-300 text-right"></div>
+        <div><label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Pay Date</label><input type="date" id="stfSalaryPayDate" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs"></div>
       </div>
-
       <div class="grid grid-cols-2 gap-2">
-        <div>
-          <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Paid Via</label>
-          <select id="stfSalaryPayMode"
-                  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs">
-            <option value="Cash-in-Hand">Cash</option>
-            <option value="Bank / UPI">Bank / UPI</option>
+        <div><label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Paid Via</label>
+          <select id="stfSalaryPayMode" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs">
+            <option value="Cash-in-Hand">Cash</option><option value="Bank / UPI">Bank / UPI</option>
           </select>
         </div>
-        <div>
-          <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Bonus ₹</label>
-          <input type="number" id="stfSalaryBonus" value="0" step="0.01"
-                 class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-right">
-        </div>
+        <div><label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Bonus ₹</label><input type="number" id="stfSalaryBonus" value="0" step="0.01" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-right"></div>
       </div>
-
-      <div>
-        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Note (Optional)</label>
-        <input type="text" id="stfSalaryNote" placeholder="e.g. Advance adjustment"
-               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs">
-      </div>
-
-      <button type="button" onclick="SF.staff.paySalary()"
-              class="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-black py-3 rounded-xl text-sm shadow-lg shadow-emerald-600/30 transition">
-        💵 Pay Salary & Print Slip
-      </button>
+      <div><label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Note</label><input type="text" id="stfSalaryNote" placeholder="Optional note" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs"></div>
+      <button type="button" onclick="SF.staff.paySalary()" class="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-black py-3 rounded-xl text-sm shadow-lg transition">💵 Pay Salary & Print Slip</button>
     </div>
 
   </div>
 
-
-  <!-- ============================================================
-       RIGHT PANEL — STAFF LIST + PAYMENT HISTORY
-       ============================================================ -->
+  <!-- RIGHT PANEL -->
   <div class="lg:col-span-8 space-y-3">
 
-    <!-- ============ STATS ============ -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-      <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3">
-        <div class="text-[9px] font-bold uppercase text-slate-500">Total Staff</div>
-        <div id="stfStatCount" class="text-lg font-black text-white mt-0.5">0</div>
-      </div>
-      <div class="bg-indigo-950/40 border border-indigo-800/40 rounded-xl p-3">
-        <div class="text-[9px] font-bold uppercase text-indigo-400">Monthly Payroll</div>
-        <div id="stfStatPayroll" class="text-lg font-black text-indigo-300 mt-0.5">₹0</div>
-      </div>
-      <div class="bg-emerald-950/40 border border-emerald-800/40 rounded-xl p-3">
-        <div class="text-[9px] font-bold uppercase text-emerald-400">Paid (This Month)</div>
-        <div id="stfStatPaidMonth" class="text-lg font-black text-emerald-300 mt-0.5">₹0</div>
-      </div>
-      <div class="bg-amber-950/40 border border-amber-800/40 rounded-xl p-3">
-        <div class="text-[9px] font-bold uppercase text-amber-400">Total Paid (All)</div>
-        <div id="stfStatPaidTotal" class="text-lg font-black text-amber-300 mt-0.5">₹0</div>
-      </div>
+      <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3"><div class="text-[9px] font-bold uppercase text-slate-500">Total Staff</div><div id="stfStatCount" class="text-lg font-black text-white mt-0.5">0</div></div>
+      <div class="bg-indigo-950/40 border border-indigo-800/40 rounded-xl p-3"><div class="text-[9px] font-bold uppercase text-indigo-400">Monthly Payroll</div><div id="stfStatPayroll" class="text-lg font-black text-indigo-300 mt-0.5">₹0</div></div>
+      <div class="bg-emerald-950/40 border border-emerald-800/40 rounded-xl p-3"><div class="text-[9px] font-bold uppercase text-emerald-400">Paid This Month</div><div id="stfStatPaidMonth" class="text-lg font-black text-emerald-300 mt-0.5">₹0</div></div>
+      <div class="bg-amber-950/40 border border-amber-800/40 rounded-xl p-3"><div class="text-[9px] font-bold uppercase text-amber-400">Total Paid (YTD)</div><div id="stfStatPaidTotal" class="text-lg font-black text-amber-300 mt-0.5">₹0</div></div>
     </div>
 
-    <!-- ============ STAFF LIST ============ -->
     <div class="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden">
       <div class="p-4 border-b border-slate-800 flex flex-wrap justify-between items-center gap-2">
-        <h3 class="font-bold text-xs uppercase tracking-wider text-slate-300">
-          👥 Staff Members
-        </h3>
-        <input type="text" id="stfSearchInput" oninput="SF.staff.renderStaffList()"
-               placeholder="🔍 Search name, phone..."
-               class="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-[11px] text-slate-200 w-48">
+        <h3 class="font-bold text-xs uppercase tracking-wider text-slate-300">👥 Staff Members</h3>
+        <input type="text" id="stfSearchInput" oninput="SF.staff.renderStaffList()" placeholder="🔍 Search..." class="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-[11px] text-slate-200 w-48">
       </div>
-
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs border-collapse min-w-[700px]">
           <thead class="bg-slate-950/70 text-slate-500 uppercase text-[10px]">
-            <tr>
-              <th class="p-2.5 border-b border-slate-800">Name</th>
-              <th class="p-2.5 border-b border-slate-800">Designation</th>
-              <th class="p-2.5 border-b border-slate-800">Phone</th>
-              <th class="p-2.5 border-b border-slate-800 text-right">Salary</th>
-              <th class="p-2.5 border-b border-slate-800">Joined</th>
-              <th class="p-2.5 border-b border-slate-800 text-center">Actions</th>
-            </tr>
+            <tr><th class="p-2.5 border-b border-slate-800">Name</th><th class="p-2.5 border-b border-slate-800">Designation</th><th class="p-2.5 border-b border-slate-800">Phone</th><th class="p-2.5 border-b border-slate-800 text-right">Salary</th><th class="p-2.5 border-b border-slate-800">Joined</th><th class="p-2.5 border-b border-slate-800 text-center">Actions</th></tr>
           </thead>
-          <tbody id="stfListBody" class="divide-y divide-slate-800/60">
-            <tr>
-              <td colspan="6" class="text-center py-8 text-slate-500 text-xs">
-                No staff added yet.
-              </td>
-            </tr>
-          </tbody>
+          <tbody id="stfListBody" class="divide-y divide-slate-800/60"><tr><td colspan="6" class="text-center py-8 text-slate-500 text-xs">No staff added yet.</td></tr></tbody>
         </table>
       </div>
     </div>
 
-    <!-- ============ SALARY HISTORY ============ -->
     <div class="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden">
       <div class="p-4 border-b border-slate-800 flex flex-wrap justify-between items-center gap-2">
-        <h3 class="font-bold text-xs uppercase tracking-wider text-slate-300">
-          💵 Salary Payment History
-        </h3>
+        <h3 class="font-bold text-xs uppercase tracking-wider text-slate-300">💵 Salary Payment History</h3>
         <div class="flex items-center gap-2">
-          <span id="stfPayCount" class="text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded font-mono">
-            0 payments
-          </span>
-          <input type="text" id="stfPayFilter"
-                 oninput="SF.staff.renderPayHistory()"
-                 placeholder="🔍 Filter..."
-                 class="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1 text-[11px] text-slate-200 w-36">
+          <span id="stfPayCount" class="text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded font-mono">0 payments</span>
+          <input type="text" id="stfPayFilter" oninput="SF.staff.renderPayHistory()" placeholder="🔍" class="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1 text-[11px] text-slate-200 w-36">
         </div>
       </div>
-
       <div class="overflow-x-auto max-h-[60vh]">
         <table class="w-full text-left text-xs border-collapse min-w-[800px]">
           <thead class="bg-slate-950 sticky top-0 z-10">
-            <tr>
-              <th class="p-2.5 text-[10px] uppercase text-slate-500 font-bold whitespace-nowrap">Pay Date</th>
-              <th class="p-2.5 text-[10px] uppercase text-slate-500 font-bold">Staff</th>
-              <th class="p-2.5 text-[10px] uppercase text-slate-500 font-bold">For Month</th>
-              <th class="p-2.5 text-[10px] uppercase text-slate-500 font-bold text-right whitespace-nowrap">Salary</th>
-              <th class="p-2.5 text-[10px] uppercase text-slate-500 font-bold text-right whitespace-nowrap">Bonus</th>
-              <th class="p-2.5 text-[10px] uppercase text-slate-500 font-bold text-right whitespace-nowrap">Total</th>
-              <th class="p-2.5 text-[10px] uppercase text-slate-500 font-bold text-center">Actions</th>
-            </tr>
+            <tr><th class="p-2.5 text-[10px] uppercase text-slate-500 font-bold whitespace-nowrap">Pay Date</th><th class="p-2.5 text-[10px] uppercase text-slate-500 font-bold">Staff</th><th class="p-2.5 text-[10px] uppercase text-slate-500 font-bold">For Month</th><th class="p-2.5 text-[10px] uppercase text-slate-500 font-bold text-right whitespace-nowrap">Salary</th><th class="p-2.5 text-[10px] uppercase text-slate-500 font-bold text-right whitespace-nowrap">Bonus</th><th class="p-2.5 text-[10px] uppercase text-slate-500 font-bold text-right whitespace-nowrap">Total</th><th class="p-2.5 text-[10px] uppercase text-slate-500 font-bold text-center">Actions</th></tr>
           </thead>
-          <tbody id="stfPayHistoryBody" class="divide-y divide-slate-800/60">
-            <tr>
-              <td colspan="7" class="text-center py-8 text-slate-500 text-xs">
-                No salary payments yet.
-              </td>
-            </tr>
-          </tbody>
+          <tbody id="stfPayHistoryBody" class="divide-y divide-slate-800/60"><tr><td colspan="7" class="text-center py-8 text-slate-500 text-xs">No salary payments yet.</td></tr></tbody>
         </table>
       </div>
     </div>
 
   </div>
-
 </section>
 
 
-<!-- ============================================================
-     STAFF MODULE LOGIC
-     ============================================================ -->
 <script>
 (function () {
   'use strict';
@@ -268,36 +117,38 @@
   const C  = window.SF?.common;
   const Cl = window.SF?.cloud;
 
-  if (!S || !C) {
-    console.error('Staff module: SF globals not ready');
-    return;
+  if (!S || !C) { console.error('Staff: SF globals not ready'); return; }
+
+  const SM = { editingId: null };
+
+  function requirePerm(perm, msg) {
+    if (!window.SF?.perms?.can?.(perm)) {
+      C.toast('🔒 ' + (msg || 'Permission denied'), 'error', 3000);
+      return false;
+    }
+    return true;
   }
 
-  /* ============================================================
-     MODULE STATE
-     ============================================================ */
-  const SM = {
-    editingId: null
-  };
-
 
   /* ============================================================
-     1. INIT
+     INIT
      ============================================================ */
   function init_staffModule() {
     console.log('%c👨‍💼 Staff module initialized', 'color:#8b5cf6;font-weight:bold');
 
+    if (!window.SF?.perms?.can?.('staff.view')) {
+      const container = document.getElementById('moduleContainer');
+      if (container) container.innerHTML = '<div style="max-width:520px;margin:60px auto;padding:28px;background:#1e1b2e;border:1px solid #7f1d1d;border-radius:16px;text-align:center;"><div style="font-size:42px;margin-bottom:12px">🔒</div><div style="font-size:16px;font-weight:800;color:#fca5a5;">Access Denied</div><div style="font-size:12px;color:#94a3b8;margin-top:6px;">Only owner and manager can view staff.</div></div>';
+      return { onUnload: () => {} };
+    }
+
     SM.editingId = null;
 
-    /* Default joining date */
     const jEl = document.getElementById('stfJoining');
     if (jEl && !jEl.value) jEl.value = C.fmtDate(new Date());
-
-    /* Default salary pay date */
     const pdEl = document.getElementById('stfSalaryPayDate');
     if (pdEl && !pdEl.value) pdEl.value = C.fmtDate(new Date());
 
-    /* Default year + month */
     const today = new Date();
     const yEl = document.getElementById('stfSalaryYear');
     if (yEl) yEl.value = today.getFullYear();
@@ -308,76 +159,68 @@
     populateStaffDropdown();
     renderStaffList();
     renderPayHistory();
+    updateStats();
 
-    /* Subscribe to state changes */
-    if (window.SF?.state?.on) {
-      window.SF.state.on('change:staff', () => {
-        populateStaffDropdown();
-        renderStaffList();
-      });
-      window.SF.state.on('change:salaryPayments', () => {
-        renderPayHistory();
-        updateStats();
+    /* Manager can't create staff — hide form */
+    if (!window.SF?.perms?.can?.('staff.create')) {
+      const form = document.getElementById('stfFormSection');
+      const saveBtn = document.getElementById('stfSaveBtn');
+      const nameInput = document.getElementById('stfName');
+      if (saveBtn) saveBtn.style.display = 'none';
+      ['stfName','stfDesignation','stfPhone','stfSalary','stfJoining','stfAddress'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) { el.disabled = true; el.classList.add('opacity-50'); }
       });
     }
 
-    updateStats();
+    /* Manager can't pay salary — hide form */
+    if (!window.SF?.perms?.can?.('staff.pay')) {
+      const payBtn = document.querySelector('#staffModule button[onclick="SF.staff.paySalary()"]');
+      if (payBtn) payBtn.style.display = 'none';
+      ['stfSalaryStaff','stfSalaryMonth','stfSalaryYear','stfSalaryAmount','stfSalaryPayDate','stfSalaryPayMode','stfSalaryBonus','stfSalaryNote'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) { el.disabled = true; el.classList.add('opacity-50'); }
+      });
+    }
 
-    /* Focus name */
+    if (window.SF?.state?.on) {
+      window.SF.state.on('change:staff', () => { populateStaffDropdown(); renderStaffList(); });
+      window.SF.state.on('change:salaryPayments', () => { renderPayHistory(); updateStats(); });
+    }
+
     setTimeout(() => {
       const n = document.getElementById('stfName');
-      if (n && window.innerWidth > 640) n.focus();
+      if (n && window.innerWidth > 640 && !n.disabled) n.focus();
     }, 250);
 
-    return {
-      onUnload: () => {
-        console.log('Staff module unloading');
-      }
-    };
+    return { onUnload: () => {} };
   }
 
 
   /* ============================================================
-     2. SAVE STAFF
+     SAVE STAFF
      ============================================================ */
   async function save() {
-    const name        = (document.getElementById('stfName')?.value || '').trim();
+    if (!requirePerm('staff.create', 'Only owner can create staff')) return;
+
+    const name = (document.getElementById('stfName')?.value || '').trim();
     const designation = (document.getElementById('stfDesignation')?.value || '').trim();
-    const phone       = (document.getElementById('stfPhone')?.value || '').trim();
-    const salary      = parseFloat(document.getElementById('stfSalary')?.value) || 0;
-    const joining     = document.getElementById('stfJoining')?.value || C.fmtDate(new Date());
-    const address     = (document.getElementById('stfAddress')?.value || '').trim();
+    const phone = (document.getElementById('stfPhone')?.value || '').trim();
+    const salary = parseFloat(document.getElementById('stfSalary')?.value) || 0;
+    const joining = document.getElementById('stfJoining')?.value || C.fmtDate(new Date());
+    const address = (document.getElementById('stfAddress')?.value || '').trim();
 
-    if (!name || name.length < 2) {
-      C.toast('Enter staff name (min 2 chars)', 'warning');
-      return;
-    }
-    if (salary <= 0) {
-      C.toast('Enter valid monthly salary', 'warning');
-      return;
-    }
-    if (phone && !/^\d{10}$/.test(phone)) {
-      C.toast('Phone must be 10 digits', 'warning');
-      return;
-    }
+    if (!name || name.length < 2) { C.toast('Enter name (min 2 chars)', 'warning'); return; }
+    if (salary <= 0) { C.toast('Enter valid salary', 'warning'); return; }
+    if (phone && !/^\d{10}$/.test(phone)) { C.toast('Phone must be 10 digits', 'warning'); return; }
 
-    /* Duplicate check */
-    const dup = (S.staff || []).find((x) =>
-      x.name.toLowerCase() === name.toLowerCase() && x.id !== SM.editingId
-    );
-    if (dup) {
-      C.toast('Staff already exists: ' + name, 'warning');
-      return;
-    }
+    const dup = (S.staff || []).find((x) => x.name.toLowerCase() === name.toLowerCase() && x.id !== SM.editingId);
+    if (dup) { C.toast('Staff already exists', 'warning'); return; }
 
     const staff = {
       id: SM.editingId || ('stf-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6)),
-      name,
-      designation,
-      phone,
-      salary: +salary.toFixed(2),
-      joining,
-      address,
+      name, designation, phone,
+      salary: +salary.toFixed(2), joining, address,
       createdAt: new Date().toISOString()
     };
 
@@ -385,24 +228,17 @@
 
     if (SM.editingId) {
       const idx = S.staff.findIndex((x) => x.id === SM.editingId);
-      if (idx === -1) { C.toast('Staff not found', 'error'); return; }
+      if (idx === -1) { C.toast('Not found', 'error'); return; }
       S.staff[idx] = { ...S.staff[idx], ...staff };
       C.toast('Staff updated: ' + name, 'success');
-      try { window.SF.state.logAudit('STAFF_UPDATE', name + ' | ₹' + salary); } catch (e) {}
     } else {
       S.staff.push(staff);
       C.toast('Staff saved: ' + name, 'success');
-      try { window.SF.state.logAudit('STAFF_CREATE', name + ' | ₹' + salary); } catch (e) {}
     }
 
     C.safeSave('sfp_staff', S.staff);
-
-    /* Push to cloud */
-    try {
-      await Cl.pushOne('staff', staff);
-    } catch (e) {
-      console.warn('Cloud push failed:', e);
-    }
+    try { await Cl.pushOne('staff', staff); } catch (e) {}
+    try { window.SF.state.logAudit(SM.editingId ? 'STAFF_UPDATE' : 'STAFF_CREATE', name + ' | ₹' + salary); } catch (e) {}
 
     C.playBeep();
     resetForm();
@@ -411,14 +247,9 @@
     updateStats();
   }
 
-
-  /* ============================================================
-     3. RESET FORM
-     ============================================================ */
   function resetForm() {
     SM.editingId = null;
-    const ids = ['stfName', 'stfDesignation', 'stfPhone', 'stfSalary', 'stfAddress'];
-    ids.forEach((id) => {
+    ['stfName','stfDesignation','stfPhone','stfSalary','stfAddress'].forEach((id) => {
       const el = document.getElementById(id);
       if (el) el.value = '';
     });
@@ -426,7 +257,6 @@
     if (jEl) jEl.value = C.fmtDate(new Date());
     const idEl = document.getElementById('stfEditId');
     if (idEl) idEl.value = '';
-
     const titleEl = document.getElementById('stfFormTitle');
     if (titleEl) titleEl.textContent = '👨‍💼 New Staff';
     const resetBtn = document.getElementById('stfResetBtn');
@@ -435,414 +265,213 @@
     if (saveBtn) saveBtn.textContent = '💾 Save Staff';
   }
 
-
-  /* ============================================================
-     4. EDIT STAFF
-     ============================================================ */
   function edit(id) {
+    if (!requirePerm('staff.edit', 'Only owner can edit staff')) return;
     const s = (S.staff || []).find((x) => x.id === id);
     if (!s) { C.toast('Not found', 'error'); return; }
-
     SM.editingId = id;
-
-    const setVal = (elId, v) => {
-      const el = document.getElementById(elId);
-      if (el) el.value = v ?? '';
-    };
-    setVal('stfName', s.name);
-    setVal('stfDesignation', s.designation);
-    setVal('stfPhone', s.phone);
-    setVal('stfSalary', s.salary);
-    setVal('stfJoining', s.joining);
-    setVal('stfAddress', s.address);
+    const setVal = (elId, v) => { const el = document.getElementById(elId); if (el) el.value = v ?? ''; };
+    setVal('stfName', s.name); setVal('stfDesignation', s.designation);
+    setVal('stfPhone', s.phone); setVal('stfSalary', s.salary);
+    setVal('stfJoining', s.joining); setVal('stfAddress', s.address);
     setVal('stfEditId', id);
-
     const titleEl = document.getElementById('stfFormTitle');
     if (titleEl) titleEl.textContent = '✏ Edit Staff';
     const resetBtn = document.getElementById('stfResetBtn');
     if (resetBtn) resetBtn.classList.remove('hidden');
     const saveBtn = document.getElementById('stfSaveBtn');
     if (saveBtn) saveBtn.textContent = '💾 Update Staff';
-
     document.querySelector('#staffModule')?.scrollIntoView({ behavior: 'smooth' });
-    setTimeout(() => {
-      const n = document.getElementById('stfName');
-      if (n) n.focus();
-    }, 200);
   }
 
-
-  /* ============================================================
-     5. DELETE STAFF
-     ============================================================ */
   async function deleteStaff(id) {
+    if (!requirePerm('staff.delete', 'Only owner can delete staff')) return;
     const s = (S.staff || []).find((x) => x.id === id);
     if (!s) return;
-
-    const pin = prompt('🔒 Master PIN to delete this staff:');
+    const pin = prompt('🔒 Master PIN:');
     if (!pin) return;
-    if (pin !== (S.profile?.masterPin || '1234')) {
-      C.toast('Incorrect PIN', 'error');
-      C.playErrorBeep();
-      return;
-    }
-
-    /* Count payments */
-    const paymentCount = (S.salaryPayments || []).filter((p) => p.staffId === id).length;
-
-    const ok = await C.confirmDialog(
-      'Delete Staff?',
-      s.name + '\n' + (s.designation || '—') + '\n\nMonthly: ₹' + (s.salary || 0).toFixed(2) +
-      '\n\nHistorical salary payments (' + paymentCount + ') will NOT be deleted.',
-      'Delete',
-      true
-    );
+    if (pin !== (S.profile?.masterPin || '1234')) { C.toast('Incorrect PIN', 'error'); C.playErrorBeep(); return; }
+    const ok = await C.confirmDialog('Delete Staff?', s.name + '\n₹' + (s.salary || 0).toFixed(2), 'Delete', true);
     if (!ok) return;
-
     S.staff = S.staff.filter((x) => x.id !== id);
     C.safeSave('sfp_staff', S.staff);
-
-    try {
-      await Cl.deleteOne('staff', id);
-    } catch (e) {}
-
-    try {
-      window.SF.state.logAudit('STAFF_DELETE', s.name);
-    } catch (e) {}
-
-    C.toast('Staff deleted: ' + s.name, 'success');
+    try { await Cl.deleteOne('staff', id); } catch (e) {}
+    C.toast('Deleted', 'success');
     populateStaffDropdown();
     renderStaffList();
     updateStats();
   }
 
-
-  /* ============================================================
-     6. POPULATE STAFF DROPDOWN
-     ============================================================ */
   function populateStaffDropdown() {
     const sel = document.getElementById('stfSalaryStaff');
     if (!sel) return;
-
     const staff = S.staff || [];
     const currentVal = sel.value;
-
-    sel.innerHTML = '<option value="">— Choose staff —</option>' +
-      staff.map((s) =>
-        `<option value="${s.id}">${C.escapeHTML(s.name)} — ₹${(s.salary || 0).toFixed(0)}</option>`
-      ).join('');
-
-    /* Restore selection if still exists */
-    if (currentVal && staff.some((s) => s.id === currentVal)) {
-      sel.value = currentVal;
-    }
+    sel.innerHTML = '<option value="">— Choose staff —</option>' + staff.map((s) => `<option value="${s.id}">${C.escapeHTML(s.name)} — ₹${(s.salary || 0).toFixed(0)}</option>`).join('');
+    if (currentVal && staff.some((s) => s.id === currentVal)) sel.value = currentVal;
   }
 
-
-  /* ============================================================
-     7. ON STAFF SELECTED — AUTO-FILL SALARY
-     ============================================================ */
   function onStaffSelected() {
     const sel = document.getElementById('stfSalaryStaff');
     const staffId = sel?.value;
     if (!staffId) return;
-
     const s = (S.staff || []).find((x) => x.id === staffId);
     if (!s) return;
-
     const amtEl = document.getElementById('stfSalaryAmount');
     if (amtEl) amtEl.value = s.salary || 0;
   }
 
 
   /* ============================================================
-     8. PAY SALARY
+     PAY SALARY
      ============================================================ */
   async function paySalary() {
-    const staffId  = document.getElementById('stfSalaryStaff')?.value;
-    const month    = parseInt(document.getElementById('stfSalaryMonth')?.value, 10);
-    const year     = parseInt(document.getElementById('stfSalaryYear')?.value, 10);
-    const amount   = parseFloat(document.getElementById('stfSalaryAmount')?.value) || 0;
-    const payDate  = document.getElementById('stfSalaryPayDate')?.value || C.fmtDate(new Date());
-    const payMode  = document.getElementById('stfSalaryPayMode')?.value || 'Cash-in-Hand';
-    const bonus    = parseFloat(document.getElementById('stfSalaryBonus')?.value) || 0;
-    const note     = (document.getElementById('stfSalaryNote')?.value || '').trim();
+    if (!requirePerm('staff.pay', 'Only owner can pay salary')) return;
 
-    if (!staffId) {
-      C.toast('Select a staff member', 'warning');
-      return;
-    }
-    if (amount <= 0) {
-      C.toast('Enter valid salary amount', 'warning');
-      return;
-    }
-    if (!month || month < 1 || month > 12) {
-      C.toast('Invalid month', 'warning');
-      return;
-    }
-    if (!year || year < 2000 || year > 2100) {
-      C.toast('Invalid year', 'warning');
-      return;
-    }
+    const staffId = document.getElementById('stfSalaryStaff')?.value;
+    const month = parseInt(document.getElementById('stfSalaryMonth')?.value, 10);
+    const year = parseInt(document.getElementById('stfSalaryYear')?.value, 10);
+    const amount = parseFloat(document.getElementById('stfSalaryAmount')?.value) || 0;
+    const payDate = document.getElementById('stfSalaryPayDate')?.value || C.fmtDate(new Date());
+    const payMode = document.getElementById('stfSalaryPayMode')?.value || 'Cash-in-Hand';
+    const bonus = parseFloat(document.getElementById('stfSalaryBonus')?.value) || 0;
+    const note = (document.getElementById('stfSalaryNote')?.value || '').trim();
+
+    if (!staffId) { C.toast('Select staff', 'warning'); return; }
+    if (amount <= 0) { C.toast('Enter valid amount', 'warning'); return; }
+    if (!month || month < 1 || month > 12) { C.toast('Invalid month', 'warning'); return; }
+    if (!year || year < 2000 || year > 2100) { C.toast('Invalid year', 'warning'); return; }
 
     const s = (S.staff || []).find((x) => x.id === staffId);
     if (!s) { C.toast('Staff not found', 'error'); return; }
 
-    /* Duplicate check: same staff + same month + same year */
-    const dup = (S.salaryPayments || []).find(
-      (p) => p.staffId === staffId && p.month === month && p.year === year
-    );
+    const dup = (S.salaryPayments || []).find((p) => p.staffId === staffId && p.month === month && p.year === year);
     if (dup) {
-      const ok = await C.confirmDialog(
-        'Already Paid?',
-        'Salary for ' + monthName(month) + ' ' + year + ' has already been paid:\n\n' +
-        '₹' + (dup.total || 0).toFixed(2) + ' on ' + dup.payDate +
-        '\n\nContinue with another payment?',
-        'Pay Again',
-        true
-      );
+      const ok = await C.confirmDialog('Already Paid?', 'Salary for ' + monthName(month) + ' ' + year + ' was already paid:\n₹' + (dup.total || 0).toFixed(2) + ' on ' + dup.payDate + '\n\nContinue?', 'Pay Again', true);
       if (!ok) return;
     }
 
     const monthLabel = monthName(month) + ' ' + year;
     const total = +(amount + bonus).toFixed(2);
 
-    /* Record */
     const payment = {
       id: 'sal-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
-      staffId,
-      staffName: s.name,
-      designation: s.designation || '',
-      payDate,
-      month,
-      year,
-      monthLabel,
-      salary: +amount.toFixed(2),
-      bonus: +bonus.toFixed(2),
-      total,
-      payMode,
-      note,
-      createdAt: new Date().toISOString()
+      staffId, staffName: s.name, designation: s.designation || '',
+      payDate, month, year, monthLabel,
+      salary: +amount.toFixed(2), bonus: +bonus.toFixed(2), total,
+      payMode, note, createdAt: new Date().toISOString()
     };
 
     if (!Array.isArray(S.salaryPayments)) S.salaryPayments = [];
     S.salaryPayments.unshift(payment);
     C.safeSave('sfp_salary_payments', S.salaryPayments);
 
-    /* Also record as EXPENSE voucher for books consistency */
     const voucher = {
-      id: 'vch-sal-' + Date.now(),
-      type: 'EXPENSE',
-      date: payDate,
-      amount: total,
-      category: 'Staff Salary — ' + s.name,
-      account: payMode,
+      id: 'vch-sal-' + Date.now(), type: 'EXPENSE', date: payDate, amount: total,
+      category: 'Staff Salary — ' + s.name, account: payMode,
       narration: 'Salary for ' + monthLabel + (bonus > 0 ? ' + Bonus ₹' + bonus : '') + (note ? ' | ' + note : ''),
       createdAt: new Date().toISOString(),
-      _autoGenerated: true,
-      _sourcePaymentId: payment.id
+      _autoGenerated: true, _sourcePaymentId: payment.id
     };
     if (!Array.isArray(S.vouchers)) S.vouchers = [];
     S.vouchers.unshift(voucher);
     C.safeSave('sfp_vouchers', S.vouchers);
 
-    /* Cloud push */
     try {
       await Cl.pushOne('salaryPayments', payment);
       await Cl.pushOne('vouchers', voucher);
-    } catch (e) {
-      console.warn('Cloud push failed:', e);
-      C.toast('Saved locally. Will sync when online.', 'warning', 3500);
-    }
+    } catch (e) { C.toast('Saved locally. Sync pending.', 'warning', 3500); }
 
-    /* Audit */
-    try {
-      window.SF.state.logAudit('SALARY_PAID', s.name + ' | ' + monthLabel + ' | ₹' + total);
-    } catch (e) {}
+    try { window.SF.state.logAudit('SALARY_PAID', s.name + ' | ' + monthLabel + ' | ₹' + total); } catch (e) {}
 
-    C.toast(
-      'Salary paid: ' + s.name + ' — ' + monthLabel + ' — ₹' + total.toFixed(2),
-      'success', 4000
-    );
-    C.playBeep();
-
-    /* Print slip */
+    /* Print FIRST, then reset and toast */
     printSalarySlip(payment.id);
 
-    /* Reset pay fields */
     document.getElementById('stfSalaryAmount').value = '';
     document.getElementById('stfSalaryBonus').value = '0';
     document.getElementById('stfSalaryNote').value = '';
     document.getElementById('stfSalaryStaff').value = '';
 
-    /* Refresh UI */
     renderPayHistory();
     updateStats();
+
+    setTimeout(() => {
+      try { C.toast('✅ Salary paid: ' + s.name + ' — ' + monthLabel, 'success', 3000); C.playBeep(); } catch (e) {}
+    }, 1300);
   }
 
 
   /* ============================================================
-     9. RENDER STAFF LIST
+     RENDER LISTS
      ============================================================ */
   function renderStaffList() {
     const body = document.getElementById('stfListBody');
     if (!body) return;
-
     const searchQ = (document.getElementById('stfSearchInput')?.value || '').trim().toLowerCase();
     const staff = S.staff || [];
-
-    let filtered = staff;
-    if (searchQ) {
-      filtered = staff.filter((s) => {
-        const blob = (s.name + ' ' + (s.designation || '') + ' ' + (s.phone || '')).toLowerCase();
-        return blob.includes(searchQ);
-      });
-    }
-
-    /* Sort by name */
+    let filtered = searchQ ? staff.filter((s) => (s.name + ' ' + (s.designation || '') + ' ' + (s.phone || '')).toLowerCase().includes(searchQ)) : staff;
     filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-
     if (filtered.length === 0) {
-      body.innerHTML = `
-        <tr>
-          <td colspan="6" class="text-center py-8 text-slate-500 text-xs">
-            ${searchQ ? 'No matches.' : 'No staff added yet.'}
-          </td>
-        </tr>`;
+      body.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-500 text-xs">${searchQ ? 'No matches.' : 'No staff added yet.'}</td></tr>`;
       return;
     }
-
+    const canPay = window.SF?.perms?.can?.('staff.pay');
+    const canEdit = window.SF?.perms?.can?.('staff.edit');
+    const canDel = window.SF?.perms?.can?.('staff.delete');
     body.innerHTML = filtered.map((s) => `
       <tr class="hover:bg-slate-800/30 transition">
-        <td class="p-2.5 border-b border-slate-800/60">
-          <div class="font-bold text-white text-[12px]">${C.escapeHTML(s.name)}</div>
-          ${s.address ? `<div class="text-[10px] text-slate-500 truncate max-w-[180px]">${C.escapeHTML(s.address)}</div>` : ''}
-        </td>
-        <td class="p-2.5 border-b border-slate-800/60 text-slate-300 text-[11.5px]">
-          ${C.escapeHTML(s.designation || '—')}
-        </td>
-        <td class="p-2.5 border-b border-slate-800/60 font-mono text-slate-400 text-[11px]">
-          ${C.escapeHTML(s.phone || '—')}
-        </td>
-        <td class="p-2.5 border-b border-slate-800/60 text-right font-mono font-bold text-emerald-400 text-[11.5px]">
-          ₹${fmt2(s.salary)}
-        </td>
-        <td class="p-2.5 border-b border-slate-800/60 font-mono text-slate-500 text-[10.5px]">
-          ${C.escapeHTML(s.joining || '—')}
-        </td>
+        <td class="p-2.5 border-b border-slate-800/60"><div class="font-bold text-white text-[12px]">${C.escapeHTML(s.name)}</div></td>
+        <td class="p-2.5 border-b border-slate-800/60 text-slate-300 text-[11.5px]">${C.escapeHTML(s.designation || '—')}</td>
+        <td class="p-2.5 border-b border-slate-800/60 font-mono text-slate-400 text-[11px]">${C.escapeHTML(s.phone || '—')}</td>
+        <td class="p-2.5 border-b border-slate-800/60 text-right font-mono font-bold text-emerald-400 text-[11.5px]">₹${fmt2(s.salary)}</td>
+        <td class="p-2.5 border-b border-slate-800/60 font-mono text-slate-500 text-[10.5px]">${C.escapeHTML(s.joining || '—')}</td>
         <td class="p-2.5 border-b border-slate-800/60 text-center">
           <div class="inline-flex gap-1">
-            <button type="button" onclick="SF.staff.quickPay('${s.id}')"
-                    title="Pay Salary"
-                    class="text-[10px] bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-400 font-bold px-2 py-1 rounded">
-              💰
-            </button>
-            <button type="button" onclick="SF.staff.edit('${s.id}')"
-                    title="Edit"
-                    class="text-[10px] bg-amber-950/60 hover:bg-amber-900/60 text-amber-400 font-bold px-2 py-1 rounded">
-              ✏
-            </button>
-            <button type="button" onclick="SF.staff.deleteStaff('${s.id}')"
-                    title="Delete"
-                    class="text-[10px] bg-rose-950/60 hover:bg-rose-900/60 text-rose-400 font-bold px-2 py-1 rounded">
-              🗑
-            </button>
+            ${canPay ? `<button type="button" onclick="SF.staff.quickPay('${s.id}')" title="Pay" class="text-[10px] bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-400 font-bold px-2 py-1 rounded">💰</button>` : ''}
+            ${canEdit ? `<button type="button" onclick="SF.staff.edit('${s.id}')" title="Edit" class="text-[10px] bg-amber-950/60 hover:bg-amber-900/60 text-amber-400 font-bold px-2 py-1 rounded">✏</button>` : ''}
+            ${canDel ? `<button type="button" onclick="SF.staff.deleteStaff('${s.id}')" title="Delete" class="text-[10px] bg-rose-950/60 hover:bg-rose-900/60 text-rose-400 font-bold px-2 py-1 rounded">🗑</button>` : ''}
           </div>
         </td>
       </tr>
     `).join('');
   }
 
-
-  /* ============================================================
-     10. QUICK PAY — from list button
-     ============================================================ */
   function quickPay(staffId) {
+    if (!requirePerm('staff.pay')) return;
     const sel = document.getElementById('stfSalaryStaff');
     if (sel) sel.value = staffId;
     onStaffSelected();
-
-    /* Scroll pay section into view */
     document.getElementById('stfSalaryStaff')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-    setTimeout(() => {
-      const amtEl = document.getElementById('stfSalaryAmount');
-      if (amtEl) amtEl.focus();
-    }, 400);
+    setTimeout(() => { const amtEl = document.getElementById('stfSalaryAmount'); if (amtEl) amtEl.focus(); }, 400);
   }
 
-
-  /* ============================================================
-     11. RENDER PAY HISTORY
-     ============================================================ */
   function renderPayHistory() {
     const body = document.getElementById('stfPayHistoryBody');
     const cntEl = document.getElementById('stfPayCount');
     if (!body) return;
-
     const filterQ = (document.getElementById('stfPayFilter')?.value || '').trim().toLowerCase();
     const payments = S.salaryPayments || [];
-
     if (cntEl) cntEl.textContent = payments.length + ' payment' + (payments.length !== 1 ? 's' : '');
-
-    let filtered = payments;
-    if (filterQ) {
-      filtered = payments.filter((p) => {
-        const blob = (
-          (p.staffName || '') + ' ' +
-          (p.monthLabel || '') + ' ' +
-          (p.payDate || '') + ' ' +
-          (p.note || '')
-        ).toLowerCase();
-        return blob.includes(filterQ);
-      });
-    }
-
+    let filtered = filterQ ? payments.filter((p) => ((p.staffName || '') + ' ' + (p.monthLabel || '') + ' ' + (p.payDate || '')).toLowerCase().includes(filterQ)) : payments;
     if (filtered.length === 0) {
-      body.innerHTML = `
-        <tr>
-          <td colspan="7" class="text-center py-8 text-slate-500 text-xs">
-            ${filterQ ? 'No matches.' : 'No salary payments yet.'}
-          </td>
-        </tr>`;
+      body.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-slate-500 text-xs">${filterQ ? 'No matches.' : 'No salary payments yet.'}</td></tr>`;
       return;
     }
-
+    const canDel = window.SF?.perms?.can?.('staff.pay');
     body.innerHTML = filtered.map((p) => {
       const idx = payments.indexOf(p);
       return `
         <tr class="hover:bg-slate-800/30 transition">
-          <td class="p-2.5 border-b border-slate-800/60 font-mono text-slate-400 text-[11px] whitespace-nowrap">
-            ${C.escapeHTML(p.payDate)}
-          </td>
-          <td class="p-2.5 border-b border-slate-800/60">
-            <div class="font-bold text-white text-[11.5px]">${C.escapeHTML(p.staffName)}</div>
-            ${p.designation ? `<div class="text-[10px] text-slate-500">${C.escapeHTML(p.designation)}</div>` : ''}
-          </td>
-          <td class="p-2.5 border-b border-slate-800/60 text-slate-300 text-[11px]">
-            ${C.escapeHTML(p.monthLabel)}
-          </td>
-          <td class="p-2.5 border-b border-slate-800/60 text-right font-mono text-slate-300 text-[11px]">
-            ₹${fmt2(p.salary || 0)}
-          </td>
-          <td class="p-2.5 border-b border-slate-800/60 text-right font-mono text-emerald-400 text-[11px]">
-            ${(p.bonus || 0) > 0 ? '₹' + fmt2(p.bonus) : '—'}
-          </td>
-          <td class="p-2.5 border-b border-slate-800/60 text-right font-mono font-bold text-sky-400 text-[11.5px]">
-            ₹${fmt2(p.total || 0)}
-          </td>
+          <td class="p-2.5 border-b border-slate-800/60 font-mono text-slate-400 text-[11px] whitespace-nowrap">${C.escapeHTML(p.payDate)}</td>
+          <td class="p-2.5 border-b border-slate-800/60"><div class="font-bold text-white text-[11.5px]">${C.escapeHTML(p.staffName)}</div>${p.designation ? `<div class="text-[10px] text-slate-500">${C.escapeHTML(p.designation)}</div>` : ''}</td>
+          <td class="p-2.5 border-b border-slate-800/60 text-slate-300 text-[11px]">${C.escapeHTML(p.monthLabel)}</td>
+          <td class="p-2.5 border-b border-slate-800/60 text-right font-mono text-slate-300 text-[11px]">₹${fmt2(p.salary || 0)}</td>
+          <td class="p-2.5 border-b border-slate-800/60 text-right font-mono text-emerald-400 text-[11px]">${(p.bonus || 0) > 0 ? '₹' + fmt2(p.bonus) : '—'}</td>
+          <td class="p-2.5 border-b border-slate-800/60 text-right font-mono font-bold text-sky-400 text-[11.5px]">₹${fmt2(p.total || 0)}</td>
           <td class="p-2.5 border-b border-slate-800/60 text-center">
             <div class="inline-flex gap-1">
-              <button type="button" onclick="SF.staff.printSlip('${p.id}')"
-                      title="Print Slip"
-                      class="text-[10px] bg-sky-950/60 hover:bg-sky-900/60 text-sky-400 font-bold px-2 py-1 rounded">
-                🖨
-              </button>
-              <button type="button" onclick="SF.staff.deletePayment(${idx})"
-                      title="Delete"
-                      class="text-[10px] bg-rose-950/60 hover:bg-rose-900/60 text-rose-400 font-bold px-2 py-1 rounded">
-                🗑
-              </button>
+              <button type="button" onclick="SF.staff.printSlip('${p.id}')" title="Print" class="text-[10px] bg-sky-950/60 hover:bg-sky-900/60 text-sky-400 font-bold px-2 py-1 rounded">🖨</button>
+              ${canDel ? `<button type="button" onclick="SF.staff.deletePayment(${idx})" title="Delete" class="text-[10px] bg-rose-950/60 hover:bg-rose-900/60 text-rose-400 font-bold px-2 py-1 rounded">🗑</button>` : ''}
             </div>
           </td>
         </tr>
@@ -850,193 +479,141 @@
     }).join('');
   }
 
-
-  /* ============================================================
-     12. DELETE PAYMENT
-     ============================================================ */
   async function deletePayment(idx) {
+    if (!requirePerm('staff.pay', 'Only owner can delete payments')) return;
     const payments = S.salaryPayments || [];
     const p = payments[idx];
     if (!p) return;
-
-    const pin = prompt('🔒 Master PIN to delete this payment:');
+    const pin = prompt('🔒 Master PIN:');
     if (!pin) return;
-    if (pin !== (S.profile?.masterPin || '1234')) {
-      C.toast('Incorrect PIN', 'error');
-      C.playErrorBeep();
-      return;
-    }
-
-    const ok = await C.confirmDialog(
-      'Delete Salary Payment?',
-      p.staffName + '\n' + p.monthLabel + '\n₹' + (p.total || 0).toFixed(2) +
-      '\n\nLinked voucher will also be deleted.',
-      'Delete',
-      true
-    );
+    if (pin !== (S.profile?.masterPin || '1234')) { C.toast('Incorrect PIN', 'error'); C.playErrorBeep(); return; }
+    const ok = await C.confirmDialog('Delete Payment?', p.staffName + '\n' + p.monthLabel + '\n₹' + (p.total || 0).toFixed(2), 'Delete', true);
     if (!ok) return;
-
-    /* Remove linked voucher */
     if (p.id) {
       S.vouchers = (S.vouchers || []).filter((v) => v._sourcePaymentId !== p.id);
       C.safeSave('sfp_vouchers', S.vouchers);
     }
-
     payments.splice(idx, 1);
     C.safeSave('sfp_salary_payments', S.salaryPayments);
-
-    try {
-      await Cl.deleteOne('salaryPayments', p.id);
-    } catch (e) {}
-
-    try {
-      window.SF.state.logAudit('SALARY_DELETE', p.staffName + ' | ' + p.monthLabel + ' | ₹' + p.total);
-    } catch (e) {}
-
-    C.toast('Salary payment deleted', 'success');
+    try { await Cl.deleteOne('salaryPayments', p.id); } catch (e) {}
+    C.toast('Deleted', 'success');
     renderPayHistory();
     updateStats();
   }
 
 
   /* ============================================================
-     13. PRINT SALARY SLIP
+     PRINT SALARY SLIP — A5 Landscape Premium
      ============================================================ */
-  function printSlip(id) {
-    printSalarySlip(id);
-  }
+  function printSlip(id) { printSalarySlip(id); }
 
   function printSalarySlip(paymentId) {
     const p = (S.salaryPayments || []).find((x) => x.id === paymentId);
-    if (!p) {
-      /* Might be a freshly-created payment not yet in state — check by index */
-      C.toast('Payment not found', 'error');
-      return;
-    }
+    if (!p) { C.toast('Payment not found', 'error'); return; }
 
     const s = (S.staff || []).find((x) => x.id === p.staffId) || {};
     const prof = S.profile || {};
-
     const target = document.getElementById('isolatedPrintContainer');
     if (!target) return;
 
     const words = C.numberToWords(p.total || 0);
     const dateStr = C.fmtDatePretty(new Date((p.payDate || C.fmtDate(new Date())) + 'T12:00:00'));
 
+    const allPayments = (S.salaryPayments || []).filter((x) => x.staffId === p.staffId);
+    const thisYearTotal = allPayments.filter((x) => x.year === p.year).reduce((a, x) => a + (x.total || 0), 0);
+    const pending = Math.max(0, (s.salary || 0) - (p.salary || 0));
+
     target.innerHTML = `
-      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:11px;color:#0f172a;display:flex;flex-direction:column;justify-content:space-between;height:100%">
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#0f172a;width:100%;height:100%;display:flex;flex-direction:column;background:white;">
 
-        <div>
-          <!-- HEADER -->
-          <div style="text-align:center;border-bottom:2px solid #10b981;padding-bottom:10px;margin-bottom:14px">
-            <div style="font-size:22px;font-weight:900;color:#065f46;letter-spacing:-0.02em">
-              ${C.escapeHTML(prof.name || 'Store')}
-            </div>
-            <div style="font-size:10px;color:#475569;margin-top:4px">${C.escapeHTML(prof.address || '')}</div>
-            <div style="font-size:10px;color:#334155;margin-top:2px;font-weight:600">
-              ${C.escapeHTML(prof.phone || '')} • GSTIN: <span style="font-family:monospace">${C.escapeHTML(prof.gstin || '—')}</span>
-            </div>
-          </div>
-
-          <!-- TITLE BADGE -->
-          <div style="text-align:center;margin-bottom:20px">
-            <span style="display:inline-block;background:#065f46;color:white;font-size:13px;font-weight:800;padding:6px 24px;border-radius:999px;letter-spacing:1px;text-transform:uppercase">
-              Salary Payment Slip
-            </span>
-          </div>
-
-          <!-- STAFF + PAYMENT DETAILS -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;font-size:11px">
-            <div style="border:1px solid #cbd5e1;padding:12px;border-radius:8px">
-              <div style="font-size:9px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e2e8f0">
-                Staff Details
-              </div>
-              <div style="display:flex;padding:3px 0"><span style="color:#64748b;width:90px">Name:</span><strong style="color:#0f172a">${C.escapeHTML(p.staffName)}</strong></div>
-              <div style="display:flex;padding:3px 0"><span style="color:#64748b;width:90px">Designation:</span><span style="color:#334155">${C.escapeHTML(s.designation || '—')}</span></div>
-              <div style="display:flex;padding:3px 0"><span style="color:#64748b;width:90px">Phone:</span><span style="color:#334155;font-family:monospace">${C.escapeHTML(s.phone || '—')}</span></div>
-              <div style="display:flex;padding:3px 0"><span style="color:#64748b;width:90px">Joined:</span><span style="color:#334155;font-family:monospace">${C.escapeHTML(s.joining || '—')}</span></div>
-            </div>
-
-            <div style="border:1px solid #cbd5e1;padding:12px;border-radius:8px">
-              <div style="font-size:9px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e2e8f0">
-                Payment Details
-              </div>
-              <div style="display:flex;padding:3px 0"><span style="color:#64748b;width:90px">Slip No:</span><strong style="color:#0f172a;font-family:monospace">SAL-${String(p.id || '').slice(-6).toUpperCase()}</strong></div>
-              <div style="display:flex;padding:3px 0"><span style="color:#64748b;width:90px">Pay Date:</span><strong style="color:#0f172a;font-family:monospace">${C.escapeHTML(dateStr)}</strong></div>
-              <div style="display:flex;padding:3px 0"><span style="color:#64748b;width:90px">For Month:</span><strong style="color:#0f172a">${C.escapeHTML(p.monthLabel)}</strong></div>
-              <div style="display:flex;padding:3px 0"><span style="color:#64748b;width:90px">Mode:</span><span style="color:#334155">${C.escapeHTML(p.payMode === 'Cash-in-Hand' ? 'Cash' : 'Bank / UPI')}</span></div>
+        <!-- HEADER -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #059669;padding-bottom:8px;margin-bottom:10px;">
+          <div style="display:flex;gap:12px;align-items:center;">
+            ${prof.logo ? `<img src="${prof.logo}" style="height:48px;width:48px;object-fit:contain;">` : `<div style="width:44px;height:44px;background:linear-gradient(135deg,#059669,#065f46);border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-size:22px;">🏢</div>`}
+            <div>
+              <div style="font-size:18px;font-weight:900;color:#065f46;letter-spacing:-0.02em;line-height:1;">${C.escapeHTML(prof.name || 'Store')}</div>
+              <div style="font-size:8.5px;color:#475569;margin-top:3px;line-height:1.3;max-width:260px;">${C.escapeHTML(prof.address || '')}</div>
+              <div style="font-size:8.5px;color:#334155;margin-top:1px;font-weight:600;">${C.escapeHTML(prof.phone || '')} ${prof.gstin ? ' • GSTIN: ' + C.escapeHTML(prof.gstin) : ''}</div>
             </div>
           </div>
-
-          <!-- TABLE -->
-          <table style="width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:16px">
-            <thead>
-              <tr style="background:#d1fae5">
-                <th style="border:2px solid #64748b;padding:8px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.5px">Particulars</th>
-                <th style="border:2px solid #64748b;padding:8px;text-align:right;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;width:160px">Amount ₹</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td style="border:1px solid #64748b;padding:8px">Basic Monthly Salary — ${C.escapeHTML(p.monthLabel)}</td>
-                <td style="border:1px solid #64748b;padding:8px;text-align:right;font-family:monospace;font-weight:600">
-                  ₹${(p.salary || 0).toFixed(2)}
-                </td>
-              </tr>
-              ${(p.bonus || 0) > 0 ? `
-                <tr>
-                  <td style="border:1px solid #64748b;padding:8px">Bonus / Incentive</td>
-                  <td style="border:1px solid #64748b;padding:8px;text-align:right;font-family:monospace;font-weight:600;color:#065f46">
-                    + ₹${(p.bonus || 0).toFixed(2)}
-                  </td>
-                </tr>
-              ` : ''}
-              ${p.note ? `
-                <tr>
-                  <td style="border:1px solid #64748b;padding:8px;font-style:italic;font-size:10.5px;color:#475569" colspan="2">
-                    Note: ${C.escapeHTML(p.note)}
-                  </td>
-                </tr>
-              ` : ''}
-              <tr style="background:#d1fae5">
-                <td style="border:2px solid #64748b;padding:10px;font-weight:900;font-size:14px;text-transform:uppercase">Total Paid</td>
-                <td style="border:2px solid #64748b;padding:10px;text-align:right;font-family:monospace;font-weight:900;font-size:15px;color:#065f46">
-                  ₹${(p.total || 0).toFixed(2)}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-
-          <!-- AMOUNT IN WORDS -->
-          <div style="background:#f0fdf4;border:1px solid #86efac;padding:10px;border-radius:8px;margin-bottom:16px">
-            <div style="font-size:9px;font-weight:800;color:#065f46;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">
-              Amount in Words
-            </div>
-            <div style="font-size:12px;font-weight:800;color:#0f172a;text-transform:uppercase">
-              ${C.escapeHTML(words)}
-            </div>
-          </div>
-
-          <!-- DECLARATION -->
-          <div style="background:#f8fafc;border-left:4px solid #10b981;padding:10px 14px;font-size:10.5px;color:#475569;line-height:1.5">
-            <strong style="color:#0f172a">Declaration:</strong> This is a computer-generated salary slip. It does not require a physical signature. Thank you for your service.
+          <div style="text-align:right;">
+            <div style="background:linear-gradient(135deg,#059669,#065f46);color:white;font-size:9px;font-weight:900;padding:5px 12px;border-radius:4px;letter-spacing:1.5px;text-transform:uppercase;">Salary Slip</div>
+            <div style="font-size:8px;color:#64748b;font-family:monospace;margin-top:5px;">Slip # SAL-${String(p.id || '').slice(-6).toUpperCase()}</div>
+            <div style="font-size:8px;color:#64748b;font-family:monospace;">Date: ${dateStr}</div>
           </div>
         </div>
 
-        <!-- SIGNATURES -->
-        <div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:60px;padding-top:50px;margin-top:20px">
-            <div style="border-top:1px solid #94a3b8;padding-top:6px;text-align:center;font-size:10.5px;font-weight:700;color:#334155">
-              Employee Signature
-            </div>
-            <div style="border-top:1px solid #94a3b8;padding-top:6px;text-align:center;font-size:10.5px;font-weight:700;color:#334155">
-              For ${C.escapeHTML(prof.name || 'Store')}<br>
-              <span style="font-size:9px;font-weight:600;color:#64748b">Authorised Signatory</span>
+        <!-- EMPLOYEE + PAYMENT -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+          <div style="border:1px solid #cbd5e1;border-radius:6px;padding:8px;background:#f8fafc;">
+            <div style="font-size:8px;font-weight:900;color:#059669;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;padding-bottom:3px;border-bottom:1px solid #d1fae5;">👤 Employee Details</div>
+            <div style="display:grid;grid-template-columns:70px 1fr;gap:3px 6px;font-size:9.5px;">
+              <span style="color:#64748b;font-weight:600;">Name:</span><strong style="color:#0f172a;">${C.escapeHTML(p.staffName)}</strong>
+              <span style="color:#64748b;font-weight:600;">Designation:</span><span style="color:#334155;">${C.escapeHTML(s.designation || '—')}</span>
+              <span style="color:#64748b;font-weight:600;">Phone:</span><span style="color:#334155;font-family:monospace;">${C.escapeHTML(s.phone || '—')}</span>
+              <span style="color:#64748b;font-weight:600;">Joined:</span><span style="color:#334155;font-family:monospace;">${C.escapeHTML(s.joining || '—')}</span>
             </div>
           </div>
+          <div style="border:1px solid #cbd5e1;border-radius:6px;padding:8px;background:#f0fdf4;">
+            <div style="font-size:8px;font-weight:900;color:#059669;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;padding-bottom:3px;border-bottom:1px solid #d1fae5;">💰 Payment Details</div>
+            <div style="display:grid;grid-template-columns:80px 1fr;gap:3px 6px;font-size:9.5px;">
+              <span style="color:#64748b;font-weight:600;">Pay Date:</span><strong style="color:#0f172a;font-family:monospace;">${dateStr}</strong>
+              <span style="color:#64748b;font-weight:600;">For Month:</span><strong style="color:#059669;">${C.escapeHTML(p.monthLabel)}</strong>
+              <span style="color:#64748b;font-weight:600;">Paid Via:</span><span style="color:#334155;">${C.escapeHTML(p.payMode === 'Cash-in-Hand' ? '💵 Cash' : '🏦 Bank / UPI')}</span>
+              <span style="color:#64748b;font-weight:600;">Status:</span><span style="background:#059669;color:white;font-size:7.5px;font-weight:900;padding:1px 6px;border-radius:8px;justify-self:start;">PAID ✓</span>
+            </div>
+          </div>
+        </div>
 
-          <div style="margin-top:16px;padding-top:10px;border-top:1px solid #e2e8f0;text-align:center;font-size:9px;color:#94a3b8;font-family:monospace">
-            SmartFix ERP © 2026 • Salary Slip #SAL-${String(p.id || '').slice(-6).toUpperCase()} • ${dateStr}
+        <!-- SALARY TABLE -->
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin-bottom:8px;">
+          <thead>
+            <tr style="background:linear-gradient(90deg,#059669,#065f46);color:white;">
+              <th style="padding:7px 10px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;font-weight:800;">Particulars</th>
+              <th style="padding:7px 10px;text-align:right;font-size:9px;text-transform:uppercase;letter-spacing:0.8px;font-weight:800;width:140px;">Amount (₹)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid #e2e8f0;">
+              <td style="padding:8px 10px;color:#334155;">Basic Monthly Salary — ${C.escapeHTML(p.monthLabel)}</td>
+              <td style="padding:8px 10px;text-align:right;font-family:monospace;font-weight:700;color:#0f172a;">${(p.salary || 0).toFixed(2)}</td>
+            </tr>
+            ${(p.bonus || 0) > 0 ? `<tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:8px 10px;color:#334155;">Bonus / Incentive</td><td style="padding:8px 10px;text-align:right;font-family:monospace;font-weight:700;color:#059669;">+ ${(p.bonus || 0).toFixed(2)}</td></tr>` : ''}
+            ${p.note ? `<tr><td style="padding:6px 10px;font-style:italic;font-size:9px;color:#64748b;" colspan="2">Note: ${C.escapeHTML(p.note)}</td></tr>` : ''}
+            <tr style="background:#ecfdf5;border-top:2px solid #059669;border-bottom:2px solid #059669;">
+              <td style="padding:10px;font-weight:900;font-size:12px;color:#065f46;text-transform:uppercase;letter-spacing:0.5px;">Total Paid</td>
+              <td style="padding:10px;text-align:right;font-family:monospace;font-weight:900;font-size:16px;color:#065f46;">₹ ${(p.total || 0).toFixed(2)}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- WORDS + SUMMARY -->
+        <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:8px;margin-bottom:8px;">
+          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:8px;">
+            <div style="font-size:8px;font-weight:900;color:#0369a1;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">Amount in Words</div>
+            <div style="font-size:11px;font-weight:900;color:#0f172a;text-transform:uppercase;letter-spacing:-0.01em;line-height:1.25;">${words}</div>
+          </div>
+          <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:6px;padding:8px;">
+            <div style="font-size:8px;font-weight:900;color:#92400e;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">📊 Summary</div>
+            <div style="font-size:9px;line-height:1.5;color:#78350f;">
+              <div style="display:flex;justify-content:space-between;"><span>This month:</span><strong style="font-family:monospace;">₹${(p.total || 0).toFixed(0)}</strong></div>
+              <div style="display:flex;justify-content:space-between;"><span>YTD ${p.year}:</span><strong style="font-family:monospace;">₹${thisYearTotal.toFixed(0)}</strong></div>
+              <div style="display:flex;justify-content:space-between;"><span>Pending:</span><strong style="font-family:monospace;color:${pending > 0 ? '#dc2626' : '#059669'};">₹${pending.toFixed(0)}</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DECLARATION + SIGNATURE -->
+        <div style="margin-top:auto;">
+          <div style="background:#f8fafc;border-left:3px solid #059669;padding:6px 10px;font-size:8.5px;color:#475569;line-height:1.4;border-radius:3px;">
+            <strong style="color:#0f172a;">Declaration:</strong> This is a computer-generated salary slip and does not require a physical signature. Please retain for your records.
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:60px;padding-top:24px;margin-top:10px;">
+            <div style="border-top:1px solid #94a3b8;padding-top:4px;text-align:center;font-size:9px;font-weight:700;color:#334155;">Employee Signature</div>
+            <div style="border-top:1px solid #94a3b8;padding-top:4px;text-align:center;font-size:9px;font-weight:700;color:#334155;">For ${C.escapeHTML(prof.name || 'Store')}<br><span style="font-size:8px;font-weight:600;color:#64748b;">Authorised Signatory</span></div>
+          </div>
+          <div style="margin-top:10px;padding-top:6px;border-top:1px solid #e2e8f0;text-align:center;font-size:7.5px;color:#94a3b8;font-family:monospace;">
+            SmartFix ERP © 2026 • Salary Slip #SAL-${String(p.id || '').slice(-6).toUpperCase()} • Generated ${dateStr}
           </div>
         </div>
 
@@ -1046,104 +623,96 @@
     target.style.cssText = `
       display: flex !important;
       flex-direction: column !important;
-      justify-content: space-between !important;
-      width: 100% !important;
-      max-width: 202mm !important;
-      min-height: 285mm !important;
-      padding: 4mm 6mm !important;
+      width: 210mm !important;
+      height: 148mm !important;
+      min-height: 148mm !important;
+      padding: 8mm 10mm !important;
       box-sizing: border-box !important;
       margin: 0 auto !important;
       background: white !important;
       color: #000 !important;
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
+      page-break-inside: avoid !important;
     `;
+
+    /* Inject A5 landscape print CSS */
+    let styleEl = document.getElementById('sfSalaryPrintStyle');
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = 'sfSalaryPrintStyle';
+      styleEl.textContent = `
+        @media print {
+          @page { size: A4 landscape; margin: 5mm; }
+          body > *:not(#isolatedPrintContainer) { display: none !important; }
+          #isolatedPrintContainer {
+            display: flex !important;
+            width: 287mm !important;
+            height: 200mm !important;
+            min-height: 200mm !important;
+            max-width: 287mm !important;
+            margin: 0 auto !important;
+            padding: 8mm 10mm !important;
+            box-sizing: border-box !important;
+            background: white !important;
+            page-break-inside: avoid !important;
+            page-break-after: avoid !important;
+          }
+        }
+      `;
+      document.head.appendChild(styleEl);
+    }
 
     setTimeout(() => {
       window.print();
       setTimeout(() => {
         target.innerHTML = '';
         target.style.cssText = '';
-      }, 500);
-    }, 200);
+      }, 800);
+    }, 400);
   }
 
 
   /* ============================================================
-     14. UPDATE STATS
+     STATS + HELPERS
      ============================================================ */
   function updateStats() {
     const staff = S.staff || [];
     const payments = S.salaryPayments || [];
-
     const monthlyPayroll = staff.reduce((a, s) => a + (s.salary || 0), 0);
     const totalPaid = payments.reduce((a, p) => a + (p.total || 0), 0);
-
-    /* This month paid */
     const today = new Date();
     const thisMonth = today.getMonth() + 1;
-    const thisYear  = today.getFullYear();
-    const monthPaid = payments
-      .filter((p) => p.month === thisMonth && p.year === thisYear)
-      .reduce((a, p) => a + (p.total || 0), 0);
-
+    const thisYear = today.getFullYear();
+    const monthPaid = payments.filter((p) => p.month === thisMonth && p.year === thisYear).reduce((a, p) => a + (p.total || 0), 0);
     setText('stfStatCount', staff.length);
     setText('stfStatPayroll', '₹' + fmt0(monthlyPayroll));
     setText('stfStatPaidMonth', '₹' + fmt0(monthPaid));
     setText('stfStatPaidTotal', '₹' + fmt0(totalPaid));
   }
 
-
-  /* ============================================================
-     15. HELPERS
-     ============================================================ */
   function monthName(m) {
-    const names = ['', 'January', 'February', 'March', 'April', 'May', 'June',
-                   'July', 'August', 'September', 'October', 'November', 'December'];
-    return names[m] || '';
+    return ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][m] || '';
   }
-
-  function setText(id, text) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = text;
-  }
-
-  function fmt0(n) {
-    const v = Number(n) || 0;
-    return v.toLocaleString('en-IN', { maximumFractionDigits: 0 });
-  }
-
-  function fmt2(n) {
-    const v = Number(n) || 0;
-    return v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }
+  function setText(id, text) { const el = document.getElementById(id); if (el) el.textContent = text; }
+  function fmt0(n) { return (Number(n) || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 }); }
+  function fmt2(n) { return (Number(n) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
 
   /* ============================================================
-     16. EXPOSE API
+     EXPOSE
      ============================================================ */
   window.SF = window.SF || {};
   window.SF.staff = {
     init: init_staffModule,
-    save,
-    edit,
-    resetForm,
-    deleteStaff,
-    populateStaffDropdown,
-    onStaffSelected,
-    paySalary,
-    quickPay,
-    renderStaffList,
-    renderPayHistory,
-    deletePayment,
-    printSlip,
-    updateStats
+    save, edit, resetForm, deleteStaff,
+    populateStaffDropdown, onStaffSelected,
+    paySalary, quickPay, renderStaffList, renderPayHistory,
+    deletePayment, printSlip, updateStats
   };
 
-  /* Router expects this */
   window.init_staffModule = init_staffModule;
 
-  /* Auto-init fallback */
   if (document.getElementById('staffModule')) {
     init_staffModule();
   }
