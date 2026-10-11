@@ -3,185 +3,126 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>My Bills — SmartFix ERP</title>
-
+<title>My Bills & Repairs — SmartFix ERP</title>
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%230ea5e9'/%3E%3Cstop offset='1' stop-color='%230369a1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='100' fill='url(%23g)'/%3E%3Ctext x='50%25' y='65%25' font-size='300' text-anchor='middle' fill='white'%3E%F0%9F%94%A7%3C/text%3E%3C/svg%3E">
-
 <meta name="theme-color" content="#0284c7">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="SmartFix — My Bills">
 <meta name="mobile-web-app-capable" content="yes">
-
 <script src="https://cdn.tailwindcss.com"></script>
-
 <style>
   * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-
-  html, body {
-    margin: 0; padding: 0; min-height: 100vh;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-    background: #020617;
-    color: #e2e8f0;
-    overflow-x: hidden;
-  }
-
-  .bg-blob {
-    position: fixed; border-radius: 50%;
-    filter: blur(90px); opacity: 0.3;
-    pointer-events: none; z-index: 0;
-  }
-  .blob-1 {
-    width: 380px; height: 380px;
-    top: -140px; left: -140px;
-    background: radial-gradient(circle, #0ea5e9 0%, transparent 70%);
-  }
-  .blob-2 {
-    width: 340px; height: 340px;
-    bottom: -120px; right: -120px;
-    background: radial-gradient(circle, #6366f1 0%, transparent 70%);
-  }
-
-  .glass {
-    background: rgba(15, 23, 42, 0.75);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid rgba(56, 189, 248, 0.15);
-  }
-
-  .fade-in {
-    animation: fadeInUp 0.35s ease-out;
-  }
-  @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(10px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .inv-card {
-    transition: all 0.15s ease;
-  }
-  .inv-card:hover {
-    border-color: rgba(56, 189, 248, 0.4);
-    transform: translateY(-1px);
-  }
-
+  html, body { margin: 0; padding: 0; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; background: #020617; color: #e2e8f0; overflow-x: hidden; }
+  .bg-blob { position: fixed; border-radius: 50%; filter: blur(90px); opacity: 0.3; pointer-events: none; z-index: 0; }
+  .blob-1 { width: 380px; height: 380px; top: -140px; left: -140px; background: radial-gradient(circle, #0ea5e9 0%, transparent 70%); }
+  .blob-2 { width: 340px; height: 340px; bottom: -120px; right: -120px; background: radial-gradient(circle, #6366f1 0%, transparent 70%); }
+  .glass { background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border: 1px solid rgba(56, 189, 248, 0.15); }
+  .fade-in { animation: fadeInUp 0.35s ease-out; }
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .inv-card { transition: all 0.15s ease; }
+  .inv-card:hover { border-color: rgba(56, 189, 248, 0.4); transform: translateY(-1px); }
   @media print {
     @page { size: A4 portrait; margin: 6mm; }
     body { background: white !important; color: black !important; }
     header, footer, .no-print, .bg-blob { display: none !important; }
-    .glass {
-      background: white !important;
-      border: 1px solid #cbd5e1 !important;
-      backdrop-filter: none !important;
-    }
-    .inv-card { page-break-inside: avoid; }
+    .glass { background: white !important; border: 1px solid #cbd5e1 !important; backdrop-filter: none !important; }
   }
-
-  /* Custom scrollbar */
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: rgba(15,23,42,0.5); }
   ::-webkit-scrollbar-thumb { background: rgba(56,189,248,0.3); border-radius: 3px; }
 </style>
 </head>
-
 <body>
 
 <div class="bg-blob blob-1"></div>
 <div class="bg-blob blob-2"></div>
 
-<!-- ============================================================
-     HEADER
-     ============================================================ -->
+<!-- HEADER -->
 <header class="relative z-10 glass border-b border-slate-800 sticky top-0">
   <div class="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
-
-    <div class="w-9 h-9 flex-shrink-0 rounded-xl bg-gradient-to-br from-sky-500 to-sky-800 flex items-center justify-center text-white text-base shadow-lg shadow-sky-500/30">
-      🔧
-    </div>
-
+    <div class="w-9 h-9 flex-shrink-0 rounded-xl bg-gradient-to-br from-sky-500 to-sky-800 flex items-center justify-center text-white text-base shadow-lg shadow-sky-500/30">🔧</div>
     <div class="min-w-0 flex-1">
       <div class="flex items-center gap-2">
         <h1 class="text-sm font-black text-white truncate" id="hdrShopName">Store</h1>
         <span class="text-[9px] bg-sky-950/60 text-sky-400 border border-sky-800/60 px-1.5 py-0.5 rounded font-mono" id="hdrShopCode">—</span>
       </div>
-      <p class="text-[10px] text-slate-400">My Bills & Warranty</p>
+      <p class="text-[10px] text-slate-400">My Bills & Repairs</p>
     </div>
-
     <button type="button" onclick="exitPortal()"
-            class="text-[10px] bg-slate-800/70 hover:bg-slate-700 text-slate-300 font-bold px-3 py-1.5 rounded-lg border border-slate-700 transition">
-      ✕ Exit
-    </button>
-
+            class="text-[10px] bg-slate-800/70 hover:bg-slate-700 text-slate-300 font-bold px-3 py-1.5 rounded-lg border border-slate-700 transition">✕ Exit</button>
   </div>
 </header>
 
 
-<!-- ============================================================
-     MAIN
-     ============================================================ -->
+<!-- MAIN -->
 <main class="relative z-10 max-w-4xl mx-auto px-4 py-5 space-y-4">
 
-  <!-- Welcome card -->
+  <!-- Welcome -->
   <div class="glass rounded-2xl p-5 fade-in">
     <div class="flex items-start gap-3">
-      <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-800 flex items-center justify-center text-white text-xl flex-shrink-0">
-        ✓
-      </div>
+      <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-800 flex items-center justify-center text-white text-xl flex-shrink-0">✓</div>
       <div class="min-w-0 flex-1">
         <div class="text-[10px] uppercase font-bold text-emerald-400 tracking-wider">Welcome</div>
         <div class="text-lg font-black text-white mt-0.5" id="welcomeName">Customer</div>
         <div class="text-[11px] text-slate-400 mt-1">
           <span class="font-mono" id="welcomePhone">—</span>
           <span class="mx-1.5">•</span>
-          <span id="welcomeCount">0 invoices found</span>
+          <span id="welcomeCount">0 records</span>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Search again button -->
+  <!-- Search again -->
   <button type="button" onclick="searchAgain()"
           class="w-full bg-sky-950/40 hover:bg-sky-950/60 border border-sky-800/60 text-sky-300 font-bold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
-    🔍 Search another bill
+    🔍 Search again
   </button>
 
-  <!-- Invoices list -->
-  <div id="invoiceList" class="space-y-3"></div>
-
-  <!-- Empty state (fallback) -->
-  <div id="emptyState" style="display:none" class="glass rounded-2xl p-8 text-center">
-    <div class="text-5xl mb-3">📭</div>
-    <div class="text-white font-bold text-sm mb-1">No bills found</div>
-    <div class="text-slate-400 text-xs mb-4">
-      Try searching again or contact the shop directly.
-    </div>
-    <button type="button" onclick="searchAgain()"
-            class="bg-sky-600 hover:bg-sky-500 text-white font-bold px-5 py-2 rounded-lg text-xs">
-      Search Again
+  <!-- TAB SWITCHER -->
+  <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-1 flex gap-1">
+    <button type="button" id="tabBills" onclick="switchTab('bills')"
+            class="flex-1 py-2.5 rounded-xl text-xs font-bold transition bg-sky-600 text-white">
+      🧾 Bills (<span id="billTabCount">0</span>)
+    </button>
+    <button type="button" id="tabRepairs" onclick="switchTab('repairs')"
+            class="flex-1 py-2.5 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white">
+      🔧 Repairs (<span id="repairTabCount">0</span>)
     </button>
   </div>
 
-  <!-- Shop contact -->
-  <div class="glass rounded-2xl p-5">
-    <div class="text-[10px] uppercase font-bold text-sky-400 tracking-wider mb-2">📞 Shop Contact</div>
-    <div class="space-y-1 text-xs">
-      <div class="flex items-start gap-2">
-        <span class="text-slate-500 w-16 flex-shrink-0">Name:</span>
-        <span class="font-semibold text-slate-200" id="shopContactName">—</span>
-      </div>
-      <div class="flex items-start gap-2">
-        <span class="text-slate-500 w-16 flex-shrink-0">Phone:</span>
-        <a id="shopContactPhone" href="tel:" class="font-mono text-sky-400 hover:text-sky-300 font-semibold">—</a>
-      </div>
-      <div class="flex items-start gap-2">
-        <span class="text-slate-500 w-16 flex-shrink-0">Address:</span>
-        <span class="text-slate-300 text-[11px] leading-relaxed" id="shopContactAddress">—</span>
-      </div>
+  <!-- BILLS SECTION -->
+  <div id="billsSection" class="space-y-3">
+    <div id="invoiceList" class="space-y-3"></div>
+    <div id="emptyBills" style="display:none" class="glass rounded-2xl p-8 text-center">
+      <div class="text-5xl mb-3">📭</div>
+      <div class="text-white font-bold text-sm mb-1">No bills found</div>
+      <div class="text-slate-400 text-xs">Try searching with a different code.</div>
     </div>
   </div>
 
-  <!-- Footer note -->
+  <!-- REPAIRS SECTION -->
+  <div id="repairsSection" class="space-y-3" style="display:none">
+    <div id="repairList" class="space-y-3"></div>
+    <div id="emptyRepairs" style="display:none" class="glass rounded-2xl p-8 text-center">
+      <div class="text-5xl mb-3">🔧</div>
+      <div class="text-white font-bold text-sm mb-1">No repairs found</div>
+      <div class="text-slate-400 text-xs">Try searching with a different code.</div>
+    </div>
+  </div>
+
+  <!-- SHOP CONTACT -->
+  <div class="glass rounded-2xl p-5">
+    <div class="text-[10px] uppercase font-bold text-sky-400 tracking-wider mb-2">📞 Shop Contact</div>
+    <div class="space-y-1 text-xs">
+      <div class="flex items-start gap-2"><span class="text-slate-500 w-16 flex-shrink-0">Name:</span><span class="font-semibold text-slate-200" id="shopContactName">—</span></div>
+      <div class="flex items-start gap-2"><span class="text-slate-500 w-16 flex-shrink-0">Phone:</span><a id="shopContactPhone" href="tel:" class="font-mono text-sky-400 hover:text-sky-300 font-semibold">—</a></div>
+      <div class="flex items-start gap-2"><span class="text-slate-500 w-16 flex-shrink-0">Address:</span><span class="text-slate-300 text-[11px] leading-relaxed" id="shopContactAddress">—</span></div>
+    </div>
+  </div>
+
   <div class="text-center text-[10px] text-slate-500 py-3">
     <div>SmartFix ERP © 2026 • Secure customer portal</div>
     <div class="mt-0.5">Your data is encrypted and never shared</div>
@@ -190,140 +131,147 @@
 </main>
 
 
-<!-- ============================================================
-     INVOICE DETAILS MODAL
-     ============================================================ -->
-<div id="invModal" class="fixed inset-0 z-[9999] hidden"
-     style="background:rgba(0,0,0,0.8); backdrop-filter:blur(6px);">
+<!-- INVOICE DETAIL MODAL -->
+<div id="invModal" class="fixed inset-0 z-[9999] hidden" style="background:rgba(0,0,0,0.8); backdrop-filter:blur(6px);">
   <div class="flex items-end sm:items-center justify-center h-full p-0 sm:p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-t-2xl sm:rounded-2xl max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
-
-      <!-- Modal header -->
       <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950/70 flex-shrink-0">
         <div class="min-w-0 flex-1">
-          <h3 id="invModalTitle" class="font-bold text-white text-sm truncate">Invoice Details</h3>
+          <h3 id="invModalTitle" class="font-bold text-white text-sm truncate">Details</h3>
           <p id="invModalSubtitle" class="text-[11px] text-slate-400 mt-0.5 truncate">—</p>
         </div>
         <button type="button" onclick="closeModal()"
-                class="text-slate-400 hover:text-white text-2xl font-bold w-9 h-9 flex items-center justify-center rounded-lg hover:bg-slate-800 flex-shrink-0">
-          ✕
-        </button>
+                class="text-slate-400 hover:text-white text-2xl font-bold w-9 h-9 flex items-center justify-center rounded-lg hover:bg-slate-800 flex-shrink-0">✕</button>
       </div>
-
-      <!-- Modal body -->
-      <div id="invModalBody" class="p-4 overflow-y-auto flex-1 space-y-3">
-        <!-- injected -->
-      </div>
-
-      <!-- Modal footer -->
+      <div id="invModalBody" class="p-4 overflow-y-auto flex-1 space-y-3"></div>
       <div class="p-3 border-t border-slate-800 bg-slate-950/70 flex gap-2 flex-shrink-0">
         <button type="button" onclick="printCurrentInvoice()"
-                class="flex-1 bg-sky-600 hover:bg-sky-500 text-white font-bold py-2.5 rounded-lg text-xs transition">
-          🖨️ Print / Save PDF
-        </button>
+                class="flex-1 bg-sky-600 hover:bg-sky-500 text-white font-bold py-2.5 rounded-lg text-xs transition">🖨️ Print / PDF</button>
         <button type="button" onclick="shareCurrentInvoice()"
-                class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-lg text-xs transition">
-          📤 Share
-        </button>
+                class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-lg text-xs transition">📤 Share</button>
       </div>
-
     </div>
   </div>
 </div>
 
-
-<!-- ============================================================
-     HIDDEN PRINT CONTAINER
-     ============================================================ -->
 <div id="printArea" style="display:none"></div>
 
 
-<!-- ============================================================
-     MODULE LOGIC
-     ============================================================ -->
 <script>
 (function () {
   'use strict';
 
-  /* ============================================================
-     STATE
-     ============================================================ */
   const PORTAL = {
     session: null,
     invoices: [],
+    repairs: [],
     currentInvoice: null,
+    currentRepair: null,
     storeProfile: null
+  };
+
+  const STATUS = {
+    RECEIVED:         { label: 'Received',          icon: '📥', text: 'text-sky-300',     bg: 'bg-sky-950/60',     border: 'border-sky-800/60' },
+    DIAGNOSED:        { label: 'Diagnosed',         icon: '🔬', text: 'text-purple-300',  bg: 'bg-purple-950/60',  border: 'border-purple-800/60' },
+    WAITING_APPROVAL: { label: 'Waiting Approval',  icon: '⏳', text: 'text-amber-300',   bg: 'bg-amber-950/60',   border: 'border-amber-800/60' },
+    IN_REPAIR:        { label: 'In Repair',         icon: '🔧', text: 'text-orange-300',  bg: 'bg-orange-950/60',  border: 'border-orange-800/60' },
+    READY:            { label: 'Ready for Pickup',  icon: '✅', text: 'text-emerald-300', bg: 'bg-emerald-950/60', border: 'border-emerald-800/60' },
+    DELIVERED:        { label: 'Delivered',         icon: '📦', text: 'text-violet-300',  bg: 'bg-violet-950/60',  border: 'border-violet-800/60' },
+    CANCELLED:        { label: 'Cancelled',         icon: '❌', text: 'text-rose-300',    bg: 'bg-rose-950/60',    border: 'border-rose-800/60' }
   };
 
 
   /* ============================================================
-     1. INIT
+     INIT
      ============================================================ */
   function init() {
     console.log('%c🛍 Customer portal loading...', 'color:#10b981;font-weight:bold');
 
-    /* Load session */
     const raw = sessionStorage.getItem('sfp_customer_session');
-    if (!raw) {
-      console.warn('No session found — redirecting to login');
-      showEmptyState();
-      return;
-    }
+    if (!raw) { showEmptyState(); return; }
 
     try {
       const session = JSON.parse(raw);
-      if (!session || !session.invoices || session.invoices.length === 0) {
-        showEmptyState();
-        return;
-      }
+      if (!session) { showEmptyState(); return; }
       PORTAL.session = session;
       PORTAL.invoices = session.invoices || [];
-    } catch (e) {
-      console.error('Session parse error:', e);
+      PORTAL.repairs = session.repairs || [];
+    } catch (e) { showEmptyState(); return; }
+
+    if (PORTAL.invoices.length === 0 && PORTAL.repairs.length === 0) {
       showEmptyState();
       return;
     }
 
-    /* Update header */
+    /* Header */
     const shopName = document.getElementById('hdrShopName');
     if (shopName) shopName.textContent = PORTAL.session.shopName || 'Store';
     const shopCode = document.getElementById('hdrShopCode');
     if (shopCode) shopCode.textContent = PORTAL.session.shopCode || '';
 
-    /* Welcome card */
+    /* Welcome */
     const wname = document.getElementById('welcomeName');
     if (wname) {
-      const firstInv = PORTAL.invoices[0];
-      wname.textContent = firstInv.customerName || 'Customer';
+      const first = PORTAL.invoices[0] || PORTAL.repairs[0];
+      wname.textContent = first?.customerName || 'Customer';
     }
     const wphone = document.getElementById('welcomePhone');
     if (wphone) wphone.textContent = PORTAL.session.phone || '—';
     const wcount = document.getElementById('welcomeCount');
     if (wcount) {
-      wcount.textContent = PORTAL.invoices.length + ' invoice' +
-        (PORTAL.invoices.length !== 1 ? 's' : '') + ' found';
+      const total = PORTAL.invoices.length + PORTAL.repairs.length;
+      wcount.textContent = total + ' record' + (total !== 1 ? 's' : '') +
+        ' (' + PORTAL.invoices.length + ' bills, ' + PORTAL.repairs.length + ' repairs)';
     }
 
-    /* Fetch store profile from Firestore (public read) */
+    /* Tab counts */
+    setText('billTabCount', PORTAL.invoices.length);
+    setText('repairTabCount', PORTAL.repairs.length);
+
+    /* Auto switch to repairs if no bills */
+    if (PORTAL.invoices.length === 0 && PORTAL.repairs.length > 0) {
+      switchTab('repairs');
+    } else {
+      switchTab('bills');
+    }
+
     loadStoreProfile();
-
-    /* Render invoices */
     renderInvoices();
-
-    /* Update shop contact */
+    renderRepairs();
     updateShopContact();
   }
 
 
   /* ============================================================
-     2. LOAD STORE PROFILE (public read of profile doc)
+     TAB SWITCHER
+     ============================================================ */
+  window.switchTab = function (tab) {
+    const billsSection = document.getElementById('billsSection');
+    const repairsSection = document.getElementById('repairsSection');
+    const billTab = document.getElementById('tabBills');
+    const repTab = document.getElementById('tabRepairs');
+
+    if (tab === 'bills') {
+      if (billsSection) billsSection.style.display = '';
+      if (repairsSection) repairsSection.style.display = 'none';
+      if (billTab) billTab.className = 'flex-1 py-2.5 rounded-xl text-xs font-bold transition bg-sky-600 text-white';
+      if (repTab) repTab.className = 'flex-1 py-2.5 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white';
+    } else {
+      if (billsSection) billsSection.style.display = 'none';
+      if (repairsSection) repairsSection.style.display = '';
+      if (billTab) billTab.className = 'flex-1 py-2.5 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white';
+      if (repTab) repTab.className = 'flex-1 py-2.5 rounded-xl text-xs font-bold transition bg-violet-600 text-white';
+    }
+  };
+
+
+  /* ============================================================
+     STORE PROFILE
      ============================================================ */
   async function loadStoreProfile() {
     const storeId = PORTAL.session?.storeId;
     if (!storeId) return;
-
     try {
-      /* Use dynamic import of firebase to fetch profile */
       const mod = await import('./js/firebase-config.js');
       const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
       const snap = await getDoc(doc(mod.db, 'stores', storeId, 'profile', 'main'));
@@ -332,13 +280,7 @@
         updateShopContact();
       }
     } catch (e) {
-      console.warn('Could not load store profile:', e);
-      /* Fallback: derive from session */
-      PORTAL.storeProfile = {
-        name: PORTAL.session.shopName || 'Store',
-        phone: '',
-        address: ''
-      };
+      PORTAL.storeProfile = { name: PORTAL.session.shopName || 'Store', phone: '', address: '' };
       updateShopContact();
     }
   }
@@ -366,11 +308,11 @@
 
 
   /* ============================================================
-     3. RENDER INVOICES
+     RENDER INVOICES
      ============================================================ */
   function renderInvoices() {
     const container = document.getElementById('invoiceList');
-    const emptyEl = document.getElementById('emptyState');
+    const emptyEl = document.getElementById('emptyBills');
     if (!container) return;
 
     if (!PORTAL.invoices.length) {
@@ -381,7 +323,6 @@
 
     if (emptyEl) emptyEl.style.display = 'none';
 
-    /* Sort: latest first */
     const sorted = [...PORTAL.invoices].sort((a, b) => {
       const da = new Date((a.date || '') + 'T12:00:00');
       const db = new Date((b.date || '') + 'T12:00:00');
@@ -392,82 +333,58 @@
       const total = inv.totalGross || 0;
       const itemCount = (inv.items || []).length;
       const warranty = computeWarrantyStatus(inv);
+      const isNonGst = inv.billType === 'NON_GST';
 
-      /* Warranty badge */
       let warrantyBadge = '';
       if (warranty) {
         if (warranty.expired) {
           warrantyBadge = `<span class="text-[9px] bg-slate-800 text-slate-400 border border-slate-700 px-2 py-0.5 rounded font-bold">⌛ WARRANTY EXPIRED</span>`;
         } else {
           const days = warranty.daysLeft;
-          const cls = days <= 30
-            ? 'bg-amber-950/60 text-amber-400 border-amber-800/60'
-            : 'bg-emerald-950/60 text-emerald-400 border-emerald-800/60';
-          warrantyBadge = `<span class="text-[9px] ${cls} border px-2 py-0.5 rounded font-bold">🛡️ WARRANTY ACTIVE — ${days} days left</span>`;
+          const cls = days <= 30 ? 'bg-amber-950/60 text-amber-400 border-amber-800/60' : 'bg-emerald-950/60 text-emerald-400 border-emerald-800/60';
+          warrantyBadge = `<span class="text-[9px] ${cls} border px-2 py-0.5 rounded font-bold">🛡️ ${days} days left</span>`;
         }
       }
 
       return `
         <div class="inv-card glass rounded-2xl p-4 fade-in cursor-pointer"
-             onclick="openInvoice(${idx}, '${C_escape(inv.invoiceNo || '')}')">
-
-          <!-- Top: type + total -->
+             onclick="openInvoice(${idx}, '${escapeAttr(inv.invoiceNo || '')}')">
           <div class="flex justify-between items-start gap-3 mb-3">
             <div class="min-w-0 flex-1">
-              <div class="flex items-center gap-2 mb-1">
-                <span class="text-[10px] bg-indigo-950/60 text-indigo-300 border border-indigo-800/60 px-2 py-0.5 rounded font-bold">
-                  TAX INVOICE
-                </span>
-                <span class="text-[10px] font-mono text-slate-500">${C_escape(inv.date || '')}</span>
+              <div class="flex items-center gap-2 mb-1 flex-wrap">
+                ${isNonGst
+                  ? '<span class="text-[10px] bg-violet-950/60 text-violet-300 border border-violet-800/60 px-2 py-0.5 rounded font-bold">INVOICE</span>'
+                  : '<span class="text-[10px] bg-indigo-950/60 text-indigo-300 border border-indigo-800/60 px-2 py-0.5 rounded font-bold">TAX INVOICE</span>'}
+                <span class="text-[10px] font-mono text-slate-500">${esc(inv.date || '')}</span>
               </div>
-              <div class="text-base font-black text-white font-mono truncate">
-                ${C_escape(inv.invoiceNo || '')}
-              </div>
+              <div class="text-base font-black text-white font-mono truncate">${esc(inv.invoiceNo || '')}</div>
             </div>
             <div class="text-right flex-shrink-0">
               <div class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Total</div>
-              <div class="text-lg font-black font-mono text-emerald-400">
-                ${C_money(total)}
-              </div>
+              <div class="text-lg font-black font-mono text-emerald-400">${money(total)}</div>
             </div>
           </div>
 
-          <!-- Middle: item preview -->
           <div class="bg-slate-950/60 border border-slate-800/60 rounded-lg p-2.5 mb-3">
-            <div class="text-[10px] text-slate-500 uppercase font-bold mb-1">
-              ${itemCount} Item${itemCount !== 1 ? 's' : ''}
-            </div>
+            <div class="text-[10px] text-slate-500 uppercase font-bold mb-1">${itemCount} Item${itemCount !== 1 ? 's' : ''}</div>
             <div class="space-y-1">
               ${(inv.items || []).slice(0, 3).map((it) => `
                 <div class="flex justify-between items-start gap-2 text-[11px]">
                   <div class="min-w-0 flex-1">
-                    <div class="text-slate-200 font-semibold truncate">${C_escape(it.model || '')}</div>
-                    ${it.imei ? `<div class="text-[10px] text-sky-500 font-mono truncate">IMEI: ${C_escape(it.imei)}</div>` : ''}
+                    <div class="text-slate-200 font-semibold truncate">${esc(it.model || '')}</div>
+                    ${it.imei ? `<div class="text-[10px] text-sky-500 font-mono truncate">IMEI: ${esc(it.imei)}</div>` : ''}
                   </div>
-                  <div class="text-slate-400 font-mono text-[10.5px] flex-shrink-0">
-                    ₹${((it.rate || 0) * (it.qty || 1)).toFixed(2)}
-                  </div>
+                  <div class="text-slate-400 font-mono text-[10.5px] flex-shrink-0">₹${((it.rate || 0) * (it.qty || 1)).toFixed(2)}</div>
                 </div>
               `).join('')}
-              ${itemCount > 3 ? `
-                <div class="text-[10px] text-slate-500 italic pt-1">
-                  + ${itemCount - 3} more item${itemCount - 3 !== 1 ? 's' : ''}
-                </div>
-              ` : ''}
+              ${itemCount > 3 ? `<div class="text-[10px] text-slate-500 italic pt-1">+ ${itemCount - 3} more</div>` : ''}
             </div>
           </div>
 
-          <!-- Bottom: warranty + action -->
           <div class="flex justify-between items-center gap-2 flex-wrap">
-            <div class="flex items-center gap-1.5 flex-wrap">
-              ${warrantyBadge}
-            </div>
-            <div class="text-[10px] text-sky-400 font-bold flex items-center gap-1">
-              <span>View Details</span>
-              <span>›</span>
-            </div>
+            <div class="flex items-center gap-1.5 flex-wrap">${warrantyBadge}</div>
+            <div class="text-[10px] text-sky-400 font-bold flex items-center gap-1"><span>View</span><span>›</span></div>
           </div>
-
         </div>
       `;
     }).join('');
@@ -475,270 +392,382 @@
 
 
   /* ============================================================
-     4. WARRANTY CALC
+     RENDER REPAIRS
      ============================================================ */
-  function computeWarrantyStatus(inv) {
-    if (!inv.date) return null;
-    if (!inv.items || inv.items.length === 0) return null;
+  function renderRepairs() {
+    const container = document.getElementById('repairList');
+    const emptyEl = document.getElementById('emptyRepairs');
+    if (!container) return;
 
-    /* Check if any item qualifies for warranty */
-    /* Categories like "Mobile Phone" typically have 12 months;
-       accessories have 6 months. We use a simple heuristic. */
-    const catToMonths = {
-      'Mobile Phone': 12,
-      'Tablet': 12,
-      'Smart Watch': 12,
-      'Laptop': 12,
-      'Mobile Cover': 0,       /* no warranty */
-      'Tempered Glass': 0,
-      'Cable': 3,
-      'Charger': 6,
-      'Earphone': 6,
-      'Power Bank': 6,
-      'Memory Card': 12,
-      'Other': 0
-    };
+    if (!PORTAL.repairs.length) {
+      container.innerHTML = '';
+      if (emptyEl) emptyEl.style.display = 'block';
+      return;
+    }
 
-    /* Find max warranty from items */
-    let maxMonths = 0;
-    (inv.items || []).forEach((it) => {
-      const cat = it.category || 'Mobile Phone';
-      const m = catToMonths[cat] ?? 12;
-      if (m > maxMonths) maxMonths = m;
+    if (emptyEl) emptyEl.style.display = 'none';
+
+    const sorted = [...PORTAL.repairs].sort((a, b) => {
+      const da = new Date((a.date || '') + 'T12:00:00');
+      const db = new Date((b.date || '') + 'T12:00:00');
+      return db - da;
     });
 
-    if (maxMonths === 0) return null;
+    container.innerHTML = sorted.map((job, idx) => {
+      const st = STATUS[job.status] || STATUS.RECEIVED;
+      const balance = (job.finalCost || job.estimatedCost || 0) - (job.advancePaid || 0);
+      const daysOld = Math.floor((Date.now() - new Date(job.date + 'T12:00:00').getTime()) / 86400000);
 
-    /* Calculate expiry */
-    const purchaseDate = new Date(inv.date + 'T12:00:00');
-    if (isNaN(purchaseDate.getTime())) return null;
+      /* Progress indicator */
+      const progressMap = { RECEIVED: 15, DIAGNOSED: 30, WAITING_APPROVAL: 45, IN_REPAIR: 70, READY: 90, DELIVERED: 100, CANCELLED: 0 };
+      const progress = progressMap[job.status] || 0;
 
-    const expiryDate = new Date(purchaseDate);
-    expiryDate.setMonth(expiryDate.getMonth() + maxMonths);
+      return `
+        <div class="inv-card glass rounded-2xl p-4 fade-in cursor-pointer"
+             onclick="openRepair(${idx}, '${escapeAttr(job.id || '')}')">
+          <div class="flex justify-between items-start gap-3 mb-3">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2 mb-1 flex-wrap">
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded border ${st.bg} ${st.text} ${st.border}">
+                  ${st.icon} ${st.label}
+                </span>
+                <span class="text-[10px] font-mono text-slate-500">${esc(job.date || '')}</span>
+              </div>
+              <div class="text-base font-black text-white font-mono truncate">${esc(job.jobNo || '')}</div>
+            </div>
+            ${balance > 0 ? `
+              <div class="text-right flex-shrink-0">
+                <div class="text-[10px] text-amber-500 uppercase font-bold tracking-wider">Balance Due</div>
+                <div class="text-lg font-black font-mono text-amber-400">${money(balance)}</div>
+              </div>
+            ` : `
+              <div class="text-right flex-shrink-0">
+                <div class="text-[10px] text-emerald-500 uppercase font-bold tracking-wider">Paid</div>
+                <div class="text-lg font-black font-mono text-emerald-400">✓</div>
+              </div>
+            `}
+          </div>
 
-    const now = new Date();
-    const diffMs = expiryDate - now;
-    const daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+          <!-- Progress bar -->
+          <div class="mb-3">
+            <div class="h-1.5 bg-slate-900 rounded-full overflow-hidden">
+              <div class="h-full bg-gradient-to-r ${st.text.replace('text-','from-')} to-slate-600 transition-all" style="width: ${progress}%"></div>
+            </div>
+          </div>
 
-    return {
-      expiryDate,
-      months: maxMonths,
-      expired: daysLeft < 0,
-      daysLeft: Math.max(0, daysLeft)
-    };
+          <div class="bg-slate-950/60 border border-slate-800/60 rounded-lg p-2.5 mb-3">
+            <div class="flex justify-between items-start gap-2 text-[11px] mb-1">
+              <div class="min-w-0 flex-1">
+                <div class="text-slate-200 font-semibold truncate">📱 ${esc(job.deviceBrand || '')} ${esc(job.deviceModel || '')}</div>
+                ${job.deviceIMEI ? `<div class="text-[10px] text-violet-400 font-mono truncate">IMEI: ${esc(job.deviceIMEI)}</div>` : ''}
+              </div>
+            </div>
+            <div class="text-[11px] text-slate-400 mt-1 line-clamp-2">🛠 ${esc(job.issueDescription || '')}</div>
+          </div>
+
+          <div class="flex justify-between items-center gap-2 flex-wrap">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              ${job.warrantyDays > 0 && job.status === 'DELIVERED'
+                ? `<span class="text-[9px] bg-emerald-950/60 text-emerald-400 border border-emerald-800/60 px-2 py-0.5 rounded font-bold">🛡️ ${job.warrantyDays}d warranty</span>`
+                : ''}
+              ${daysOld > 3 && !['DELIVERED','CANCELLED'].includes(job.status)
+                ? `<span class="text-[9px] bg-rose-950/60 text-rose-400 border border-rose-800/60 px-2 py-0.5 rounded font-bold">${daysOld} days</span>`
+                : ''}
+            </div>
+            <div class="text-[10px] text-violet-400 font-bold flex items-center gap-1"><span>Track</span><span>›</span></div>
+          </div>
+        </div>
+      `;
+    }).join('');
   }
 
 
   /* ============================================================
-     5. OPEN INVOICE MODAL
+     WARRANTY
      ============================================================ */
-  function openInvoice(idx, invoiceNo) {
-    /* Find actual invoice (by invoiceNo to be safe) */
+  function computeWarrantyStatus(inv) {
+    if (!inv.date) return null;
+    if (!inv.items || inv.items.length === 0) return null;
+    const catToMonths = { 'Mobile Phone': 12, 'Tablet': 12, 'Smart Watch': 12, 'Laptop': 12, 'Mobile Cover': 0, 'Tempered Glass': 0, 'Cable': 3, 'Charger': 6, 'Earphone': 6, 'Power Bank': 6, 'Memory Card': 12, 'Other': 0 };
+    let maxMonths = 0;
+    (inv.items || []).forEach((it) => {
+      const m = catToMonths[it.category || 'Mobile Phone'] ?? 12;
+      if (m > maxMonths) maxMonths = m;
+    });
+    if (maxMonths === 0) return null;
+    const purchaseDate = new Date(inv.date + 'T12:00:00');
+    if (isNaN(purchaseDate.getTime())) return null;
+    const expiryDate = new Date(purchaseDate);
+    expiryDate.setMonth(expiryDate.getMonth() + maxMonths);
+    const diffMs = expiryDate - new Date();
+    const daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    return { expiryDate, months: maxMonths, expired: daysLeft < 0, daysLeft: Math.max(0, daysLeft) };
+  }
+
+
+  /* ============================================================
+     OPEN INVOICE
+     ============================================================ */
+  window.openInvoice = function (idx, invoiceNo) {
     let inv = PORTAL.invoices.find((x) => x.invoiceNo === invoiceNo);
     if (!inv) inv = PORTAL.invoices[idx];
-    if (!inv) {
-      alert('Invoice not found');
-      return;
-    }
-
+    if (!inv) { alert('Invoice not found'); return; }
     PORTAL.currentInvoice = inv;
 
-    /* Set title */
     const titleEl = document.getElementById('invModalTitle');
     if (titleEl) titleEl.textContent = inv.invoiceNo || 'Invoice';
-
     const subEl = document.getElementById('invModalSubtitle');
-    if (subEl) {
-      subEl.textContent = (inv.date || '') + ' • ' + C_money(inv.totalGross || 0);
-    }
+    if (subEl) subEl.textContent = (inv.date || '') + ' • ' + money(inv.totalGross || 0);
 
-    /* Build body */
     const body = document.getElementById('invModalBody');
     if (!body) return;
 
     const items = inv.items || [];
     const warranty = computeWarrantyStatus(inv);
-
-    /* Calculate tax */
     const totalTaxable = inv.totalTaxable || 0;
     const totalTax = (inv.totalCGST || 0) + (inv.totalSGST || 0) + (inv.totalIGST || 0);
     const taxType = inv.taxType || 'INTRA';
+    const isNonGst = inv.billType === 'NON_GST';
 
     body.innerHTML = `
-      <!-- Invoice meta -->
       <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-3 space-y-1.5 text-xs">
-        <div class="flex justify-between">
-          <span class="text-slate-500">Invoice No:</span>
-          <span class="font-mono font-bold text-sky-400">${C_escape(inv.invoiceNo || '')}</span>
-        </div>
-        <div class="flex justify-between">
-          <span class="text-slate-500">Date:</span>
-          <span class="font-mono text-slate-200">${C_escape(inv.date || '')}</span>
-        </div>
-        <div class="flex justify-between">
-          <span class="text-slate-500">Customer:</span>
-          <span class="font-semibold text-slate-200">${C_escape(inv.customerName || '')}</span>
-        </div>
-        ${inv.customerPhone ? `
-          <div class="flex justify-between">
-            <span class="text-slate-500">Phone:</span>
-            <span class="font-mono text-slate-200">${C_escape(inv.customerPhone)}</span>
-          </div>
-        ` : ''}
-        ${inv.customerGSTIN ? `
-          <div class="flex justify-between">
-            <span class="text-slate-500">GSTIN:</span>
-            <span class="font-mono text-slate-200 text-[10.5px]">${C_escape(inv.customerGSTIN)}</span>
-          </div>
-        ` : ''}
-        <div class="flex justify-between">
-          <span class="text-slate-500">Payment:</span>
-          <span class="text-slate-200">${C_escape(shortLedger(inv.ledger))}</span>
-        </div>
+        <div class="flex justify-between"><span class="text-slate-500">Invoice No:</span><span class="font-mono font-bold text-sky-400">${esc(inv.invoiceNo || '')}</span></div>
+        <div class="flex justify-between"><span class="text-slate-500">Date:</span><span class="font-mono text-slate-200">${esc(inv.date || '')}</span></div>
+        <div class="flex justify-between"><span class="text-slate-500">Customer:</span><span class="font-semibold text-slate-200">${esc(inv.customerName || '')}</span></div>
+        ${inv.customerPhone ? `<div class="flex justify-between"><span class="text-slate-500">Phone:</span><span class="font-mono text-slate-200">${esc(inv.customerPhone)}</span></div>` : ''}
+        <div class="flex justify-between"><span class="text-slate-500">Type:</span><span class="text-slate-200">${isNonGst ? '⚪ Non-GST' : '✅ GST'}</span></div>
+        <div class="flex justify-between"><span class="text-slate-500">Payment:</span><span class="text-slate-200">${esc(shortLedger(inv.ledger))}</span></div>
       </div>
 
-      <!-- Warranty card -->
       ${warranty ? `
         <div class="border rounded-lg p-3 ${warranty.expired ? 'bg-slate-950/70 border-slate-700' : 'bg-emerald-950/30 border-emerald-800/60'}">
           <div class="flex items-center justify-between mb-1.5">
-            <div class="text-[10px] font-bold uppercase tracking-wider ${warranty.expired ? 'text-slate-400' : 'text-emerald-400'}">
-              🛡️ Warranty Status
-            </div>
-            <div class="text-[10px] font-bold ${warranty.expired ? 'text-slate-400' : 'text-emerald-400'}">
-              ${warranty.expired ? 'EXPIRED' : warranty.daysLeft + ' days left'}
-            </div>
+            <div class="text-[10px] font-bold uppercase tracking-wider ${warranty.expired ? 'text-slate-400' : 'text-emerald-400'}">🛡️ Warranty Status</div>
+            <div class="text-[10px] font-bold ${warranty.expired ? 'text-slate-400' : 'text-emerald-400'}">${warranty.expired ? 'EXPIRED' : warranty.daysLeft + ' days left'}</div>
           </div>
           <div class="text-[11px] text-slate-300 leading-relaxed">
-            <div><strong>Period:</strong> ${warranty.months} months from purchase</div>
-            <div><strong>Expires on:</strong> <span class="font-mono text-slate-200">${C_fmtDatePretty(warranty.expiryDate)}</span></div>
+            <div><strong>Period:</strong> ${warranty.months} months</div>
+            <div><strong>Expires:</strong> <span class="font-mono">${fmtDatePretty(warranty.expiryDate)}</span></div>
           </div>
         </div>
       ` : ''}
 
-      <!-- Items -->
       <div>
-        <div class="text-[10px] font-bold uppercase text-slate-500 mb-1.5 tracking-wider">
-          📦 Items (${items.length})
-        </div>
+        <div class="text-[10px] font-bold uppercase text-slate-500 mb-1.5 tracking-wider">📦 Items (${items.length})</div>
         <div class="space-y-2">
-          ${items.map((it, i) => `
+          ${items.map((it) => `
             <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-3 text-xs">
               <div class="flex justify-between items-start gap-2 mb-1">
-                <div class="font-bold text-white min-w-0 flex-1">${C_escape(it.model || '')}</div>
-                <div class="font-mono font-bold text-slate-200 flex-shrink-0">
-                  ₹${((it.rate || 0) * (it.qty || 1)).toFixed(2)}
-                </div>
+                <div class="font-bold text-white min-w-0 flex-1">${esc(it.model || '')}</div>
+                <div class="font-mono font-bold text-slate-200 flex-shrink-0">${money((it.rate || 0) * (it.qty || 1))}</div>
               </div>
-              ${it.imei ? `
-                <div class="font-mono text-[10.5px] text-sky-400 mb-0.5">
-                  IMEI: ${C_escape(it.imei)}
-                </div>
-              ` : ''}
-              <div class="text-[10.5px] text-slate-500">
-                ${it.qty || 1} × ₹${(it.rate || 0).toFixed(2)}
-                <span class="mx-1.5">•</span>
-                GST ${it.gst || 18}%
-                ${it.hsn ? `<span class="mx-1.5">•</span>HSN ${C_escape(it.hsn)}` : ''}
-              </div>
+              ${it.imei ? `<div class="font-mono text-[10.5px] text-sky-400 mb-0.5">IMEI: ${esc(it.imei)}</div>` : ''}
+              <div class="text-[10.5px] text-slate-500">${it.qty || 1} × ₹${(it.rate || 0).toFixed(2)}${!isNonGst ? ' • GST ' + (it.gst || 18) + '%' : ''}</div>
             </div>
           `).join('')}
         </div>
       </div>
 
-      <!-- Totals -->
       <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-3 space-y-1.5 text-xs">
-        <div class="flex justify-between">
-          <span class="text-slate-400">Taxable Amount:</span>
-          <span class="font-mono text-slate-200">₹${totalTaxable.toFixed(2)}</span>
-        </div>
-        ${inv.discount > 0 ? `
-          <div class="flex justify-between">
-            <span class="text-rose-400">Discount:</span>
-            <span class="font-mono text-rose-400">-₹${(inv.discount || 0).toFixed(2)}</span>
-          </div>
-        ` : ''}
-        <div class="flex justify-between">
-          <span class="text-slate-400">${taxType === 'INTRA' ? 'CGST + SGST' : 'IGST'}:</span>
-          <span class="font-mono text-slate-200">₹${totalTax.toFixed(2)}</span>
-        </div>
-        <div class="flex justify-between border-t border-slate-800 pt-1.5 mt-1">
-          <span class="font-bold text-white">Total:</span>
-          <span class="font-mono font-black text-emerald-400 text-base">
-            ₹${(inv.totalGross || 0).toFixed(2)}
-          </span>
-        </div>
+        <div class="flex justify-between"><span class="text-slate-400">Taxable:</span><span class="font-mono text-slate-200">${money(totalTaxable)}</span></div>
+        ${inv.discount > 0 ? `<div class="flex justify-between"><span class="text-rose-400">Discount:</span><span class="font-mono text-rose-400">-${money(inv.discount)}</span></div>` : ''}
+        ${!isNonGst ? `<div class="flex justify-between"><span class="text-slate-400">${taxType === 'INTRA' ? 'CGST + SGST' : 'IGST'}:</span><span class="font-mono text-slate-200">${money(totalTax)}</span></div>` : ''}
+        <div class="flex justify-between border-t border-slate-800 pt-1.5 mt-1"><span class="font-bold text-white">Total:</span><span class="font-mono font-black text-emerald-400 text-base">${money(inv.totalGross || 0)}</span></div>
       </div>
 
-      <!-- Info notice -->
       <div class="bg-sky-950/30 border border-sky-800/40 rounded-lg p-3 text-[10.5px] text-sky-200 leading-relaxed">
-        💡 <strong>Need service?</strong> Call the shop at the number below. Keep your IMEI ready — it's printed above for quick reference.
+        💡 <strong>Need help?</strong> Call the shop number below.
       </div>
     `;
 
-    /* Show modal */
     const modal = document.getElementById('invModal');
     if (modal) modal.classList.remove('hidden');
-  }
-
-  function closeModal() {
-    const modal = document.getElementById('invModal');
-    if (modal) modal.classList.add('hidden');
-  }
+  };
 
 
   /* ============================================================
-     6. PRINT / SHARE
+     OPEN REPAIR
      ============================================================ */
-  function printCurrentInvoice() {
-    const inv = PORTAL.currentInvoice;
-    if (!inv) return;
+  window.openRepair = function (idx, jobId) {
+    let job = PORTAL.repairs.find((x) => x.id === jobId);
+    if (!job) job = PORTAL.repairs[idx];
+    if (!job) { alert('Repair not found'); return; }
+    PORTAL.currentRepair = job;
 
-    const target = document.getElementById('printArea');
-    if (!target) return;
+    const st = STATUS[job.status] || STATUS.RECEIVED;
+    const balance = (job.finalCost || job.estimatedCost || 0) - (job.advancePaid || 0);
 
+    const titleEl = document.getElementById('invModalTitle');
+    if (titleEl) titleEl.textContent = job.jobNo || 'Repair';
+    const subEl = document.getElementById('invModalSubtitle');
+    if (subEl) subEl.textContent = (job.date || '') + ' • ' + (job.deviceBrand || '') + ' ' + (job.deviceModel || '') + ' • ' + st.label;
+
+    const body = document.getElementById('invModalBody');
+    if (!body) return;
+
+    body.innerHTML = `
+      <div class="bg-slate-950/70 border-2 ${st.border} rounded-lg p-3">
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Current Status</div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="text-3xl">${st.icon}</div>
+          <div>
+            <div class="text-base font-black ${st.text}">${st.label}</div>
+            <div class="text-[10px] text-slate-500">Updated: ${job.updatedAt ? new Date(job.updatedAt).toLocaleString('en-IN', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '—'}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-3 space-y-1.5 text-xs">
+        <div class="flex justify-between"><span class="text-slate-500">Job No:</span><span class="font-mono font-bold text-violet-400">${esc(job.jobNo || '')}</span></div>
+        <div class="flex justify-between"><span class="text-slate-500">Date:</span><span class="font-mono text-slate-200">${esc(job.date || '')}</span></div>
+        <div class="flex justify-between"><span class="text-slate-500">Customer:</span><span class="font-semibold text-slate-200">${esc(job.customerName || '')}</span></div>
+        <div class="flex justify-between"><span class="text-slate-500">Phone:</span><span class="font-mono text-slate-200">${esc(job.customerPhone || '')}</span></div>
+      </div>
+
+      <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-3">
+        <div class="text-[10px] font-bold uppercase text-violet-400 mb-1.5">📱 Device</div>
+        <div class="text-[11px] space-y-0.5">
+          <div><span class="text-slate-500">Brand:</span> <strong>${esc(job.deviceBrand || '—')}</strong></div>
+          <div><span class="text-slate-500">Model:</span> <strong>${esc(job.deviceModel || '—')}</strong></div>
+          ${job.deviceIMEI ? `<div><span class="text-slate-500">IMEI:</span> <span class="font-mono">${esc(job.deviceIMEI)}</span></div>` : ''}
+          ${job.deviceColor ? `<div><span class="text-slate-500">Color:</span> ${esc(job.deviceColor)}</div>` : ''}
+        </div>
+      </div>
+
+      <div class="bg-amber-950/30 border border-amber-800/60 rounded-lg p-3">
+        <div class="text-[10px] font-bold uppercase text-amber-400 mb-1.5">🛠 Reported Issue</div>
+        <div class="text-[11.5px] text-amber-100 leading-relaxed">${esc(job.issueDescription || '')}</div>
+      </div>
+
+      ${(job.accessories || []).length > 0 ? `
+        <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-3">
+          <div class="text-[10px] font-bold uppercase text-slate-400 mb-1.5">📦 Accessories Submitted</div>
+          <div class="flex flex-wrap gap-1.5">
+            ${job.accessories.map((a) => `<span class="text-[10px] bg-slate-800 text-slate-200 px-2 py-0.5 rounded">${esc(a)}</span>`).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-3">
+        <div class="text-[10px] font-bold uppercase text-slate-400 mb-2">💰 Cost Breakdown</div>
+        <div class="space-y-1 text-[11px]">
+          <div class="flex justify-between"><span class="text-slate-500">Estimated:</span><span class="font-mono">${money(job.estimatedCost || 0)}</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Advance Paid:</span><span class="font-mono text-emerald-400">-${money(job.advancePaid || 0)}</span></div>
+          ${job.finalCost > 0 ? `<div class="flex justify-between border-t border-slate-800 pt-1 mt-1"><span class="text-slate-300 font-bold">Final Cost:</span><span class="font-mono font-bold text-violet-400">${money(job.finalCost)}</span></div>` : ''}
+          <div class="flex justify-between border-t border-slate-800 pt-1 mt-1">
+            <span class="font-bold text-white">Balance ${balance > 0 ? 'Due' : 'Paid'}:</span>
+            <span class="font-mono font-black text-${balance > 0 ? 'amber' : 'emerald'}-400">${balance > 0 ? money(balance) : '✓ Paid'}</span>
+          </div>
+        </div>
+      </div>
+
+      ${job.warrantyDays > 0 && job.status === 'DELIVERED' ? `
+        <div class="bg-emerald-950/30 border border-emerald-800/60 rounded-lg p-3 text-[11px] text-emerald-200">
+          🛡️ <strong>Warranty:</strong> ${job.warrantyDays} days on this repair from delivery date
+        </div>
+      ` : ''}
+
+      <!-- Timeline -->
+      ${(job.statusHistory || []).length > 0 ? `
+        <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-3">
+          <div class="text-[10px] font-bold uppercase text-slate-400 mb-2">📋 Repair Progress</div>
+          <div class="space-y-2">
+            ${job.statusHistory.map((h, i) => {
+              const s = STATUS[h.status] || STATUS.RECEIVED;
+              return `<div class="flex items-start gap-2.5">
+                <div class="w-6 h-6 rounded-full ${s.bg} ${s.border} border flex items-center justify-center text-[10px] flex-shrink-0">${s.icon}</div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-[11px] font-bold ${s.text}">${s.label}</div>
+                  <div class="text-[10px] text-slate-500 font-mono">${new Date(h.timestamp).toLocaleString('en-IN', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      <div class="bg-violet-950/30 border border-violet-800/40 rounded-lg p-3 text-[10.5px] text-violet-200 leading-relaxed">
+        📞 <strong>Questions about your repair?</strong> Call the shop number below.
+      </div>
+    `;
+
+    const modal = document.getElementById('invModal');
+    if (modal) modal.classList.remove('hidden');
+  };
+
+
+  window.closeModal = function () {
+    const modal = document.getElementById('invModal');
+    if (modal) modal.classList.add('hidden');
+    PORTAL.currentInvoice = null;
+    PORTAL.currentRepair = null;
+  };
+
+
+  /* ============================================================
+     PRINT / SHARE
+     ============================================================ */
+  window.printCurrentInvoice = function () {
+    if (PORTAL.currentRepair && !PORTAL.currentInvoice) {
+      printRepairSlip(PORTAL.currentRepair);
+      return;
+    }
+    if (PORTAL.currentInvoice) {
+      printInvoiceSlip(PORTAL.currentInvoice);
+      return;
+    }
+    alert('Nothing to print');
+  };
+
+  window.shareCurrentInvoice = function () {
+    if (PORTAL.currentRepair && !PORTAL.currentInvoice) {
+      shareRepairWhatsApp(PORTAL.currentRepair);
+      return;
+    }
+    if (PORTAL.currentInvoice) {
+      shareInvoiceWhatsApp(PORTAL.currentInvoice);
+      return;
+    }
+  };
+
+  function printInvoiceSlip(inv) {
     const p = PORTAL.storeProfile || {};
     const items = inv.items || [];
     const totalTaxable = inv.totalTaxable || 0;
     const totalTax = (inv.totalCGST || 0) + (inv.totalSGST || 0) + (inv.totalIGST || 0);
-    const taxType = inv.taxType || 'INTRA';
+    const isNonGst = inv.billType === 'NON_GST';
 
+    const target = document.getElementById('printArea');
     target.innerHTML = `
       <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:11px;color:#0f172a;padding:6mm">
-
-        <!-- Header -->
         <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #0284c7;padding-bottom:8px;margin-bottom:12px">
           <div>
-            <div style="font-size:20px;font-weight:900;color:#075985;line-height:1">${C_escape(p.name || PORTAL.session.shopName)}</div>
-            <div style="font-size:10px;color:#475569;margin-top:4px;max-width:280px;line-height:1.3">${C_escape(p.address || '')}</div>
-            <div style="font-size:10px;font-weight:700;color:#1e293b;margin-top:2px">${C_escape(p.phone || '')}</div>
-            ${p.gstin ? `<div style="font-size:10px;color:#475569;margin-top:1px">GSTIN: <span style="font-family:monospace;color:#0369a1">${C_escape(p.gstin)}</span></div>` : ''}
+            <div style="font-size:20px;font-weight:900;color:#075985;line-height:1">${esc(p.name || PORTAL.session.shopName)}</div>
+            <div style="font-size:10px;color:#475569;margin-top:4px;max-width:280px;line-height:1.3">${esc(p.address || '')}</div>
+            <div style="font-size:10px;font-weight:700;color:#1e293b;margin-top:2px">${esc(p.phone || '')}</div>
+            ${p.gstin ? `<div style="font-size:10px;color:#475569;margin-top:1px">GSTIN: <span style="font-family:monospace;color:#0369a1">${esc(p.gstin)}</span></div>` : ''}
           </div>
           <div style="text-align:right">
-            <div style="display:inline-block;background:#075985;color:white;font-size:9px;font-weight:800;padding:3px 10px;border-radius:4px;letter-spacing:1px">
-              TAX INVOICE
-            </div>
-            <div style="font-family:monospace;font-size:14px;font-weight:900;color:#0c4a6e;margin-top:6px">${C_escape(inv.invoiceNo)}</div>
-            <div style="font-size:10px;color:#64748b;font-family:monospace">${C_escape(inv.date)}</div>
+            <div style="background:${isNonGst ? '#6d28d9' : '#075985'};color:white;font-size:9px;font-weight:800;padding:3px 10px;border-radius:4px;letter-spacing:1px">${isNonGst ? 'INVOICE' : 'TAX INVOICE'}</div>
+            <div style="font-family:monospace;font-size:14px;font-weight:900;color:#0c4a6e;margin-top:6px">${esc(inv.invoiceNo)}</div>
+            <div style="font-size:10px;color:#64748b;font-family:monospace">${esc(inv.date)}</div>
           </div>
         </div>
-
-        <!-- Customer -->
         <div style="background:#f0f9ff;border:1px solid #bae6fd;padding:8px;border-radius:6px;margin-bottom:12px;font-size:11px">
           <div style="font-weight:800;color:#0369a1;font-size:9px;text-transform:uppercase;margin-bottom:4px">Billed To</div>
-          <div><strong>${C_escape(inv.customerName || '')}</strong></div>
-          ${inv.customerPhone ? `<div style="font-family:monospace;color:#475569">${C_escape(inv.customerPhone)}</div>` : ''}
-          ${inv.customerGSTIN ? `<div style="font-family:monospace;font-size:10px;color:#475569">GSTIN: ${C_escape(inv.customerGSTIN)}</div>` : ''}
+          <div><strong>${esc(inv.customerName || '')}</strong></div>
+          ${inv.customerPhone ? `<div style="font-family:monospace;color:#475569">${esc(inv.customerPhone)}</div>` : ''}
         </div>
-
-        <!-- Items table -->
         <table style="width:100%;border-collapse:collapse;font-size:10.5px;margin-bottom:10px">
           <thead>
             <tr style="background:#e0f2fe;color:#0c4a6e;font-size:9px;text-transform:uppercase;font-weight:700">
               <th style="border:1px solid #0284c7;padding:5px;text-align:center;width:24px">#</th>
               <th style="border:1px solid #0284c7;padding:5px;text-align:left">Item</th>
               <th style="border:1px solid #0284c7;padding:5px;text-align:center;width:36px">Qty</th>
-              <th style="border:1px solid #0284c7;padding:5px;text-align:right;width:70px">Rate ₹</th>
-              <th style="border:1px solid #0284c7;padding:5px;text-align:right;width:80px">Amount ₹</th>
+              <th style="border:1px solid #0284c7;padding:5px;text-align:right;width:70px">Rate</th>
+              <th style="border:1px solid #0284c7;padding:5px;text-align:right;width:80px">Amount</th>
             </tr>
           </thead>
           <tbody>
@@ -746,9 +775,8 @@
               <tr>
                 <td style="border:1px solid #0284c7;padding:5px;text-align:center;font-weight:700">${i + 1}</td>
                 <td style="border:1px solid #0284c7;padding:5px">
-                  <div style="font-weight:700">${C_escape(it.model || '')}</div>
-                  ${it.imei ? `<div style="font-size:9px;color:#0369a1;font-family:monospace">IMEI: ${C_escape(it.imei)}</div>` : ''}
-                  <div style="font-size:9px;color:#64748b">HSN: ${C_escape(it.hsn || '8517')} • GST: ${it.gst || 18}%</div>
+                  <div style="font-weight:700">${esc(it.model || '')}</div>
+                  ${it.imei ? `<div style="font-size:9px;color:#0369a1;font-family:monospace">IMEI: ${esc(it.imei)}</div>` : ''}
                 </td>
                 <td style="border:1px solid #0284c7;padding:5px;text-align:center;font-weight:700">${it.qty || 1}</td>
                 <td style="border:1px solid #0284c7;padding:5px;text-align:right;font-family:monospace">${(it.rate || 0).toFixed(2)}</td>
@@ -757,208 +785,187 @@
             `).join('')}
           </tbody>
         </table>
-
-        <!-- Totals -->
         <div style="display:flex;justify-content:flex-end;margin-bottom:14px">
           <table style="font-size:10.5px;min-width:280px">
-            <tr>
-              <td style="padding:3px 8px;color:#475569;text-align:right">Taxable Amount:</td>
-              <td style="padding:3px 8px;text-align:right;font-family:monospace">₹${totalTaxable.toFixed(2)}</td>
-            </tr>
-            ${inv.discount > 0 ? `
-              <tr>
-                <td style="padding:3px 8px;color:#be123c;text-align:right">Discount:</td>
-                <td style="padding:3px 8px;text-align:right;font-family:monospace;color:#be123c">-₹${(inv.discount || 0).toFixed(2)}</td>
-              </tr>
-            ` : ''}
-            <tr>
-              <td style="padding:3px 8px;color:#475569;text-align:right">${taxType === 'INTRA' ? 'CGST + SGST' : 'IGST'}:</td>
-              <td style="padding:3px 8px;text-align:right;font-family:monospace">₹${totalTax.toFixed(2)}</td>
-            </tr>
-            <tr style="background:#e0f2fe">
-              <td style="padding:6px 8px;font-weight:900;font-size:13px;text-align:right;color:#0c4a6e;border-top:2px solid #0284c7">TOTAL:</td>
-              <td style="padding:6px 8px;text-align:right;font-family:monospace;font-weight:900;font-size:14px;color:#0c4a6e;border-top:2px solid #0284c7">₹${(inv.totalGross || 0).toFixed(2)}</td>
-            </tr>
+            <tr><td style="padding:3px 8px;color:#475569;text-align:right">Taxable:</td><td style="padding:3px 8px;text-align:right;font-family:monospace">₹${totalTaxable.toFixed(2)}</td></tr>
+            ${inv.discount > 0 ? `<tr><td style="padding:3px 8px;color:#be123c;text-align:right">Discount:</td><td style="padding:3px 8px;text-align:right;font-family:monospace;color:#be123c">-₹${inv.discount.toFixed(2)}</td></tr>` : ''}
+            ${!isNonGst ? `<tr><td style="padding:3px 8px;color:#475569;text-align:right">${inv.taxType === 'INTRA' ? 'CGST + SGST' : 'IGST'}:</td><td style="padding:3px 8px;text-align:right;font-family:monospace">₹${totalTax.toFixed(2)}</td></tr>` : ''}
+            <tr style="background:#e0f2fe"><td style="padding:6px 8px;font-weight:900;font-size:13px;text-align:right;color:#0c4a6e;border-top:2px solid #0284c7">TOTAL:</td><td style="padding:6px 8px;text-align:right;font-family:monospace;font-weight:900;font-size:14px;color:#0c4a6e;border-top:2px solid #0284c7">₹${(inv.totalGross || 0).toFixed(2)}</td></tr>
           </table>
         </div>
-
-        <!-- Thanks -->
-        <div style="text-align:center;padding:10px;border-top:1px solid #e2e8f0;font-size:10px;color:#64748b">
-          Thank you for your purchase!
-        </div>
-
-        <div style="text-align:center;margin-top:6px;font-size:8px;color:#94a3b8;font-family:monospace">
-          SmartFix ERP © 2026 • ${C_escape(p.name || '')}
-        </div>
-      </div>
-    `;
-
+        <div style="text-align:center;padding:10px;border-top:1px solid #e2e8f0;font-size:10px;color:#64748b">Thank you!</div>
+        <div style="text-align:center;margin-top:6px;font-size:8px;color:#94a3b8;font-family:monospace">SmartFix ERP © 2026</div>
+      </div>`;
     target.style.display = 'block';
+
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;pointer-events:none;';
+    document.body.appendChild(iframe);
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    doc.open();
+    doc.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invoice</title><style>
+      @page { size: A4 portrait; margin: 6mm; }
+      * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      html, body { margin:0; padding:0; background:#fff; }
+    </style></head><body>${target.innerHTML}</body></html>`);
+    doc.close();
     setTimeout(() => {
-      window.print();
-      setTimeout(() => {
-        target.innerHTML = '';
-        target.style.display = 'none';
-      }, 500);
-    }, 150);
+      try { iframe.contentWindow.focus(); iframe.contentWindow.print(); } catch (e) {}
+      setTimeout(() => { try { document.body.removeChild(iframe); } catch (e) {} target.innerHTML = ''; target.style.display = 'none'; }, 1500);
+    }, 500);
   }
 
-  async function shareCurrentInvoice() {
-    const inv = PORTAL.currentInvoice;
-    if (!inv) return;
-
+  function printRepairSlip(job) {
     const p = PORTAL.storeProfile || {};
-    const shopName = p.name || PORTAL.session.shopName;
+    const st = STATUS[job.status] || STATUS.RECEIVED;
+    const balance = (job.finalCost || job.estimatedCost || 0) - (job.advancePaid || 0);
+
+    const target = document.getElementById('printArea');
+    target.innerHTML = `
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:11px;color:#0f172a;padding:8mm">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #6366f1;padding-bottom:8px;margin-bottom:10px">
+          <div>
+            <div style="font-size:18px;font-weight:900;color:#3730a3">${esc(p.name || PORTAL.session.shopName)}</div>
+            <div style="font-size:9px;color:#475569;margin-top:3px;max-width:250px">${esc(p.address || '')}</div>
+            <div style="font-size:9px;font-weight:600;color:#334155;margin-top:1px">${esc(p.phone || '')}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="background:linear-gradient(135deg,#6366f1,#4338ca);color:white;font-size:10px;font-weight:900;padding:5px 12px;border-radius:4px;letter-spacing:1.5px;text-transform:uppercase">Repair Job Card</div>
+            <div style="font-size:12px;font-weight:900;font-family:monospace;color:#3730a3;margin-top:5px">${esc(job.jobNo)}</div>
+            <div style="font-size:8.5px;color:#64748b;font-family:monospace">${esc(job.date)}</div>
+          </div>
+        </div>
+        <div style="background:#eef2ff;border:1px solid #c7d2fe;padding:6px 10px;border-radius:6px;margin-bottom:10px">
+          <div style="font-size:10px;font-weight:800;color:#3730a3">Status: ${st.icon} ${st.label}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+          <div style="border:1px solid #cbd5e1;border-radius:6px;padding:8px;background:#f8fafc">
+            <div style="font-size:8px;font-weight:900;color:#6366f1;text-transform:uppercase;margin-bottom:4px;border-bottom:1px solid #c7d2fe;padding-bottom:3px">👤 Customer</div>
+            <div style="font-size:10px;line-height:1.5">
+              <div><strong>${esc(job.customerName)}</strong></div>
+              <div style="font-family:monospace">${esc(job.customerPhone)}</div>
+            </div>
+          </div>
+          <div style="border:1px solid #cbd5e1;border-radius:6px;padding:8px;background:#f8fafc">
+            <div style="font-size:8px;font-weight:900;color:#6366f1;text-transform:uppercase;margin-bottom:4px;border-bottom:1px solid #c7d2fe;padding-bottom:3px">📱 Device</div>
+            <div style="font-size:10px;line-height:1.5">
+              <div><strong>${esc(job.deviceBrand || '')} ${esc(job.deviceModel || '')}</strong></div>
+              ${job.deviceIMEI ? `<div style="font-family:monospace;font-size:9px">${esc(job.deviceIMEI)}</div>` : ''}
+            </div>
+          </div>
+        </div>
+        <div style="border:1px solid #cbd5e1;border-radius:6px;padding:8px;background:#fef3c7;margin-bottom:10px">
+          <div style="font-size:8px;font-weight:900;color:#92400e;text-transform:uppercase;margin-bottom:3px">🛠 Problem</div>
+          <div style="font-size:10.5px;color:#78350f;line-height:1.4">${esc(job.issueDescription || '')}</div>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:10px">
+          <thead><tr style="background:linear-gradient(90deg,#6366f1,#4338ca);color:white"><th style="padding:7px 10px;text-align:left;font-size:9px;text-transform:uppercase">Particulars</th><th style="padding:7px 10px;text-align:right;font-size:9px;text-transform:uppercase;width:120px">Amount ₹</th></tr></thead>
+          <tbody>
+            <tr style="border-bottom:1px solid #e2e8f0"><td style="padding:7px 10px">Estimated Cost</td><td style="padding:7px 10px;text-align:right;font-family:monospace;font-weight:700">${(job.estimatedCost || 0).toFixed(2)}</td></tr>
+            <tr style="border-bottom:1px solid #e2e8f0"><td style="padding:7px 10px">Advance</td><td style="padding:7px 10px;text-align:right;font-family:monospace;color:#059669;font-weight:700">-${(job.advancePaid || 0).toFixed(2)}</td></tr>
+            ${job.finalCost > 0 ? `<tr style="border-bottom:1px solid #e2e8f0"><td style="padding:7px 10px">Final Cost</td><td style="padding:7px 10px;text-align:right;font-family:monospace;font-weight:700">${job.finalCost.toFixed(2)}</td></tr>` : ''}
+            <tr style="background:#eef2ff;border-top:2px solid #6366f1"><td style="padding:9px 10px;font-weight:900;font-size:13px;color:#3730a3;text-transform:uppercase">Balance Due</td><td style="padding:9px 10px;text-align:right;font-family:monospace;font-weight:900;font-size:15px;color:#3730a3">₹ ${Math.max(0, balance).toFixed(2)}</td></tr>
+          </tbody>
+        </table>
+        ${job.warrantyDays > 0 ? `<div style="background:#ecfdf5;border:1px solid #86efac;border-radius:6px;padding:6px 10px;margin-bottom:8px;font-size:10px;color:#065f46">🛡️ <strong>Warranty: ${job.warrantyDays} days</strong> from delivery</div>` : ''}
+        <div style="background:#f8fafc;border-left:3px solid #6366f1;padding:6px 10px;font-size:9px;color:#475569;line-height:1.5;border-radius:3px">
+          <strong>Terms:</strong> Bring this receipt when collecting. Warranty covers repaired part only.
+        </div>
+        <div style="margin-top:20px;display:flex;justify-content:space-between;align-items:flex-end">
+          <div style="font-size:8px;color:#94a3b8;font-family:monospace">SmartFix ERP © 2026</div>
+          <div style="text-align:center"><div style="height:30px"></div><div style="border-top:1px solid #94a3b8;padding-top:3px;font-size:9px;font-weight:700;color:#475569;width:150px">Customer Signature</div></div>
+        </div>
+      </div>`;
+    target.style.display = 'block';
+
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;pointer-events:none;';
+    document.body.appendChild(iframe);
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    doc.open();
+    doc.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Job Card</title><style>
+      @page { size: A5 portrait; margin: 6mm; }
+      * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      html, body { margin:0; padding:0; background:#fff; }
+    </style></head><body>${target.innerHTML}</body></html>`);
+    doc.close();
+    setTimeout(() => {
+      try { iframe.contentWindow.focus(); iframe.contentWindow.print(); } catch (e) {}
+      setTimeout(() => { try { document.body.removeChild(iframe); } catch (e) {} target.innerHTML = ''; target.style.display = 'none'; }, 1500);
+    }, 500);
+  }
+
+  function shareInvoiceWhatsApp(inv) {
+    const p = PORTAL.storeProfile || {};
     const itemList = (inv.items || []).map((it) => '• ' + (it.model || '') + (it.imei ? ' (IMEI: ' + it.imei + ')' : '')).join('\n');
-
-    const text =
-      `*${shopName}*\n` +
-      `—————————————\n` +
-      `Invoice: *${inv.invoiceNo}*\n` +
-      `Date: ${inv.date}\n` +
-      `Customer: ${inv.customerName || ''}\n\n` +
-      `*Items:*\n${itemList}\n\n` +
-      `Total: *₹${(inv.totalGross || 0).toFixed(2)}*\n\n` +
-      `Thanks for shopping! 🙏`;
-
-    /* Try native share */
+    const text = `*${p.name || PORTAL.session.shopName}*\n━━━━━━━━━━━━━━\nInvoice: *${inv.invoiceNo}*\nDate: ${inv.date}\nCustomer: ${inv.customerName || ''}\n\n*Items:*\n${itemList}\n\nTotal: *${money(inv.totalGross)}*\n\nThanks!`;
     if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Invoice ' + inv.invoiceNo,
-          text
-        });
-        return;
-      } catch (e) {
-        /* User cancelled */
-        if (e.name === 'AbortError') return;
-      }
+      navigator.share({ title: 'Invoice ' + inv.invoiceNo, text }).catch(() => {});
+      return;
     }
+    window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+  }
 
-    /* Fallback: WhatsApp */
-    const waUrl = 'https://wa.me/?text=' + encodeURIComponent(text);
-    window.open(waUrl, '_blank');
+  function shareRepairWhatsApp(job) {
+    const p = PORTAL.storeProfile || {};
+    const st = STATUS[job.status] || STATUS.RECEIVED;
+    const balance = (job.finalCost || job.estimatedCost || 0) - (job.advancePaid || 0);
+    const text =
+      `*${p.name || PORTAL.session.shopName}*\n🔧 *Repair Job Card*\n━━━━━━━━━━━━━━\n` +
+      `📋 Job No: *${job.jobNo}*\n📅 Date: ${job.date}\n👤 Name: ${job.customerName}\n\n` +
+      `📱 Device: ${job.deviceBrand || ''} ${job.deviceModel || ''}\n${job.deviceIMEI ? '🔢 IMEI: ' + job.deviceIMEI + '\n' : ''}` +
+      `\n🛠 Issue: ${job.issueDescription}\n\n` +
+      `💰 Estimate: ${money(job.estimatedCost || 0)}\n✅ Advance: ${money(job.advancePaid || 0)}\n💵 Balance: ${money(Math.max(0, balance))}\n\n` +
+      `📌 Status: ${st.icon} ${st.label}\n${job.warrantyDays > 0 ? '🛡️ Warranty: ' + job.warrantyDays + ' days\n' : ''}` +
+      `\n${p.phone ? '📞 ' + p.phone : ''}`;
+    if (navigator.share) {
+      navigator.share({ title: 'Repair ' + job.jobNo, text }).catch(() => {});
+      return;
+    }
+    window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
   }
 
 
   /* ============================================================
-     7. SEARCH AGAIN / EXIT
+     HELPERS
      ============================================================ */
-  function searchAgain() {
+  function esc(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function escapeAttr(s) { return String(s || '').replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
+  function money(n) { const v = Number(n) || 0; return '₹' + v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function fmtDatePretty(d) { if (!d) return '—'; const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; const dd = String(d.getDate()).padStart(2,'0'); return `${dd}-${m[d.getMonth()]}-${d.getFullYear()}`; }
+  function shortLedger(n) { if (!n) return '—'; if (n === 'Cash-in-Hand') return 'Cash'; if (n === 'Bank / UPI') return 'Bank / UPI'; if (n === 'Card Payment') return 'Card'; if (n === 'Bajaj / EMI Finance') return 'Bajaj EMI'; if (n === 'Credit / Sundry Debtors') return 'Udhar'; return n; }
+  function setText(id, t) { const el = document.getElementById(id); if (el) el.textContent = t; }
+
+
+  window.searchAgain = function () {
     sessionStorage.removeItem('sfp_customer_session');
     location.href = './index.html#customer';
-  }
-
-  function exitPortal() {
-    if (!confirm('Exit customer portal?')) return;
+  };
+  window.exitPortal = function () {
+    if (!confirm('Exit?')) return;
     sessionStorage.removeItem('sfp_customer_session');
     location.href = './index.html';
-  }
+  };
 
-
-  /* ============================================================
-     8. EMPTY STATE
-     ============================================================ */
   function showEmptyState() {
     const list = document.getElementById('invoiceList');
     if (list) list.innerHTML = '';
-    const empty = document.getElementById('emptyState');
+    const empty = document.getElementById('emptyBills');
     if (empty) empty.style.display = 'block';
-
-    const header = document.querySelector('header h1');
-    if (header) header.textContent = 'SmartFix ERP';
   }
 
 
-  /* ============================================================
-     9. HELPERS
-     ============================================================ */
-  function C_escape(s) {
-    return String(s || '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
-  }
-
-  function C_money(n) {
-    const v = Number(n) || 0;
-    return '₹' + v.toLocaleString('en-IN', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-  }
-
-  function C_fmtDatePretty(d) {
-    if (!d) return '—';
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const dd = String(d.getDate()).padStart(2, '0');
-    return `${dd}-${months[d.getMonth()]}-${d.getFullYear()}`;
-  }
-
-  function shortLedger(name) {
-    if (!name) return '—';
-    if (name === 'Cash-in-Hand') return 'Cash';
-    if (name === 'Bank / UPI') return 'Bank / UPI';
-    if (name === 'Card Payment') return 'Card';
-    if (name === 'Bajaj / EMI Finance') return 'Bajaj EMI';
-    if (name === 'Credit / Sundry Debtors') return 'Udhar';
-    return name;
-  }
-
-
-  /* ============================================================
-     10. KEYBOARD / CLICK HANDLERS
-     ============================================================ */
-  /* Escape key closes modal */
-  window.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeModal();
-  });
-
-  /* Click outside modal to close */
+  window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
   const modal = document.getElementById('invModal');
-  if (modal) {
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) closeModal();
-    });
-  }
+  if (modal) modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
-  /* Print styles — inject on load */
-  const style = document.createElement('style');
-  style.textContent = `
-    @media print {
-      body > *:not(#printArea) { display: none !important; }
-      #printArea { display: block !important; }
-      @page { size: A4 portrait; margin: 6mm; }
-    }
-  `;
-  document.head.appendChild(style);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
 
-
-  /* ============================================================
-     11. EXPOSE API
-     ============================================================ */
-  window.openInvoice = openInvoice;
-  window.closeModal = closeModal;
-  window.printCurrentInvoice = printCurrentInvoice;
-  window.shareCurrentInvoice = shareCurrentInvoice;
-  window.searchAgain = searchAgain;
-  window.exitPortal = exitPortal;
-
-
-  /* ============================================================
-     12. BOOT
-     ============================================================ */
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
-
-  console.log('%c🛍 Customer portal ready', 'color:#10b981;font-weight:bold');
+  console.log('%c🛍 Customer portal ready (v4.4.0)', 'color:#10b981;font-weight:bold');
 })();
 </script>
-
 </body>
 </html>
