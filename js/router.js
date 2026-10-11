@@ -1,166 +1,84 @@
 /* ============================================================
-   SMARTFIX ERP — SPA Router (v4.0.1)
+   SMARTFIX ERP — SPA Router (v4.1.0)
    File: js/router.js
-   Purpose:
-     • Hash-based routing (#billing, #inventory, etc.)
-     • Dynamically loads module HTML into shell container
-     • Re-executes inline scripts (browser doesn't auto-run injected scripts)
-     • Manages active tab state
-     • Supports module lifecycle hooks (onLoad/onUnload)
-     • Browser back/forward navigation
-     • Error handling with friendly UI
    ============================================================ */
 
 import { emit, on } from './state.js';
 import { toast } from './common.js';
 
 
-/* ============================================================
-   1. ROUTE DEFINITIONS
-   ============================================================ */
 export const ROUTES = {
-  billing: {
-    id:        'billingTab',
-    label:     'Sales',
-    icon:      '🧾',
-    file:      './modules/billing.html',
-    shortcut:  'F1',
-    description: 'POS Sales Invoice'
-  },
-  returns: {
-    id:        'returnsTab',
-    label:     'Returns',
-    icon:      '↩️',
-    file:      './modules/returns.html',
-    shortcut:  'F2',
-    description: 'Credit Notes & Refunds'
-  },
-  purchase: {
-    id:        'purchaseTab',
-    label:     'Purchase',
-    icon:      '🛒',
-    file:      './modules/purchase.html',
-    shortcut:  'F3',
-    description: 'Supplier Bills & Stock In'
-  },
-  vouchers: {
-    id:        'vouchersTab',
-    label:     'Vouchers',
-    icon:      '📒',
-    file:      './modules/vouchers.html',
-    shortcut:  'F4',
-    description: 'Payment / Receipt / Journal'
-  },
-  accounting: {
-    id:        'accountingTab',
-    label:     'P&L',
-    icon:      '📊',
-    file:      './modules/accounting.html',
-    shortcut:  'F5',
-    description: 'Profit & Loss, GST, Audit'
-  },
-  books: {
-    id:        'booksTab',
-    label:     'Books',
-    icon:      '📚',
-    file:      './modules/books.html',
-    shortcut:  'F6',
-    description: 'Cash Book, Bank Book, Trial Balance'
-  },
-  parties: {
-    id:        'partiesTab',
-    label:     'Parties',
-    icon:      '👥',
-    file:      './modules/parties.html',
-    shortcut:  'F7',
-    description: 'Customers & Suppliers'
-  },
-  inventory: {
-    id:        'inventoryTab',
-    label:     'Stock',
-    icon:      '📦',
-    file:      './modules/inventory.html',
-    shortcut:  'F8',
-    description: 'Inventory Management'
-  },
-  staff: {
-    id:        'staffTab',
-    label:     'Staff',
-    icon:      '👨‍💼',
-    file:      './modules/staff.html',
-    shortcut:  'F9',
-    description: 'Staff & Salary'
-  },
-  settings: {
-    id:        'settingsTab',
-    label:     'Settings',
-    icon:      '⚙️',
-    file:      './modules/settings.html',
-    shortcut:  'F10',
-    description: 'Store Settings & Backup'
-  }
+  billing:    { id: 'billingTab',    label: 'Sales',       icon: '🧾', file: './modules/billing.html',    shortcut: 'F1',  description: 'POS Sales Invoice' },
+  returns:    { id: 'returnsTab',    label: 'Returns',     icon: '↩️', file: './modules/returns.html',    shortcut: 'F2',  description: 'Credit Notes & Refunds' },
+  purchase:   { id: 'purchaseTab',   label: 'Purchase',    icon: '🛒', file: './modules/purchase.html',   shortcut: 'F3',  description: 'Supplier Bills & Stock In' },
+  vouchers:   { id: 'vouchersTab',   label: 'Vouchers',    icon: '📒', file: './modules/vouchers.html',   shortcut: 'F4',  description: 'Payment / Receipt / Journal' },
+  accounting: { id: 'accountingTab', label: 'P&L',         icon: '📊', file: './modules/accounting.html', shortcut: 'F5',  description: 'Profit & Loss, GST, Audit' },
+  books:      { id: 'booksTab',      label: 'Books',       icon: '📚', file: './modules/books.html',      shortcut: 'F6',  description: 'Cash Book, Bank Book, Trial Balance' },
+  parties:    { id: 'partiesTab',    label: 'Parties',     icon: '👥', file: './modules/parties.html',    shortcut: 'F7',  description: 'Customers & Suppliers' },
+  inventory:  { id: 'inventoryTab',  label: 'Stock',       icon: '📦', file: './modules/inventory.html',  shortcut: 'F8',  description: 'Inventory Management' },
+  staff:      { id: 'staffTab',      label: 'Staff',       icon: '👨‍💼', file: './modules/staff.html',     shortcut: 'F9',  description: 'Staff & Salary' },
+  settings:   { id: 'settingsTab',   label: 'Settings',    icon: '⚙️', file: './modules/settings.html',  shortcut: 'F10', description: 'Store Settings & Backup' }
 };
 
-/* Route order for navigation bar */
 export const ROUTE_ORDER = [
   'billing', 'returns', 'purchase', 'vouchers', 'accounting',
   'books', 'parties', 'inventory', 'staff', 'settings'
 ];
 
 
-/* ============================================================
-   2. RUNTIME STATE
-   ============================================================ */
 const ROUTER = {
-  container:      null,       // DOM element where modules render
-  currentRoute:   null,       // e.g. 'billing'
-  currentModule:  null,       // module object with lifecycle hooks
-  moduleCache:    {},         // { route: htmlString }
+  container:      null,
+  currentRoute:   null,
+  currentModule:  null,
+  moduleCache:    {},
   loading:        false,
-  history:        []          // internal history for back button
+  history:        []
 };
 
 
 /* ============================================================
-   3. INITIALIZE ROUTER
+   INIT
    ============================================================ */
 export function initRouter(containerSelector = '#moduleContainer') {
   ROUTER.container = document.querySelector(containerSelector);
-
   if (!ROUTER.container) {
     console.error('❌ Router container not found:', containerSelector);
     return;
   }
-
   console.log('%c🧭 Router initialized', 'color:#06b6d4;font-weight:bold');
 
-  /* Handle hash on load */
   const initialHash = window.location.hash.replace('#', '').trim();
   const route = ROUTES[initialHash] ? initialHash : 'billing';
 
-  /* Listen for hash changes */
   window.addEventListener('hashchange', onHashChange);
-
-  /* Navigate to initial route */
   navigateTo(route, { replace: true });
-
-  /* Keyboard shortcuts (F1–F10) */
   window.addEventListener('keydown', onGlobalKeydown);
 }
 
 
 /* ============================================================
-   4. NAVIGATION
+   NAVIGATE
    ============================================================ */
-
-/**
- * Navigate to a route
- * @param {string} routeKey - e.g. 'billing'
- * @param {object} opts - { replace, skipHistory, force }
- */
 export async function navigateTo(routeKey, opts = {}) {
+  /* 🔐 Permission guard */
+  try {
+    const perms = window.SF?.perms;
+    if (perms && typeof perms.canAccessRoute === 'function') {
+      if (!perms.canAccessRoute(routeKey)) {
+        console.warn('🚫 Route blocked by role:', routeKey);
+        const allowed = perms.getAccessibleRoutes(ROUTE_ORDER);
+        const fallback = allowed[0] || 'billing';
+        if (fallback !== routeKey) {
+          try { perms.guard('route.' + routeKey, 'Access denied to ' + routeKey); } catch (e) {}
+          return navigateTo(fallback, { replace: true });
+        }
+        return;
+      }
+    }
+  } catch (e) {}
+
   if (ROUTER.loading) {
-    console.warn('⏳ Navigation already in progress');
+    console.warn('⏳ Navigation in progress');
     return;
   }
 
@@ -171,58 +89,35 @@ export async function navigateTo(routeKey, opts = {}) {
     return;
   }
 
-  /* If same route, do nothing */
-  if (ROUTER.currentRoute === routeKey && !opts.force) {
-    return;
-  }
+  if (ROUTER.currentRoute === routeKey && !opts.force) return;
 
   ROUTER.loading = true;
 
   try {
-    /* Lifecycle: notify previous module */
+    /* Notify previous module */
     if (ROUTER.currentModule && typeof ROUTER.currentModule.onUnload === 'function') {
-      try {
-        await ROUTER.currentModule.onUnload();
-      } catch (e) {
-        console.error('Module onUnload failed:', e);
-      }
+      try { await ROUTER.currentModule.onUnload(); } catch (e) { console.error(e); }
     }
 
-    /* Show loading spinner */
     showModuleLoading();
 
-    /* Update URL hash (skip if initial load with replace) */
     if (!opts.skipHistory) {
       const newHash = '#' + routeKey;
-      if (opts.replace) {
-        history.replaceState(null, '', newHash);
-      } else {
-        history.pushState(null, '', newHash);
-        ROUTER.history.push(routeKey);
-      }
+      if (opts.replace) history.replaceState(null, '', newHash);
+      else { history.pushState(null, '', newHash); ROUTER.history.push(routeKey); }
     }
 
-    /* Load module HTML */
     const html = await loadModuleHTML(routeKey);
-
-    /* Inject into container */
     ROUTER.container.innerHTML = html;
 
-    /* --------------------------------------------------------
-       ⭐ CRITICAL: Re-execute inline <script> tags
-       Browser does NOT auto-run scripts injected via innerHTML.
-       We must clone each script and replace it so it executes.
-       -------------------------------------------------------- */
+    /* ⭐ Re-execute injected <script> tags */
     reExecuteScripts(ROUTER.container);
 
-    /* Update tab bar active state */
     updateTabBar(routeKey);
-
-    /* Lifecycle: notify new module */
     ROUTER.currentRoute = routeKey;
     emit('route:changed', { route: routeKey, config: route });
 
-    /* Try to call module's init function if it exists (global) */
+    /* Call module init function */
     const initFnName = 'init_' + routeKey + 'Module';
     if (typeof window[initFnName] === 'function') {
       try {
@@ -233,7 +128,7 @@ export async function navigateTo(routeKey, opts = {}) {
       }
     }
 
-    /* Refresh UI to catch latest state */
+    /* Refresh UI hooks */
     setTimeout(() => {
       const refreshFns = [
         'renderLiveInvoicePreview', 'renderStockTable', 'renderCreditNotesTable',
@@ -247,7 +142,6 @@ export async function navigateTo(routeKey, opts = {}) {
       });
     }, 100);
 
-    /* Scroll to top */
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
   } catch (err) {
@@ -261,22 +155,10 @@ export async function navigateTo(routeKey, opts = {}) {
 
 
 /* ============================================================
-   5. SCRIPT RE-EXECUTION HELPER
+   RE-EXECUTE SCRIPTS
    ============================================================ */
-/**
- * Clone and replace all <script> tags inside a container
- * so that browser executes them.
- *
- * Handles:
- *   • Inline scripts (textContent)
- *   • External scripts (src attribute) — loaded sequentially
- *   • Module scripts (type="module")
- *
- * @param {HTMLElement} container
- */
 function reExecuteScripts(container) {
   if (!container) return;
-
   const oldScripts = Array.from(container.querySelectorAll('script'));
   if (oldScripts.length === 0) return;
 
@@ -284,54 +166,35 @@ function reExecuteScripts(container) {
 
   oldScripts.forEach((oldScript) => {
     const newScript = document.createElement('script');
-
-    /* Copy all attributes (src, type, async, defer, etc.) */
     Array.from(oldScript.attributes).forEach((attr) => {
       newScript.setAttribute(attr.name, attr.value);
     });
-
-    /* Copy inline content */
-    if (!oldScript.src) {
-      newScript.textContent = oldScript.textContent;
-    }
-
-    /* Replace in DOM — this triggers execution */
-    try {
-      oldScript.parentNode.replaceChild(newScript, oldScript);
-    } catch (e) {
-      console.error('Failed to re-execute script:', e);
-    }
+    if (!oldScript.src) newScript.textContent = oldScript.textContent;
+    try { oldScript.parentNode.replaceChild(newScript, oldScript); }
+    catch (e) { console.error('Failed to re-execute script:', e); }
   });
 }
 
 
 /* ============================================================
-   6. HASH CHANGE HANDLER
+   HASH CHANGE
    ============================================================ */
 function onHashChange() {
   const hash = window.location.hash.replace('#', '').trim();
   if (!hash || !ROUTES[hash]) {
-    /* Empty hash → go to billing */
-    if (ROUTER.currentRoute !== 'billing') {
-      navigateTo('billing', { replace: true });
-    }
+    if (ROUTER.currentRoute !== 'billing') navigateTo('billing', { replace: true });
     return;
   }
-  if (hash !== ROUTER.currentRoute) {
-    navigateTo(hash, { skipHistory: true });
-  }
+  if (hash !== ROUTER.currentRoute) navigateTo(hash, { skipHistory: true });
 }
 
 
 /* ============================================================
-   7. KEYBOARD SHORTCUTS (F1–F10)
+   KEYBOARD SHORTCUTS (F1-F10) — with role guard
    ============================================================ */
 function onGlobalKeydown(e) {
-  /* Skip if user is typing in an input */
   const tag = (e.target && e.target.tagName) || '';
   if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-
-  /* Skip if modifier pressed */
   if (e.ctrlKey || e.altKey || e.metaKey) return;
 
   const match = e.key.match(/^F(\d{1,2})$/);
@@ -342,27 +205,28 @@ function onGlobalKeydown(e) {
 
   e.preventDefault();
   const routeKey = ROUTE_ORDER[num - 1];
+
+  /* Role guard — silently block */
+  if (window.SF?.perms && !window.SF.perms.canAccessRoute(routeKey)) {
+    return;
+  }
+
   navigateTo(routeKey);
 }
 
 
 /* ============================================================
-   8. MODULE HTML LOADER
+   LOAD MODULE HTML
    ============================================================ */
 async function loadModuleHTML(routeKey) {
-  /* Check cache first */
-  if (ROUTER.moduleCache[routeKey]) {
-    return ROUTER.moduleCache[routeKey];
-  }
+  if (ROUTER.moduleCache[routeKey]) return ROUTER.moduleCache[routeKey];
 
   const route = ROUTES[routeKey];
-  const url = route.file + '?v=' + Date.now(); // cache-bust
+  const url = route.file + '?v=' + Date.now();
 
   try {
     const res = await fetch(url, { cache: 'no-store' });
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
     const html = await res.text();
     ROUTER.moduleCache[routeKey] = html;
     console.log('%c📄 Module loaded: ' + routeKey, 'color:#06b6d4');
@@ -373,36 +237,22 @@ async function loadModuleHTML(routeKey) {
   }
 }
 
-/**
- * Clear cache for a specific module (forces reload)
- */
 export function clearModuleCache(routeKey) {
-  if (routeKey) {
-    delete ROUTER.moduleCache[routeKey];
-  } else {
-    ROUTER.moduleCache = {};
-  }
+  if (routeKey) delete ROUTER.moduleCache[routeKey];
+  else ROUTER.moduleCache = {};
 }
 
 
 /* ============================================================
-   9. UI — LOADING / ERROR STATES
+   LOADING / ERROR STATES
    ============================================================ */
 function showModuleLoading() {
   if (!ROUTER.container) return;
   ROUTER.container.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:center;padding:80px 20px;flex-direction:column;gap:16px">
-      <div style="
-        width:48px;height:48px;
-        border:3px solid rgba(14,165,233,0.2);
-        border-top-color:#0ea5e9;
-        border-radius:50%;
-        animation:sfSpin 0.8s linear infinite;
-      "></div>
+      <div style="width:48px;height:48px;border:3px solid rgba(14,165,233,0.2);border-top-color:#0ea5e9;border-radius:50%;animation:sfSpin 0.8s linear infinite;"></div>
       <div style="color:#64748b;font-size:13px;font-weight:600">Loading module...</div>
-      <style>
-        @keyframes sfSpin { to { transform: rotate(360deg); } }
-      </style>
+      <style>@keyframes sfSpin { to { transform: rotate(360deg); } }</style>
     </div>
   `;
 }
@@ -410,41 +260,27 @@ function showModuleLoading() {
 function showModuleError(label, err) {
   if (!ROUTER.container) return;
   ROUTER.container.innerHTML = `
-    <div style="
-      max-width:520px;margin:60px auto;padding:28px;
-      background:#1e1b2e;border:1px solid #7f1d1d;
-      border-radius:16px;text-align:center;
-    ">
+    <div style="max-width:520px;margin:60px auto;padding:28px;background:#1e1b2e;border:1px solid #7f1d1d;border-radius:16px;text-align:center;">
       <div style="font-size:42px;margin-bottom:12px">⚠️</div>
-      <div style="font-size:16px;font-weight:800;color:#fca5a5;margin-bottom:6px">
-        ${label} module failed to load
-      </div>
-      <div style="font-size:12px;color:#94a3b8;line-height:1.6;margin-bottom:16px">
-        ${err && err.message ? err.message : 'Unknown error'}
-      </div>
-      <button type="button" onclick="location.reload()" style="
-        padding:10px 20px;border-radius:8px;border:none;
-        background:linear-gradient(135deg,#0ea5e9,#0369a1);
-        color:white;font-weight:700;cursor:pointer;font-size:13px;
-      ">Reload App</button>
+      <div style="font-size:16px;font-weight:800;color:#fca5a5;margin-bottom:6px">${label} module failed to load</div>
+      <div style="font-size:12px;color:#94a3b8;line-height:1.6;margin-bottom:16px">${err && err.message ? err.message : 'Unknown error'}</div>
+      <button type="button" onclick="location.reload()" style="padding:10px 20px;border-radius:8px;border:none;background:linear-gradient(135deg,#0ea5e9,#0369a1);color:white;font-weight:700;cursor:pointer;font-size:13px;">Reload App</button>
     </div>
   `;
 }
 
 
 /* ============================================================
-   10. TAB BAR — active state management
+   TAB BAR
    ============================================================ */
 function updateTabBar(routeKey) {
   const route = ROUTES[routeKey];
   if (!route) return;
-
   ROUTE_ORDER.forEach((key) => {
     const r = ROUTES[key];
     if (!r) return;
     const btn = document.getElementById('nav-' + key);
     if (!btn) return;
-
     if (key === routeKey) {
       btn.classList.add('sf-tab-active');
       btn.setAttribute('aria-current', 'page');
@@ -453,44 +289,38 @@ function updateTabBar(routeKey) {
       btn.removeAttribute('aria-current');
     }
   });
-
-  /* Update page title */
   document.title = `${route.label} — SmartFix ERP`;
 }
 
 /**
- * Programmatically set the tab bar (used by app.html shell)
+ * Render only allowed tabs (called from app-init)
  */
-export function renderTabBar() {
+export function renderTabBar(allowedRoutes) {
   const nav = document.getElementById('sfTabBar');
   if (!nav) return;
 
-  nav.innerHTML = ROUTE_ORDER.map((key) => {
+  const routes = Array.isArray(allowedRoutes) && allowedRoutes.length
+    ? allowedRoutes
+    : ROUTE_ORDER;
+
+  nav.innerHTML = routes.map((key) => {
     const r = ROUTES[key];
+    if (!r) return '';
     return `
-      <button
-        type="button"
-        id="nav-${key}"
-        onclick="SF.router.go('${key}')"
-        class="sf-tab-btn"
-        data-route="${key}"
-        title="${r.description} (${r.shortcut})"
-      >
+      <button type="button" id="nav-${key}" onclick="SF.router.go('${key}')"
+              class="sf-tab-btn" data-route="${key}" title="${r.description} (${r.shortcut})">
         <span class="sf-tab-icon">${r.icon}</span>
         <span class="sf-tab-label">${r.label}</span>
       </button>
     `;
   }).join('');
 
-  /* Highlight current */
-  if (ROUTER.currentRoute) {
-    updateTabBar(ROUTER.currentRoute);
-  }
+  if (ROUTER.currentRoute) updateTabBar(ROUTER.currentRoute);
 }
 
 
 /* ============================================================
-   11. PUBLIC API
+   PUBLIC API
    ============================================================ */
 export const Router = {
   go:          navigateTo,
@@ -503,19 +333,13 @@ export const Router = {
   isReady:     () => !!ROUTER.container
 };
 
-
-/* ============================================================
-   12. GLOBAL CONSOLE ACCESS
-   ============================================================ */
 window.SF = window.SF || {};
 window.SF.router = Router;
-
-/* Convenience: SF.go('inventory') from anywhere */
 window.SF.go = navigateTo;
 
 
 /* ============================================================
-   13. HANDLE BROWSER BACK / FORWARD
+   BROWSER BACK / FORWARD
    ============================================================ */
 window.addEventListener('popstate', () => {
   const hash = window.location.hash.replace('#', '').trim();
@@ -524,12 +348,4 @@ window.addEventListener('popstate', () => {
   }
 });
 
-
-/* ============================================================
-   14. BOOT LOG
-   ============================================================ */
-console.log(
-  '%c🧭 Router ready (v4.0.1)',
-  'color:#06b6d4;font-weight:bold;font-size:11px',
-  `| ${ROUTE_ORDER.length} routes registered`
-);
+console.log('%c🧭 Router ready (v4.1.0)', 'color:#06b6d4;font-weight:bold;font-size:11px', `| ${ROUTE_ORDER.length} routes`);
