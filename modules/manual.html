@@ -1,0 +1,1441 @@
+<!-- ============================================================
+     SMARTFIX ERP — In-App Manual (Multi-Language)
+     File: modules/manual.html
+     Languages: English, বাংলা, हिन्दी
+     ============================================================ -->
+
+<section id="manualModule" class="space-y-4">
+
+  <!-- HEADER + LANGUAGE SWITCHER -->
+  <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
+    <div class="flex flex-wrap justify-between items-center gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-700 flex items-center justify-center text-2xl shadow-lg shadow-violet-500/30">📖</div>
+        <div>
+          <h2 class="text-lg font-black text-white" id="manTitle">User Manual & Help Center</h2>
+          <p class="text-[11px] text-slate-400 mt-0.5" id="manSubtitle">Learn how to use every feature • Available in 3 languages</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="flex gap-1 p-1 rounded-lg bg-slate-950 border border-slate-800">
+          <button type="button" data-lang="en" onclick="SF.manual.setLang('en')" class="man-lang-btn px-3 py-1.5 rounded-md text-[11px] font-bold transition">EN</button>
+          <button type="button" data-lang="bn" onclick="SF.manual.setLang('bn')" class="man-lang-btn px-3 py-1.5 rounded-md text-[11px] font-bold transition">বাং</button>
+          <button type="button" data-lang="hi" onclick="SF.manual.setLang('hi')" class="man-lang-btn px-3 py-1.5 rounded-md text-[11px] font-bold transition">हि</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEARCH -->
+    <div class="relative">
+      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">🔍</span>
+      <input type="text" id="manSearchInput" oninput="SF.manual.search()" placeholder="Search manual... (e.g. invoice, repair, GST, backup)"
+             class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs text-slate-200">
+    </div>
+  </div>
+
+  <!-- MAIN LAYOUT -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+
+    <!-- SIDEBAR (Contents) -->
+    <div class="lg:col-span-3">
+      <div class="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden sticky top-4">
+        <div class="p-3 border-b border-slate-800 bg-slate-950/70">
+          <div class="text-[10px] font-black uppercase tracking-wider text-violet-400" id="manContentsLabel">📑 Contents</div>
+        </div>
+        <div id="manSidebar" class="max-h-[70vh] overflow-y-auto p-2 space-y-0.5">
+          <!-- Injected -->
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="lg:col-span-9">
+      <div id="manContent" class="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 sm:p-7 min-h-[600px]">
+        <!-- Injected -->
+      </div>
+    </div>
+
+  </div>
+
+</section>
+
+
+<script>
+(function () {
+  'use strict';
+
+  const S = window.SF?.state?.state;
+  const C = window.SF?.common;
+
+  if (!S || !C) { console.error('Manual: SF globals not ready'); return; }
+
+  const LANG_KEY = 'sfp_manual_lang';
+  const SCROLL_KEY = 'sfp_manual_scroll';
+
+  const MAN = {
+    lang: 'en',
+    currentSection: 'getting-started',
+    searchQuery: ''
+  };
+
+
+  /* ============================================================
+     TRANSLATIONS
+     ============================================================ */
+  const T = {
+    en: {
+      title: 'User Manual & Help Center',
+      subtitle: 'Learn how to use every feature • Available in 3 languages',
+      searchPlaceholder: 'Search manual... (e.g. invoice, repair, GST, backup)',
+      contents: '📑 Contents',
+      noResults: 'No results found for',
+      sections: {
+        'getting-started': '🚀 Getting Started',
+        'login':           '🔐 Login & Account',
+        'dashboard':       '📊 Dashboard Tour',
+        'billing':         '🧾 Billing / POS',
+        'returns':         '↩️ Returns & CRN',
+        'repair':          '🔧 Repair Job Cards',
+        'purchase':        '🛒 Purchase Entry',
+        'vouchers':        '📒 Vouchers & Daybook',
+        'accounting':      '📊 Accounting & P&L',
+        'books':           '📚 Books (Cash/Bank)',
+        'parties':         '👥 Customers & Suppliers',
+        'inventory':       '📦 Inventory Management',
+        'staff':           '👨‍💼 Staff & Salary',
+        'attendance':      '📸 Attendance (Selfie)',
+        'settings':        '⚙️ Store Settings',
+        'roles':           '👑 User Roles Explained',
+        'shortcuts':       '⌨️ Keyboard Shortcuts',
+        'tips':            '💡 Pro Tips & Best Practices',
+        'troubleshooting': '🔧 Common Issues & Fixes'
+      }
+    },
+    bn: {
+      title: 'ইউজার ম্যানুয়াল ও হেল্প সেন্টার',
+      subtitle: 'সব ফিচার কীভাবে ব্যবহার করবেন শিখুন • ৩টি ভাষায় উপলব্ধ',
+      searchPlaceholder: 'ম্যানুয়াল খুঁজুন... (যেমন: বিল, রিপেয়ার, জিএসটি, ব্যাকআপ)',
+      contents: '📑 বিষয়সূচি',
+      noResults: 'কোনো ফলাফল পাওয়া যায়নি',
+      sections: {
+        'getting-started': '🚀 শুরু করুন',
+        'login':           '🔐 লগইন ও অ্যাকাউন্ট',
+        'dashboard':       '📊 ড্যাশবোর্ড ট্যুর',
+        'billing':         '🧾 বিল / পিওএস',
+        'returns':         '↩️ রিটার্ন ও সিআরএন',
+        'repair':          '🔧 রিপেয়ার জব কার্ড',
+        'purchase':        '🛒 পারচেজ এন্ট্রি',
+        'vouchers':        '📒 ভাউচার ও ডেবুক',
+        'accounting':      '📊 অ্যাকাউন্টিং ও লাভ-ক্ষতি',
+        'books':           '📚 বই (ক্যাশ/ব্যাংক)',
+        'parties':         '👥 কাস্টমার ও সাপ্লায়ার',
+        'inventory':       '📦 স্টক ম্যানেজমেন্ট',
+        'staff':           '👨‍💼 স্টাফ ও বেতন',
+        'attendance':      '📸 অ্যাটেনডেন্স (সেলফি)',
+        'settings':        '⚙️ দোকানের সেটিংস',
+        'roles':           '👑 ইউজার রোল ব্যাখ্যা',
+        'shortcuts':       '⌨️ কীবোর্ড শর্টকাট',
+        'tips':            '💡 প্রো টিপস ও সর্বোত্তম প্র্যাকটিস',
+        'troubleshooting': '🔧 সাধারণ সমস্যা ও সমাধান'
+      }
+    },
+    hi: {
+      title: 'उपयोगकर्ता मैनुअल और सहायता केंद्र',
+      subtitle: 'हर सुविधा का उपयोग करना सीखें • 3 भाषाओं में उपलब्ध',
+      searchPlaceholder: 'मैनुअल खोजें... (जैसे: बिल, रिपेयर, जीएसटी, बैकअप)',
+      contents: '📑 विषय-सूची',
+      noResults: 'कोई परिणाम नहीं मिला',
+      sections: {
+        'getting-started': '🚀 शुरू करें',
+        'login':           '🔐 लॉगिन और खाता',
+        'dashboard':       '📊 डैशबोर्ड टूर',
+        'billing':         '🧾 बिलिंग / पीओएस',
+        'returns':         '↩️ रिटर्न और सीआरएन',
+        'repair':          '🔧 रिपेयर जॉब कार्ड',
+        'purchase':        '🛒 खरीद प्रविष्टि',
+        'vouchers':        '📒 वाउचर और डेबुक',
+        'accounting':      '📊 लेखांकन और लाभ-हानि',
+        'books':           '📚 बुक्स (कैश/बैंक)',
+        'parties':         '👥 ग्राहक और आपूर्तिकर्ता',
+        'inventory':       '📦 इन्वेंट्री प्रबंधन',
+        'staff':           '👨‍💼 स्टाफ और वेतन',
+        'attendance':      '📸 उपस्थिति (सेल्फी)',
+        'settings':        '⚙️ स्टोर सेटिंग्स',
+        'roles':           '👑 यूजर रोल',
+        'shortcuts':       '⌨️ कीबोर्ड शॉर्टकट',
+        'tips':            '💡 प्रो टिप्स',
+        'troubleshooting': '🔧 सामान्य समस्याएं'
+      }
+    }
+  };
+
+
+  /* ============================================================
+     CONTENT DATABASE
+     ============================================================ */
+  const CONTENT = {
+    'getting-started': {
+      en: `
+        <div class="space-y-4">
+          <h1 class="text-2xl font-black text-white mb-4">🚀 Getting Started with SmartFix ERP</h1>
+          <p class="text-sm text-slate-300 leading-relaxed">Welcome to SmartFix ERP — the complete cloud-based POS & Repair Management system for mobile shops. This guide will walk you through everything you need to know to run your business efficiently.</p>
+
+          <div class="bg-gradient-to-br from-violet-950/40 to-indigo-950/40 border border-violet-800/60 rounded-xl p-4 mt-4">
+            <div class="text-[11px] font-black uppercase tracking-wider text-violet-400 mb-2">🎯 Your 5-Minute Setup</div>
+            <div class="space-y-2 text-[12px] text-slate-300">
+              <div class="flex gap-2"><span class="text-emerald-400 font-bold">1.</span><span>Sign in with your registered email & password</span></div>
+              <div class="flex gap-2"><span class="text-emerald-400 font-bold">2.</span><span>Go to <strong>F11 Settings</strong> → fill store name, GSTIN, address, bank details, UPI</span></div>
+              <div class="flex gap-2"><span class="text-emerald-400 font-bold">3.</span><span>Upload your shop logo (appears on every invoice)</span></div>
+              <div class="flex gap-2"><span class="text-emerald-400 font-bold">4.</span><span>Set Master PIN for security (delete/edit protection)</span></div>
+              <div class="flex gap-2"><span class="text-emerald-400 font-bold">5.</span><span>Go to <strong>F8 Stock</strong> → Add your first product</span></div>
+              <div class="flex gap-2"><span class="text-emerald-400 font-bold">6.</span><span>Go to <strong>F1 Sales</strong> → Create your first invoice!</span></div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5">
+            <div class="bg-slate-950/60 border border-slate-800 rounded-lg p-3">
+              <div class="text-[11px] font-black uppercase text-sky-400 mb-1.5">🎁 What's included</div>
+              <ul class="text-[11.5px] text-slate-400 space-y-0.5 leading-relaxed">
+                <li>• Unlimited invoices & bills</li>
+                <li>• Cloud multi-device sync</li>
+                <li>• GST + Non-GST billing</li>
+                <li>• Repair job cards</li>
+                <li>• Attendance with selfie</li>
+                <li>• Customer portal</li>
+              </ul>
+            </div>
+            <div class="bg-slate-950/60 border border-slate-800 rounded-lg p-3">
+              <div class="text-[11px] font-black uppercase text-emerald-400 mb-1.5">✅ Best practices</div>
+              <ul class="text-[11.5px] text-slate-400 space-y-0.5 leading-relaxed">
+                <li>• Daily backup করুন</li>
+                <li>• Staff-দের আলাদা login দিন</li>
+                <li>• Stock regularly update করুন</li>
+                <li>• Attendance gate use করুন</li>
+                <li>• Customer portal share করুন</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      `,
+      bn: `
+        <div class="space-y-4">
+          <h1 class="text-2xl font-black text-white mb-4">🚀 SmartFix ERP দিয়ে শুরু করুন</h1>
+          <p class="text-sm text-slate-300 leading-relaxed">SmartFix ERP-তে স্বাগতম — মোবাইল দোকানের জন্য সম্পূর্ণ ক্লাউড-ভিত্তিক POS ও রিপেয়ার ম্যানেজমেন্ট সিস্টেম। এই গাইড আপনাকে প্রতিটি ফিচার কীভাবে ব্যবহার করবেন তা ধাপে ধাপে শেখাবে।</p>
+
+          <div class="bg-gradient-to-br from-violet-950/40 to-indigo-950/40 border border-violet-800/60 rounded-xl p-4 mt-4">
+            <div class="text-[11px] font-black uppercase tracking-wider text-violet-400 mb-2">🎯 ৫ মিনিটে সেটআপ</div>
+            <div class="space-y-2 text-[12px] text-slate-300">
+              <div class="flex gap-2"><span class="text-emerald-400 font-bold">১.</span><span>আপনার email ও password দিয়ে লগইন করুন</span></div>
+              <div class="flex gap-2"><span class="text-emerald-400 font-bold">২.</span><span><strong>F11 সেটিংস</strong>-এ যান → দোকানের নাম, GSTIN, ঠিকানা, ব্যাংক, UPI দিন</span></div>
+              <div class="flex gap-2"><span class="text-emerald-400 font-bold">৩.</span><span>দোকানের লোগো আপলোড করুন (সব বিলে দেখা যাবে)</span></div>
+              <div class="flex gap-2"><span class="text-emerald-400 font-bold">৪.</span><span>Master PIN সেট করুন (delete/edit protect করার জন্য)</span></div>
+              <div class="flex gap-2"><span class="text-emerald-400 font-bold">৫.</span><span><strong>F8 স্টক</strong>-এ যান → প্রথম পণ্য যোগ করুন</span></div>
+              <div class="flex gap-2"><span class="text-emerald-400 font-bold">৬.</span><span><strong>F1 বিলিং</strong>-এ যান → প্রথম বিল তৈরি করুন!</span></div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5">
+            <div class="bg-slate-950/60 border border-slate-800 rounded-lg p-3">
+              <div class="text-[11px] font-black uppercase text-sky-400 mb-1.5">🎁 যা যা পাচ্ছেন</div>
+              <ul class="text-[11.5px] text-slate-400 space-y-0.5 leading-relaxed">
+                <li>• অসীম বিল ও ইনভয়েস</li>
+                <li>• ক্লাউড মাল্টি-ডিভাইস সিঙ্ক</li>
+                <li>• GST + Non-GST বিলিং</li>
+                <li>• রিপেয়ার জব কার্ড</li>
+                <li>• সেলফি অ্যাটেনডেন্স</li>
+                <li>• কাস্টমার পোর্টাল</li>
+              </ul>
+            </div>
+            <div class="bg-slate-950/60 border border-slate-800 rounded-lg p-3">
+              <div class="text-[11px] font-black uppercase text-emerald-400 mb-1.5">✅ করণীয়</div>
+              <ul class="text-[11.5px] text-slate-400 space-y-0.5 leading-relaxed">
+                <li>• প্রতিদিন ব্যাকআপ নিন</li>
+                <li>• স্টাফদের আলাদা লগইন দিন</li>
+                <li>• নিয়মিত স্টক আপডেট করুন</li>
+                <li>• অ্যাটেনডেন্স গেট ব্যবহার করুন</li>
+                <li>• কাস্টমার পোর্টাল শেয়ার করুন</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      `,
+      hi: `
+        <div class="space-y-4">
+          <h1 class="text-2xl font-black text-white mb-4">🚀 SmartFix ERP के साथ शुरुआत करें</h1>
+          <p class="text-sm text-slate-300 leading-relaxed">SmartFix ERP में आपका स्वागत है — मोबाइल दुकानों के लिए पूर्ण क्लाउड-आधारित POS और रिपेयर मैनेजमेंट सिस्टम। यह गाइड आपको हर सुविधा का उपयोग करना सिखाएगा।</p>
+          <div class="bg-gradient-to-br from-violet-950/40 to-indigo-950/40 border border-violet-800/60 rounded-xl p-4 mt-4">
+            <div class="text-[11px] font-black uppercase tracking-wider text-violet-400 mb-2">🎯 5 मिनट में सेटअप</div>
+            <div class="space-y-2 text-[12px] text-slate-300">
+              <div class="flex gap-2"><span class="text-emerald-400 font-bold">1.</span><span>ईमेल और पासवर्ड से लॉगिन करें</span></div>
+              <div class="flex gap-2"><span class="text-emerald-400 font-bold">2.</span><span><strong>F11 सेटिंग्स</strong> में दुकान का नाम, GSTIN, पता, बैंक जानकारी भरें</span></div>
+              <div class="flex gap-2"><span class="text-emerald-400 font-bold">3.</span><span>दुकान का लोगो अपलोड करें</span></div>
+              <div class="flex gap-2"><span class="text-emerald-400 font-bold">4.</span><span>Master PIN सेट करें</span></div>
+              <div class="flex gap-2"><span class="text-emerald-400 font-bold">5.</span><span><strong>F8 स्टॉक</strong> में पहला उत्पाद जोड़ें</span></div>
+              <div class="flex gap-2"><span class="text-emerald-400 font-bold">6.</span><span><strong>F1 बिलिंग</strong> में पहला बिल बनाएं!</span></div>
+            </div>
+          </div>
+        </div>
+      `
+    },
+
+    'login': {
+      en: `
+        <div class="space-y-4">
+          <h1 class="text-2xl font-black text-white mb-4">🔐 Login & Account Management</h1>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-base font-bold text-white mb-3">👑 Owner Login</h3>
+            <p class="text-[12.5px] text-slate-300 mb-2">The owner signs in with the <strong>email and password</strong> used during registration.</p>
+            <div class="bg-slate-900/80 rounded-lg p-3 text-[11.5px] text-slate-400 font-mono space-y-0.5">
+              <div>1. Open your website</div>
+              <div>2. Click "Owner" tab</div>
+              <div>3. Enter email + password</div>
+              <div>4. Click "Sign In to Dashboard"</div>
+            </div>
+          </div>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-base font-bold text-white mb-3">👔 Staff Login</h3>
+            <p class="text-[12.5px] text-slate-300 mb-2">Staff uses the <strong>phone number + password</strong> that the owner created for them.</p>
+            <div class="bg-slate-900/80 rounded-lg p-3 text-[11.5px] text-slate-400 font-mono space-y-0.5">
+              <div>1. Open your website</div>
+              <div>2. Click "Staff" tab</div>
+              <div>3. Enter 10-digit phone number</div>
+              <div>4. Enter password given by owner</div>
+              <div>5. Click "Sign In"</div>
+            </div>
+          </div>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-base font-bold text-white mb-3">👤 Customer Access (No Login)</h3>
+            <p class="text-[12.5px] text-slate-300 mb-2">Customers don't need an account. They just need:</p>
+            <ul class="text-[12px] text-slate-400 space-y-1 leading-relaxed">
+              <li>• <strong>Shop Code</strong> (from owner, e.g. <code class="text-sky-400">shreemobile437</code>)</li>
+              <li>• Their <strong>phone number</strong></li>
+              <li>• <strong>IMEI last 6 digits</strong> OR <strong>Invoice No</strong> OR <strong>Job No</strong></li>
+            </ul>
+          </div>
+
+          <div class="bg-amber-950/30 border border-amber-800/60 rounded-xl p-4">
+            <div class="text-[11px] font-black uppercase text-amber-400 mb-1.5">🔑 Forgot Password?</div>
+            <p class="text-[12px] text-amber-100/90 leading-relaxed">Click "Forgot password?" link on login page. A reset link will be sent to your registered email. Check inbox AND spam folder.</p>
+          </div>
+        </div>
+      `,
+      bn: `
+        <div class="space-y-4">
+          <h1 class="text-2xl font-black text-white mb-4">🔐 লগইন ও অ্যাকাউন্ট ম্যানেজমেন্ট</h1>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-base font-bold text-white mb-3">👑 মালিকের লগইন</h3>
+            <p class="text-[12.5px] text-slate-300 mb-2">মালিক <strong>রেজিস্ট্রেশনের সময় দেওয়া email ও password</strong> দিয়ে লগইন করবেন।</p>
+            <div class="bg-slate-900/80 rounded-lg p-3 text-[11.5px] text-slate-400 font-mono space-y-0.5">
+              <div>১. ওয়েবসাইট খুলুন</div>
+              <div>২. "Owner" ট্যাব ক্লিক করুন</div>
+              <div>৩. Email ও Password লিখুন</div>
+              <div>৪. "Sign In to Dashboard" ক্লিক করুন</div>
+            </div>
+          </div>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-base font-bold text-white mb-3">👔 স্টাফ লগইন</h3>
+            <p class="text-[12.5px] text-slate-300 mb-2">স্টাফ মালিকের তৈরি করে দেওয়া <strong>মোবাইল নাম্বার + password</strong> দিয়ে লগইন করবে।</p>
+            <div class="bg-slate-900/80 rounded-lg p-3 text-[11.5px] text-slate-400 font-mono space-y-0.5">
+              <div>১. ওয়েবসাইট খুলুন</div>
+              <div>২. "Staff" ট্যাব ক্লিক করুন</div>
+              <div>৩. ১০ ডিজিটের মোবাইল নাম্বার দিন</div>
+              <div>৪. মালিকের দেওয়া password দিন</div>
+              <div>৫. "Sign In" ক্লিক করুন</div>
+            </div>
+          </div>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-base font-bold text-white mb-3">👤 কাস্টমার অ্যাক্সেস (লগইন ছাড়াই)</h3>
+            <p class="text-[12.5px] text-slate-300 mb-2">কাস্টমারকে অ্যাকাউন্ট খুলতে হবে না। শুধু প্রয়োজন:</p>
+            <ul class="text-[12px] text-slate-400 space-y-1 leading-relaxed">
+              <li>• <strong>Shop Code</strong> (মালিকের কাছ থেকে, যেমন <code class="text-sky-400">shreemobile437</code>)</li>
+              <li>• তার <strong>মোবাইল নাম্বার</strong></li>
+              <li>• <strong>IMEI শেষ ৬ ডিজিট</strong> বা <strong>Invoice No</strong> বা <strong>Job No</strong></li>
+            </ul>
+          </div>
+
+          <div class="bg-amber-950/30 border border-amber-800/60 rounded-xl p-4">
+            <div class="text-[11px] font-black uppercase text-amber-400 mb-1.5">🔑 Password ভুলে গেছেন?</div>
+            <p class="text-[12px] text-amber-100/90 leading-relaxed">লগইন পেজে "Forgot password?" লিংকে ক্লিক করুন। আপনার email-এ reset link যাবে। Inbox ও spam folder দুটোই দেখুন।</p>
+          </div>
+        </div>
+      `,
+      hi: `
+        <div class="space-y-4">
+          <h1 class="text-2xl font-black text-white mb-4">🔐 लॉगिन और खाता प्रबंधन</h1>
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-base font-bold text-white mb-3">👑 मालिक लॉगिन</h3>
+            <p class="text-[12.5px] text-slate-300 mb-2">मालिक <strong>पंजीकरण के समय दिए गए ईमेल और पासवर्ड</strong> से लॉगिन करें।</p>
+          </div>
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-base font-bold text-white mb-3">👔 स्टाफ लॉगिन</h3>
+            <p class="text-[12.5px] text-slate-300 mb-2">स्टाफ मालिक द्वारा बनाए गए <strong>फोन नंबर + पासवर्ड</strong> से लॉगिन करें।</p>
+          </div>
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-base font-bold text-white mb-3">👤 ग्राहक पहुंच (बिना लॉगिन)</h3>
+            <ul class="text-[12px] text-slate-400 space-y-1">
+              <li>• <strong>Shop Code</strong></li>
+              <li>• <strong>फोन नंबर</strong></li>
+              <li>• <strong>IMEI अंतिम 6 / Invoice / Job No</strong></li>
+            </ul>
+          </div>
+        </div>
+      `
+    },
+
+    'billing': {
+      en: `
+        <div class="space-y-4">
+          <h1 class="text-2xl font-black text-white mb-4">🧾 Billing / POS — Step by Step</h1>
+
+          <p class="text-sm text-slate-300 leading-relaxed">This is where you create GST invoices for customers. Works both GST and Non-GST.</p>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4 space-y-3">
+            <h3 class="text-base font-bold text-white">📝 How to create a bill (7 steps)</h3>
+            <div class="space-y-2.5 text-[12.5px] text-slate-300">
+              <div><strong class="text-violet-400">Step 1:</strong> Press <code class="bg-slate-900 px-1.5 py-0.5 rounded text-sky-400">F1</code> or click "Sales" tab</div>
+              <div><strong class="text-violet-400">Step 2:</strong> Choose <strong>GST Bill</strong> or <strong>Non-GST Bill</strong> at the top</div>
+              <div><strong class="text-violet-400">Step 3:</strong> Fill customer details (name, phone, address, GSTIN)</div>
+              <div><strong class="text-violet-400">Step 4:</strong> Scan barcode/IMEI OR type product manually, then click "Add to Invoice"</div>
+              <div><strong class="text-violet-400">Step 5:</strong> Apply discount if needed (₹ amount)</div>
+              <div><strong class="text-violet-400">Step 6:</strong> Review the live A4 preview on right side</div>
+              <div><strong class="text-violet-400">Step 7:</strong> Click "Save & Print GST Invoice" — done!</div>
+            </div>
+          </div>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-base font-bold text-white mb-3">📷 Barcode / IMEI Scanning</h3>
+            <ul class="text-[12.5px] text-slate-400 space-y-1.5 leading-relaxed">
+              <li>• <strong>USB Scanner:</strong> Click in the barcode box, scan → auto-adds to cart</li>
+              <li>• <strong>Phone Camera:</strong> Click "📷 Scan" button → allow camera → point at barcode</li>
+              <li>• <strong>Manual IMEI:</strong> Type IMEI in yellow box → auto-fills model + price</li>
+            </ul>
+          </div>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-base font-bold text-white mb-3">💳 Payment Modes</h3>
+            <div class="grid grid-cols-2 gap-2 text-[11.5px]">
+              <div class="bg-slate-900/60 rounded p-2 text-slate-300"><strong>Cash</strong> — Counter cash</div>
+              <div class="bg-slate-900/60 rounded p-2 text-slate-300"><strong>UPI/QR</strong> — Digital payment</div>
+              <div class="bg-slate-900/60 rounded p-2 text-slate-300"><strong>Card</strong> — Debit/Credit</div>
+              <div class="bg-slate-900/60 rounded p-2 text-slate-300"><strong>Bajaj EMI</strong> — Finance</div>
+              <div class="bg-slate-900/60 rounded p-2 text-slate-300 col-span-2"><strong>Udhar (Credit)</strong> — Customer will pay later</div>
+            </div>
+          </div>
+
+          <div class="bg-amber-950/30 border border-amber-800/60 rounded-xl p-4">
+            <div class="text-[11px] font-black uppercase text-amber-400 mb-1.5">💡 Pro Tip</div>
+            <p class="text-[12px] text-amber-100/90 leading-relaxed">After saving, an invoice number is auto-generated like <code>SFP-2425-0001</code>. This number is unique per device — no duplicate ever. Customer uses this number or IMEI last-6 to look up their bill on the Customer Portal.</p>
+          </div>
+        </div>
+      `,
+      bn: `
+        <div class="space-y-4">
+          <h1 class="text-2xl font-black text-white mb-4">🧾 বিলিং / POS — ধাপে ধাপে</h1>
+          <p class="text-sm text-slate-300 leading-relaxed">এখানেই আপনি কাস্টমারদের জন্য GST ইনভয়েস তৈরি করবেন। GST এবং Non-GST দুটোই কাজ করে।</p>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4 space-y-3">
+            <h3 class="text-base font-bold text-white">📝 বিল তৈরির ৭ ধাপ</h3>
+            <div class="space-y-2.5 text-[12.5px] text-slate-300">
+              <div><strong class="text-violet-400">ধাপ ১:</strong> <code class="bg-slate-900 px-1.5 py-0.5 rounded text-sky-400">F1</code> চাপুন বা "Sales" ট্যাব ক্লিক করুন</div>
+              <div><strong class="text-violet-400">ধাপ ২:</strong> উপরে <strong>GST Bill</strong> বা <strong>Non-GST Bill</strong> বেছে নিন</div>
+              <div><strong class="text-violet-400">ধাপ ৩:</strong> কাস্টমারের তথ্য দিন (নাম, ফোন, ঠিকানা, GSTIN)</div>
+              <div><strong class="text-violet-400">ধাপ ৪:</strong> Barcode/IMEI স্ক্যান করুন বা পণ্য টাইপ করে "Add to Invoice" ক্লিক করুন</div>
+              <div><strong class="text-violet-400">ধাপ ৫:</strong> প্রয়োজন হলে ডিসকাউন্ট দিন (₹)</div>
+              <div><strong class="text-violet-400">ধাপ ৬:</strong> ডান দিকে লাইভ A4 preview দেখুন</div>
+              <div><strong class="text-violet-400">ধাপ ৭:</strong> "Save & Print GST Invoice" ক্লিক করুন — হয়ে গেল!</div>
+            </div>
+          </div>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-base font-bold text-white mb-3">📷 Barcode / IMEI স্ক্যানিং</h3>
+            <ul class="text-[12.5px] text-slate-400 space-y-1.5 leading-relaxed">
+              <li>• <strong>USB Scanner:</strong> Barcode বক্সে ক্লিক করে স্ক্যান করুন → স্বয়ংক্রিয়ভাবে cart-এ যোগ হবে</li>
+              <li>• <strong>মোবাইল Camera:</strong> "📷 Scan" ক্লিক করুন → camera allow করুন → barcode-এ ধরুন</li>
+              <li>• <strong>Manual IMEI:</strong> হলুদ বক্সে IMEI টাইপ করুন → model + price স্বয়ংক্রিয়ভাবে আসবে</li>
+            </ul>
+          </div>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-base font-bold text-white mb-3">💳 পেমেন্ট মোড</h3>
+            <div class="grid grid-cols-2 gap-2 text-[11.5px]">
+              <div class="bg-slate-900/60 rounded p-2 text-slate-300"><strong>Cash</strong> — ক্যাশ</div>
+              <div class="bg-slate-900/60 rounded p-2 text-slate-300"><strong>UPI/QR</strong> — ডিজিটাল</div>
+              <div class="bg-slate-900/60 rounded p-2 text-slate-300"><strong>Card</strong> — ডেবিট/ক্রেডিট</div>
+              <div class="bg-slate-900/60 rounded p-2 text-slate-300"><strong>Bajaj EMI</strong> — ফাইন্যান্স</div>
+              <div class="bg-slate-900/60 rounded p-2 text-slate-300 col-span-2"><strong>Udhar</strong> — পরে দেবে</div>
+            </div>
+          </div>
+
+          <div class="bg-amber-950/30 border border-amber-800/60 rounded-xl p-4">
+            <div class="text-[11px] font-black uppercase text-amber-400 mb-1.5">💡 প্রো টিপস</div>
+            <p class="text-[12px] text-amber-100/90 leading-relaxed">বিল save করলে invoice number স্বয়ংক্রিয়ভাবে তৈরি হবে — যেমন <code>SFP-2425-0001</code>। এই নাম্বার সবসময় unique হয়। কাস্টমার এই নাম্বার বা IMEI শেষ-৬ দিয়ে Customer Portal-এ তার বিল দেখতে পারবে।</p>
+          </div>
+        </div>
+      `,
+      hi: `
+        <div class="space-y-4">
+          <h1 class="text-2xl font-black text-white mb-4">🧾 बिलिंग / POS — स्टेप बाय स्टेप</h1>
+          <p class="text-sm text-slate-300 leading-relaxed">यहां ग्राहकों के लिए GST इनवॉइस बनाएं। GST और Non-GST दोनों काम करते हैं।</p>
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4 space-y-3">
+            <h3 class="text-base font-bold text-white">📝 बिल बनाने के 7 स्टेप</h3>
+            <div class="space-y-2.5 text-[12.5px] text-slate-300">
+              <div><strong class="text-violet-400">1:</strong> F1 दबाएं या "Sales" टैब क्लिक करें</div>
+              <div><strong class="text-violet-400">2:</strong> GST या Non-GST चुनें</div>
+              <div><strong class="text-violet-400">3:</strong> ग्राहक की जानकारी भरें</div>
+              <div><strong class="text-violet-400">4:</strong> बारकोड स्कैन करें या उत्पाद जोड़ें</div>
+              <div><strong class="text-violet-400">5:</strong> छूट लागू करें (वैकल्पिक)</div>
+              <div><strong class="text-violet-400">6:</strong> दाईं ओर preview देखें</div>
+              <div><strong class="text-violet-400">7:</strong> "Save & Print" क्लिक करें</div>
+            </div>
+          </div>
+        </div>
+      `
+    },
+
+    'repair': {
+      en: `
+        <div class="space-y-4">
+          <h1 class="text-2xl font-black text-white mb-4">🔧 Repair Job Cards</h1>
+
+          <p class="text-sm text-slate-300 leading-relaxed">Complete mobile repair management — from device intake to delivery.</p>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4 space-y-3">
+            <h3 class="text-base font-bold text-white">📝 Creating a Job Card</h3>
+            <div class="space-y-2 text-[12.5px] text-slate-300">
+              <div><strong class="text-violet-400">1:</strong> Press <code class="bg-slate-900 px-1.5 py-0.5 rounded text-sky-400">F3</code> to open Repair</div>
+              <div><strong class="text-violet-400">2:</strong> Fill customer name + phone (mandatory)</div>
+              <div><strong class="text-violet-400">3:</strong> Enter device brand, model, IMEI, color, password</div>
+              <div><strong class="text-violet-400">4:</strong> Tick accessories (SIM, memory card, cover, charger, box)</div>
+              <div><strong class="text-violet-400">5:</strong> Describe the problem clearly</div>
+              <div><strong class="text-violet-400">6:</strong> Set estimated cost + advance paid</div>
+              <div><strong class="text-violet-400">7:</strong> Assign technician (optional)</div>
+              <div><strong class="text-violet-400">8:</strong> Click "Save Job Card"</div>
+            </div>
+          </div>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-base font-bold text-white mb-3">🔄 Status Workflow</h3>
+            <div class="space-y-2 text-[11.5px]">
+              <div class="flex items-center gap-2"><span class="text-sky-300 font-bold">📥 Received</span><span class="text-slate-500">— Device received</span></div>
+              <div class="flex items-center gap-2"><span class="text-purple-300 font-bold">🔬 Diagnosed</span><span class="text-slate-500">— Problem identified</span></div>
+              <div class="flex items-center gap-2"><span class="text-amber-300 font-bold">⏳ Waiting Approval</span><span class="text-slate-500">— Waiting for customer</span></div>
+              <div class="flex items-center gap-2"><span class="text-orange-300 font-bold">🔧 In Repair</span><span class="text-slate-500">— Being repaired</span></div>
+              <div class="flex items-center gap-2"><span class="text-emerald-300 font-bold">✅ Ready</span><span class="text-slate-500">— Ready for pickup</span></div>
+              <div class="flex items-center gap-2"><span class="text-violet-300 font-bold">📦 Delivered</span><span class="text-slate-500">— Handed over</span></div>
+              <div class="flex items-center gap-2"><span class="text-rose-300 font-bold">❌ Cancelled</span><span class="text-slate-500">— Job cancelled</span></div>
+            </div>
+          </div>
+
+          <div class="bg-emerald-950/30 border border-emerald-800/60 rounded-xl p-4">
+            <div class="text-[11px] font-black uppercase text-emerald-400 mb-1.5">📱 WhatsApp Update</div>
+            <p class="text-[12px] text-emerald-100/90 leading-relaxed">Open any job → "📱 WhatsApp" button → sends customer a message with job no, status, cost, and a link to track online. Customer gets live updates!</p>
+          </div>
+
+          <div class="bg-sky-950/30 border border-sky-800/60 rounded-xl p-4">
+            <div class="text-[11px] font-black uppercase text-sky-400 mb-1.5">🖨️ Print Job Slip</div>
+            <p class="text-[12px] text-sky-100/90 leading-relaxed">Print A5 job card with shop code + customer portal QR. Give this to customer when they drop the device.</p>
+          </div>
+        </div>
+      `,
+      bn: `
+        <div class="space-y-4">
+          <h1 class="text-2xl font-black text-white mb-4">🔧 রিপেয়ার জব কার্ড</h1>
+          <p class="text-sm text-slate-300 leading-relaxed">মোবাইল রিপেয়ারের সম্পূর্ণ ম্যানেজমেন্ট — ডিভাইস জমা থেকে ডেলিভারি পর্যন্ত।</p>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4 space-y-3">
+            <h3 class="text-base font-bold text-white">📝 জব কার্ড তৈরির ৮ ধাপ</h3>
+            <div class="space-y-2 text-[12.5px] text-slate-300">
+              <div><strong class="text-violet-400">১:</strong> <code class="bg-slate-900 px-1.5 py-0.5 rounded text-sky-400">F3</code> চাপুন</div>
+              <div><strong class="text-violet-400">২:</strong> কাস্টমারের নাম ও ফোন দিন (আবশ্যক)</div>
+              <div><strong class="text-violet-400">৩:</strong> ডিভাইস brand, model, IMEI, color, password দিন</div>
+              <div><strong class="text-violet-400">৪:</strong> accessories টিক দিন (SIM, memory card, cover, charger, box)</div>
+              <div><strong class="text-violet-400">৫:</strong> সমস্যা স্পষ্টভাবে লিখুন</div>
+              <div><strong class="text-violet-400">৬:</strong> আনুমানিক খরচ ও অ্যাডভান্স দিন</div>
+              <div><strong class="text-violet-400">৭:</strong> টেকনিশিয়ান assign করুন (optional)</div>
+              <div><strong class="text-violet-400">৮:</strong> "Save Job Card" ক্লিক করুন</div>
+            </div>
+          </div>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-base font-bold text-white mb-3">🔄 স্টেটাস ফ্লো</h3>
+            <div class="space-y-2 text-[11.5px]">
+              <div class="flex items-center gap-2"><span class="text-sky-300 font-bold">📥 Received</span><span class="text-slate-500">— ডিভাইস পাওয়া গেছে</span></div>
+              <div class="flex items-center gap-2"><span class="text-purple-300 font-bold">🔬 Diagnosed</span><span class="text-slate-500">— সমস্যা চিহ্নিত</span></div>
+              <div class="flex items-center gap-2"><span class="text-amber-300 font-bold">⏳ Waiting</span><span class="text-slate-500">— কাস্টমারের অনুমোদনের অপেক্ষায়</span></div>
+              <div class="flex items-center gap-2"><span class="text-orange-300 font-bold">🔧 In Repair</span><span class="text-slate-500">— মেরামত চলছে</span></div>
+              <div class="flex items-center gap-2"><span class="text-emerald-300 font-bold">✅ Ready</span><span class="text-slate-500">— সংগ্রহ করার জন্য প্রস্তুত</span></div>
+              <div class="flex items-center gap-2"><span class="text-violet-300 font-bold">📦 Delivered</span><span class="text-slate-500">— কাস্টমারকে দেওয়া হয়েছে</span></div>
+              <div class="flex items-center gap-2"><span class="text-rose-300 font-bold">❌ Cancelled</span><span class="text-slate-500">— বাতিল</span></div>
+            </div>
+          </div>
+
+          <div class="bg-emerald-950/30 border border-emerald-800/60 rounded-xl p-4">
+            <div class="text-[11px] font-black uppercase text-emerald-400 mb-1.5">📱 WhatsApp আপডেট</div>
+            <p class="text-[12px] text-emerald-100/90 leading-relaxed">যেকোনো job খুলে "📱 WhatsApp" ক্লিক করুন → কাস্টমার পাবে job no, status, খরচ সহ সম্পূর্ণ তথ্য এবং live track করার লিংক।</p>
+          </div>
+
+          <div class="bg-sky-950/30 border border-sky-800/60 rounded-xl p-4">
+            <div class="text-[11px] font-black uppercase text-sky-400 mb-1.5">🖨️ জব স্লিপ প্রিন্ট</div>
+            <p class="text-[12px] text-sky-100/90 leading-relaxed">A5 সাইজের job card print করুন যাতে shop code ও customer portal QR থাকে। ডিভাইস নেওয়ার সময় কাস্টমারকে দিন।</p>
+          </div>
+        </div>
+      `,
+      hi: `
+        <div class="space-y-4">
+          <h1 class="text-2xl font-black text-white mb-4">🔧 रिपेयर जॉब कार्ड</h1>
+          <p class="text-sm text-slate-300 leading-relaxed">डिवाइस इनटेक से डिलीवरी तक पूर्ण मोबाइल रिपेयर प्रबंधन।</p>
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-base font-bold text-white mb-3">📝 जॉब कार्ड बनाना</h3>
+            <div class="space-y-2 text-[12.5px] text-slate-300">
+              <div><strong>1:</strong> F3 दबाएं</div>
+              <div><strong>2:</strong> ग्राहक का नाम, फोन भरें</div>
+              <div><strong>3:</strong> डिवाइस की जानकारी भरें</div>
+              <div><strong>4:</strong> समस्या बताएं</div>
+              <div><strong>5:</strong> अनुमानित लागत सेट करें</div>
+              <div><strong>6:</strong> "Save Job Card" क्लिक करें</div>
+            </div>
+          </div>
+        </div>
+      `
+    },
+
+    'inventory': {
+      en: `
+        <div class="space-y-4">
+          <h1 class="text-2xl font-black text-white mb-4">📦 Inventory Management</h1>
+
+          <p class="text-sm text-slate-300 leading-relaxed">Track every phone by unique IMEI. Manage new & old stock separately.</p>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4 space-y-3">
+            <h3 class="text-base font-bold text-white">➕ Adding Stock</h3>
+            <div class="space-y-2 text-[12.5px] text-slate-300">
+              <div><strong class="text-violet-400">1:</strong> Press <code class="bg-slate-900 px-1.5 py-0.5 rounded text-sky-400">F9</code></div>
+              <div><strong class="text-violet-400">2:</strong> Select Category (Mobile Phone, Cover, etc.)</div>
+              <div><strong class="text-violet-400">3:</strong> Enter Model Name (e.g. "Samsung A15")</div>
+              <div><strong class="text-violet-400">4:</strong> Choose type: <strong>New Stock</strong> or <strong>Old / Pre-owned</strong></div>
+              <div><strong class="text-violet-400">5:</strong> Enter cost price and selling price</div>
+              <div><strong class="text-violet-400">6:</strong> Scan IMEI barcodes (multiple supported)</div>
+              <div><strong class="text-violet-400">7:</strong> Click "Inward to Stock"</div>
+            </div>
+          </div>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-base font-bold text-white mb-3">🏷️ Category Manager</h3>
+            <p class="text-[12px] text-slate-400 mb-2 leading-relaxed">Create custom categories for your business (e.g. "Screen Guard", "Charger Type-C"). Click "⚙️ Manage" to add, rename, or delete categories.</p>
+          </div>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-base font-bold text-white mb-3">⚡ Quick Sell</h3>
+            <p class="text-[12px] text-slate-400 leading-relaxed">Click ⚡ button on any item → auto-navigates to Billing with item pre-loaded in cart. Just add customer → done!</p>
+          </div>
+
+          <div class="bg-rose-950/30 border border-rose-800/60 rounded-xl p-4">
+            <div class="text-[11px] font-black uppercase text-rose-400 mb-1.5">🔒 PIN Protected</div>
+            <p class="text-[12px] text-rose-100/90 leading-relaxed">Edit price, change category, and delete stock require Master PIN (default: 1234). Change it in Settings.</p>
+          </div>
+        </div>
+      `,
+      bn: `
+        <div class="space-y-4">
+          <h1 class="text-2xl font-black text-white mb-4">📦 স্টক ম্যানেজমেন্ট</h1>
+          <p class="text-sm text-slate-300 leading-relaxed">প্রতিটি ফোন track করুন unique IMEI দিয়ে। নতুন ও পুরোনো স্টক আলাদা রাখুন।</p>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4 space-y-3">
+            <h3 class="text-base font-bold text-white">➕ স্টক যোগ করার ধাপ</h3>
+            <div class="space-y-2 text-[12.5px] text-slate-300">
+              <div><strong class="text-violet-400">১:</strong> <code class="bg-slate-900 px-1.5 py-0.5 rounded text-sky-400">F9</code> চাপুন</div>
+              <div><strong class="text-violet-400">২:</strong> Category বেছে নিন (Mobile Phone, Cover ইত্যাদি)</div>
+              <div><strong class="text-violet-400">৩:</strong> Model Name লিখুন (যেমন "Samsung A15")</div>
+              <div><strong class="text-violet-400">৪:</strong> ধরন বেছে নিন: <strong>New Stock</strong> বা <strong>Old / Pre-owned</strong></div>
+              <div><strong class="text-violet-400">৫:</strong> ক্রয় মূল্য ও বিক্রয় মূল্য দিন</div>
+              <div><strong class="text-violet-400">৬:</strong> IMEI barcode স্ক্যান করুন (একাধিক দেওয়া যাবে)</div>
+              <div><strong class="text-violet-400">৭:</strong> "Inward to Stock" ক্লিক করুন</div>
+            </div>
+          </div>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-base font-bold text-white mb-3">🏷️ Category Manager</h3>
+            <p class="text-[12px] text-slate-400 leading-relaxed">আপনার ব্যবসার জন্য কাস্টম ক্যাটাগরি বানান (যেমন "Screen Guard", "Charger Type-C")। "⚙️ Manage" ক্লিক করে add, rename বা delete করুন।</p>
+          </div>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-base font-bold text-white mb-3">⚡ দ্রুত বিক্রয়</h3>
+            <p class="text-[12px] text-slate-400 leading-relaxed">যেকোনো আইটেমে ⚡ বাটন ক্লিক করুন → স্বয়ংক্রিয়ভাবে Billing-এ চলে যাবে এবং cart-এ item pre-loaded থাকবে। শুধু কাস্টমার যোগ করুন → হয়ে গেল!</p>
+          </div>
+
+          <div class="bg-rose-950/30 border border-rose-800/60 rounded-xl p-4">
+            <div class="text-[11px] font-black uppercase text-rose-400 mb-1.5">🔒 PIN সুরক্ষিত</div>
+            <p class="text-[12px] text-rose-100/90 leading-relaxed">দাম এডিট, ক্যাটাগরি পরিবর্তন, এবং স্টক ডিলিটের জন্য Master PIN লাগবে (ডিফল্ট: 1234)। সেটিংসে পরিবর্তন করুন।</p>
+          </div>
+        </div>
+      `,
+      hi: `
+        <div class="space-y-4">
+          <h1 class="text-2xl font-black text-white mb-4">📦 इन्वेंट्री प्रबंधन</h1>
+          <p class="text-sm text-slate-300 leading-relaxed">हर फोन को unique IMEI से track करें।</p>
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-base font-bold text-white mb-3">➕ स्टॉक जोड़ें</h3>
+            <div class="space-y-2 text-[12.5px] text-slate-300">
+              <div><strong>1:</strong> F9 दबाएं</div>
+              <div><strong>2:</strong> Category चुनें</div>
+              <div><strong>3:</strong> Model नाम भरें</div>
+              <div><strong>4:</strong> New या Old चुनें</div>
+              <div><strong>5:</strong> मूल्य भरें</div>
+              <div><strong>6:</strong> IMEI स्कैन करें</div>
+              <div><strong>7:</strong> Save करें</div>
+            </div>
+          </div>
+        </div>
+      `
+    },
+
+    'settings': {
+      en: `
+        <div class="space-y-4">
+          <h1 class="text-2xl font-black text-white mb-4">⚙️ Store Settings</h1>
+
+          <p class="text-sm text-slate-300 leading-relaxed">Configure your store profile, bank details, backup preferences.</p>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4 space-y-3">
+            <h3 class="text-base font-bold text-white">🏪 Store Profile</h3>
+            <p class="text-[12px] text-slate-400 leading-relaxed">Enter your shop name, GSTIN, phone, address, and upload your logo. This appears on every invoice and job card.</p>
+          </div>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-base font-bold text-white mb-3">🏦 Bank + UPI Details</h3>
+            <p class="text-[12px] text-slate-400 leading-relaxed">Add bank name, account number, IFSC, and UPI ID. The invoice shows a dynamic QR code so customers can scan & pay directly.</p>
+          </div>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-base font-bold text-white mb-3">🔒 Master PIN</h3>
+            <p class="text-[12px] text-slate-400 leading-relaxed">4-6 digit PIN protects sensitive operations (delete, edit price, wipe data). Set a security question for recovery.</p>
+          </div>
+
+          <div class="bg-emerald-950/30 border border-emerald-800/60 rounded-xl p-4">
+            <div class="text-[11px] font-black uppercase text-emerald-400 mb-1.5">🛡️ Auto Daily Backup</div>
+            <p class="text-[12px] text-emerald-100/90 leading-relaxed mb-3">Every day, SmartFix automatically saves a full backup. Two ways to backup:</p>
+            <ul class="text-[11.5px] text-emerald-100/80 space-y-1 leading-relaxed">
+              <li>• <strong>Set Folder:</strong> Desktop Chrome only. Choose a folder → daily backups save there automatically</li>
+              <li>• <strong>Backup Now:</strong> Manual backup to Downloads folder (works on mobile too)</li>
+              <li>• <strong>Download JSON:</strong> Full data export anytime</li>
+            </ul>
+          </div>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-base font-bold text-white mb-3">👥 Staff User Accounts</h3>
+            <p class="text-[12px] text-slate-400 leading-relaxed mb-2">Create login accounts for your staff:</p>
+            <div class="space-y-1.5 text-[11.5px] text-slate-400">
+              <div>• <strong>Manager:</strong> Can bill, purchase, see reports. Cannot delete or edit.</div>
+              <div>• <strong>Promoter:</strong> Only billing + returns.</div>
+              <div>• <strong>Technician:</strong> Repair + attendance.</div>
+              <div>• <strong>CA:</strong> Read-only access to reports.</div>
+            </div>
+          </div>
+        </div>
+      `,
+      bn: `
+        <div class="space-y-4">
+          <h1 class="text-2xl font-black text-white mb-4">⚙️ দোকানের সেটিংস</h1>
+          <p class="text-sm text-slate-300 leading-relaxed">আপনার দোকানের প্রোফাইল, ব্যাংক তথ্য, ব্যাকআপ কনফিগার করুন।</p>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4 space-y-3">
+            <h3 class="text-base font-bold text-white">🏪 দোকানের প্রোফাইল</h3>
+            <p class="text-[12px] text-slate-400 leading-relaxed">দোকানের নাম, GSTIN, ফোন, ঠিকানা দিন এবং লোগো আপলোড করুন। এগুলো সব invoice ও job card-এ দেখাবে।</p>
+          </div>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-base font-bold text-white mb-3">🏦 ব্যাংক + UPI তথ্য</h3>
+            <p class="text-[12px] text-slate-400 leading-relaxed">ব্যাংকের নাম, অ্যাকাউন্ট নম্বর, IFSC, UPI ID দিন। ইনভয়েসে dynamic QR code দেখাবে — কাস্টমার স্ক্যান করে সরাসরি পেমেন্ট করতে পারবে।</p>
+          </div>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-base font-bold text-white mb-3">🔒 Master PIN</h3>
+            <p class="text-[12px] text-slate-400 leading-relaxed">৪-৬ ডিজিটের PIN সংবেদনশীল কাজ (delete, edit price, wipe data) সুরক্ষিত করে। রিকভারির জন্য security question সেট করুন।</p>
+          </div>
+
+          <div class="bg-emerald-950/30 border border-emerald-800/60 rounded-xl p-4">
+            <div class="text-[11px] font-black uppercase text-emerald-400 mb-1.5">🛡️ অটো ডেইলি ব্যাকআপ</div>
+            <p class="text-[12px] text-emerald-100/90 leading-relaxed mb-3">প্রতিদিন SmartFix স্বয়ংক্রিয়ভাবে সম্পূর্ণ ব্যাকআপ নেয়। ৩টি উপায়:</p>
+            <ul class="text-[11.5px] text-emerald-100/80 space-y-1 leading-relaxed">
+              <li>• <strong>Set Folder:</strong> শুধু Desktop Chrome। একটি ফোল্ডার বেছে নিন → প্রতিদিন ব্যাকআপ সেখানে যাবে</li>
+              <li>• <strong>Backup Now:</strong> ম্যানুয়ালি Downloads folder-এ ব্যাকআপ (মোবাইলেও কাজ করে)</li>
+              <li>• <strong>Download JSON:</strong> যেকোনো সময় সম্পূর্ণ ডেটা export</li>
+            </ul>
+          </div>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-base font-bold text-white mb-3">👥 স্টাফ ইউজার অ্যাকাউন্ট</h3>
+            <p class="text-[12px] text-slate-400 leading-relaxed mb-2">আপনার স্টাফদের জন্য লগইন অ্যাকাউন্ট তৈরি করুন:</p>
+            <div class="space-y-1.5 text-[11.5px] text-slate-400">
+              <div>• <strong>Manager:</strong> বিল, purchase, রিপোর্ট দেখতে পারে। Delete/edit করতে পারে না।</div>
+              <div>• <strong>Promoter:</strong> শুধু billing + returns।</div>
+              <div>• <strong>Technician:</strong> Repair + attendance।</div>
+              <div>• <strong>CA:</strong> শুধু read-only reports।</div>
+            </div>
+          </div>
+        </div>
+      `,
+      hi: `
+        <div class="space-y-4">
+          <h1 class="text-2xl font-black text-white mb-4">⚙️ स्टोर सेटिंग्स</h1>
+          <p class="text-sm text-slate-300 leading-relaxed">स्टोर प्रोफाइल, बैंक जानकारी, बैकअप कॉन्फ़िगर करें।</p>
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-base font-bold text-white mb-3">🏪 स्टोर प्रोफाइल</h3>
+            <p class="text-[12px] text-slate-400 leading-relaxed">दुकान का नाम, GSTIN, फोन, पता, लोगो अपलोड करें।</p>
+          </div>
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-base font-bold text-white mb-3">🏦 बैंक + UPI</h3>
+            <p class="text-[12px] text-slate-400 leading-relaxed">बैंक विवरण और UPI ID जोड़ें। इनवॉइस पर QR कोड दिखेगा।</p>
+          </div>
+        </div>
+      `
+    },
+
+    'roles': {
+      en: `
+        <div class="space-y-4">
+          <h1 class="text-2xl font-black text-white mb-4">👑 User Roles Explained</h1>
+          <p class="text-sm text-slate-300 leading-relaxed">SmartFix ERP has 5 user roles. Each has different access permissions.</p>
+
+          <div class="space-y-3">
+            <div class="bg-gradient-to-br from-amber-950/40 to-slate-950/60 border border-amber-700/60 rounded-xl p-4">
+              <div class="flex items-center gap-2 mb-2"><span class="text-2xl">👑</span><span class="text-lg font-black text-amber-300">OWNER</span></div>
+              <p class="text-[12px] text-amber-100/80 leading-relaxed">Full access to everything. Can edit, delete, view all reports, manage staff, backup, and change settings. Only ONE owner per store.</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-blue-950/40 to-slate-950/60 border border-blue-700/60 rounded-xl p-4">
+              <div class="flex items-center gap-2 mb-2"><span class="text-2xl">👔</span><span class="text-lg font-black text-blue-300">MANAGER</span></div>
+              <p class="text-[12px] text-blue-100/80 leading-relaxed">Run daily operations. Can create bills, purchases, returns, vouchers. <strong>Cannot delete anything.</strong> Cannot access Settings or modify staff.</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-emerald-950/40 to-slate-950/60 border border-emerald-700/60 rounded-xl p-4">
+              <div class="flex items-center gap-2 mb-2"><span class="text-2xl">📢</span><span class="text-lg font-black text-emerald-300">PROMOTER</span></div>
+              <p class="text-[12px] text-emerald-100/80 leading-relaxed">Sales staff. Can create bills, returns, add customers. Cannot see purchases, vouchers, or financial reports.</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-orange-950/40 to-slate-950/60 border border-orange-700/60 rounded-xl p-4">
+              <div class="flex items-center gap-2 mb-2"><span class="text-2xl">🔧</span><span class="text-lg font-black text-orange-300">TECHNICIAN</span></div>
+              <p class="text-[12px] text-orange-100/80 leading-relaxed">Repair specialist. Can create and update job cards, change repair status, add parts. Cannot access billing.</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-violet-950/40 to-slate-950/60 border border-violet-700/60 rounded-xl p-4">
+              <div class="flex items-center gap-2 mb-2"><span class="text-2xl">📊</span><span class="text-lg font-black text-violet-300">CA / ACCOUNTANT</span></div>
+              <p class="text-[12px] text-violet-100/80 leading-relaxed">Read-only access to financial data. Can view all reports, download Excel exports. Cannot create or modify anything.</p>
+            </div>
+          </div>
+
+          <div class="bg-sky-950/30 border border-sky-800/60 rounded-xl p-4">
+            <div class="text-[11px] font-black uppercase text-sky-400 mb-1.5">💡 Creating Staff Accounts</div>
+            <p class="text-[12px] text-sky-100/90 leading-relaxed">Owner → F11 Settings → Staff User Accounts → fill name, phone, email, password, select role → Create. Staff login uses phone + password.</p>
+          </div>
+        </div>
+      `,
+      bn: `
+        <div class="space-y-4">
+          <h1 class="text-2xl font-black text-white mb-4">👑 ইউজার রোল ব্যাখ্যা</h1>
+          <p class="text-sm text-slate-300 leading-relaxed">SmartFix ERP-এ ৫টি ইউজার রোল আছে। প্রত্যেকের আলাদা access permission।</p>
+
+          <div class="space-y-3">
+            <div class="bg-gradient-to-br from-amber-950/40 to-slate-950/60 border border-amber-700/60 rounded-xl p-4">
+              <div class="flex items-center gap-2 mb-2"><span class="text-2xl">👑</span><span class="text-lg font-black text-amber-300">মালিক / OWNER</span></div>
+              <p class="text-[12px] text-amber-100/80 leading-relaxed">সম্পূর্ণ access। Edit, delete, সব রিপোর্ট, স্টাফ ম্যানেজ, ব্যাকআপ, settings — সব করতে পারেন। একটি দোকানে শুধু একজন মালিক থাকবে।</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-blue-950/40 to-slate-950/60 border border-blue-700/60 rounded-xl p-4">
+              <div class="flex items-center gap-2 mb-2"><span class="text-2xl">👔</span><span class="text-lg font-black text-blue-300">ম্যানেজার / MANAGER</span></div>
+              <p class="text-[12px] text-blue-100/80 leading-relaxed">দৈনিক কাজ চালান। বিল, purchase, return, voucher তৈরি করতে পারবেন। <strong>কিছু delete করতে পারবেন না।</strong> Settings access নেই।</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-emerald-950/40 to-slate-950/60 border border-emerald-700/60 rounded-xl p-4">
+              <div class="flex items-center gap-2 mb-2"><span class="text-2xl">📢</span><span class="text-lg font-black text-emerald-300">প্রোমোটার / PROMOTER</span></div>
+              <p class="text-[12px] text-emerald-100/80 leading-relaxed">বিক্রয়কর্মী। বিল, return, কাস্টমার যোগ করতে পারবেন। Purchase, voucher বা financial report দেখতে পারবেন না।</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-orange-950/40 to-slate-950/60 border border-orange-700/60 rounded-xl p-4">
+              <div class="flex items-center gap-2 mb-2"><span class="text-2xl">🔧</span><span class="text-lg font-black text-orange-300">টেকনিশিয়ান / TECHNICIAN</span></div>
+              <p class="text-[12px] text-orange-100/80 leading-relaxed">রিপেয়ার বিশেষজ্ঞ। Job card তৈরি, status আপডেট, parts যোগ করতে পারবেন। Billing-এ access নেই।</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-violet-950/40 to-slate-950/60 border border-violet-700/60 rounded-xl p-4">
+              <div class="flex items-center gap-2 mb-2"><span class="text-2xl">📊</span><span class="text-lg font-black text-violet-300">CA / অ্যাকাউন্ট্যান্ট</span></div>
+              <p class="text-[12px] text-violet-100/80 leading-relaxed">শুধু read-only financial access। সব রিপোর্ট দেখতে, Excel download করতে পারবেন। কিছু পরিবর্তন করতে পারবেন না।</p>
+            </div>
+          </div>
+
+          <div class="bg-sky-950/30 border border-sky-800/60 rounded-xl p-4">
+            <div class="text-[11px] font-black uppercase text-sky-400 mb-1.5">💡 স্টাফ অ্যাকাউন্ট তৈরি</div>
+            <p class="text-[12px] text-sky-100/90 leading-relaxed">মালিক → F11 Settings → Staff User Accounts → নাম, ফোন, email, password দিন, role বেছে নিন → Create। স্টাফ তার ফোন নাম্বার + password দিয়ে লগইন করবে।</p>
+          </div>
+        </div>
+      `,
+      hi: `
+        <div class="space-y-4">
+          <h1 class="text-2xl font-black text-white mb-4">👑 यूजर रोल</h1>
+          <p class="text-sm text-slate-300 leading-relaxed">SmartFix ERP में 5 यूजर रोल हैं।</p>
+          <div class="space-y-2 text-[12px] text-slate-300">
+            <div><strong class="text-amber-300">👑 OWNER:</strong> पूर्ण पहुंच</div>
+            <div><strong class="text-blue-300">👔 MANAGER:</strong> संचालन (delete नहीं)</div>
+            <div><strong class="text-emerald-300">📢 PROMOTER:</strong> बिलिंग + रिटर्न</div>
+            <div><strong class="text-orange-300">🔧 TECHNICIAN:</strong> रिपेयर + अटेंडेंस</div>
+            <div><strong class="text-violet-300">📊 CA:</strong> read-only रिपोर्ट</div>
+          </div>
+        </div>
+      `
+    },
+
+    'shortcuts': {
+      en: `
+        <div class="space-y-4">
+          <h1 class="text-2xl font-black text-white mb-4">⌨️ Keyboard Shortcuts</h1>
+          <p class="text-sm text-slate-300 leading-relaxed">Use function keys to navigate instantly — saves you seconds on every bill.</p>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div class="flex items-center justify-between p-2.5 bg-slate-900/60 rounded-lg">
+                <span class="text-[12.5px] text-slate-300">Sales / Billing</span>
+                <kbd class="bg-slate-950 border border-slate-700 px-2 py-1 rounded text-[11px] font-mono text-violet-400">F1</kbd>
+              </div>
+              <div class="flex items-center justify-between p-2.5 bg-slate-900/60 rounded-lg">
+                <span class="text-[12.5px] text-slate-300">Returns</span>
+                <kbd class="bg-slate-950 border border-slate-700 px-2 py-1 rounded text-[11px] font-mono text-violet-400">F2</kbd>
+              </div>
+              <div class="flex items-center justify-between p-2.5 bg-slate-900/60 rounded-lg">
+                <span class="text-[12.5px] text-slate-300">Repair</span>
+                <kbd class="bg-slate-950 border border-slate-700 px-2 py-1 rounded text-[11px] font-mono text-violet-400">F3</kbd>
+              </div>
+              <div class="flex items-center justify-between p-2.5 bg-slate-900/60 rounded-lg">
+                <span class="text-[12.5px] text-slate-300">Purchase</span>
+                <kbd class="bg-slate-950 border border-slate-700 px-2 py-1 rounded text-[11px] font-mono text-violet-400">F4</kbd>
+              </div>
+              <div class="flex items-center justify-between p-2.5 bg-slate-900/60 rounded-lg">
+                <span class="text-[12.5px] text-slate-300">Vouchers</span>
+                <kbd class="bg-slate-950 border border-slate-700 px-2 py-1 rounded text-[11px] font-mono text-violet-400">F5</kbd>
+              </div>
+              <div class="flex items-center justify-between p-2.5 bg-slate-900/60 rounded-lg">
+                <span class="text-[12.5px] text-slate-300">P&L / Accounting</span>
+                <kbd class="bg-slate-950 border border-slate-700 px-2 py-1 rounded text-[11px] font-mono text-violet-400">F6</kbd>
+              </div>
+              <div class="flex items-center justify-between p-2.5 bg-slate-900/60 rounded-lg">
+                <span class="text-[12.5px] text-slate-300">Books</span>
+                <kbd class="bg-slate-950 border border-slate-700 px-2 py-1 rounded text-[11px] font-mono text-violet-400">F7</kbd>
+              </div>
+              <div class="flex items-center justify-between p-2.5 bg-slate-900/60 rounded-lg">
+                <span class="text-[12.5px] text-slate-300">Parties</span>
+                <kbd class="bg-slate-950 border border-slate-700 px-2 py-1 rounded text-[11px] font-mono text-violet-400">F8</kbd>
+              </div>
+              <div class="flex items-center justify-between p-2.5 bg-slate-900/60 rounded-lg">
+                <span class="text-[12.5px] text-slate-300">Inventory / Stock</span>
+                <kbd class="bg-slate-950 border border-slate-700 px-2 py-1 rounded text-[11px] font-mono text-violet-400">F9</kbd>
+              </div>
+              <div class="flex items-center justify-between p-2.5 bg-slate-900/60 rounded-lg">
+                <span class="text-[12.5px] text-slate-300">Staff</span>
+                <kbd class="bg-slate-950 border border-slate-700 px-2 py-1 rounded text-[11px] font-mono text-violet-400">F10</kbd>
+              </div>
+              <div class="flex items-center justify-between p-2.5 bg-slate-900/60 rounded-lg">
+                <span class="text-[12.5px] text-slate-300">Settings</span>
+                <kbd class="bg-slate-950 border border-slate-700 px-2 py-1 rounded text-[11px] font-mono text-violet-400">F11</kbd>
+              </div>
+              <div class="flex items-center justify-between p-2.5 bg-slate-900/60 rounded-lg">
+                <span class="text-[12.5px] text-slate-300">Attendance</span>
+                <kbd class="bg-slate-950 border border-slate-700 px-2 py-1 rounded text-[11px] font-mono text-violet-400">F12</kbd>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-base font-bold text-white mb-3">🖱️ Other Shortcuts</h3>
+            <div class="space-y-2 text-[12px]">
+              <div class="flex justify-between items-center"><span class="text-slate-400">Close modal</span><kbd class="bg-slate-900 border border-slate-700 px-2 py-0.5 rounded text-[11px] font-mono text-sky-400">Esc</kbd></div>
+              <div class="flex justify-between items-center"><span class="text-slate-400">Hard refresh (after update)</span><kbd class="bg-slate-900 border border-slate-700 px-2 py-0.5 rounded text-[11px] font-mono text-sky-400">Ctrl+Shift+R</kbd></div>
+              <div class="flex justify-between items-center"><span class="text-slate-400">Dev tools / Console</span><kbd class="bg-slate-900 border border-slate-700 px-2 py-0.5 rounded text-[11px] font-mono text-sky-400">F12</kbd></div>
+            </div>
+          </div>
+        </div>
+      `,
+      bn: `
+        <div class="space-y-4">
+          <h1 class="text-2xl font-black text-white mb-4">⌨️ কীবোর্ড শর্টকাট</h1>
+          <p class="text-sm text-slate-300 leading-relaxed">Function key দিয়ে দ্রুত navigate করুন — প্রতিটা বিলে সেকেন্ড বাঁচবে।</p>
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[12px]">
+              <div class="flex justify-between p-2 bg-slate-900/60 rounded"><span class="text-slate-300">বিলিং</span><kbd class="font-mono text-violet-400 text-[11px]">F1</kbd></div>
+              <div class="flex justify-between p-2 bg-slate-900/60 rounded"><span class="text-slate-300">রিটার্ন</span><kbd class="font-mono text-violet-400 text-[11px]">F2</kbd></div>
+              <div class="flex justify-between p-2 bg-slate-900/60 rounded"><span class="text-slate-300">রিপেয়ার</span><kbd class="font-mono text-violet-400 text-[11px]">F3</kbd></div>
+              <div class="flex justify-between p-2 bg-slate-900/60 rounded"><span class="text-slate-300">পারচেজ</span><kbd class="font-mono text-violet-400 text-[11px]">F4</kbd></div>
+              <div class="flex justify-between p-2 bg-slate-900/60 rounded"><span class="text-slate-300">ভাউচার</span><kbd class="font-mono text-violet-400 text-[11px]">F5</kbd></div>
+              <div class="flex justify-between p-2 bg-slate-900/60 rounded"><span class="text-slate-300">লাভ-ক্ষতি</span><kbd class="font-mono text-violet-400 text-[11px]">F6</kbd></div>
+              <div class="flex justify-between p-2 bg-slate-900/60 rounded"><span class="text-slate-300">বই</span><kbd class="font-mono text-violet-400 text-[11px]">F7</kbd></div>
+              <div class="flex justify-between p-2 bg-slate-900/60 rounded"><span class="text-slate-300">পার্টি</span><kbd class="font-mono text-violet-400 text-[11px]">F8</kbd></div>
+              <div class="flex justify-between p-2 bg-slate-900/60 rounded"><span class="text-slate-300">স্টক</span><kbd class="font-mono text-violet-400 text-[11px]">F9</kbd></div>
+              <div class="flex justify-between p-2 bg-slate-900/60 rounded"><span class="text-slate-300">স্টাফ</span><kbd class="font-mono text-violet-400 text-[11px]">F10</kbd></div>
+              <div class="flex justify-between p-2 bg-slate-900/60 rounded"><span class="text-slate-300">সেটিংস</span><kbd class="font-mono text-violet-400 text-[11px]">F11</kbd></div>
+              <div class="flex justify-between p-2 bg-slate-900/60 rounded"><span class="text-slate-300">অ্যাটেনডেন্স</span><kbd class="font-mono text-violet-400 text-[11px]">F12</kbd></div>
+            </div>
+          </div>
+        </div>
+      `,
+      hi: `
+        <div class="space-y-4">
+          <h1 class="text-2xl font-black text-white mb-4">⌨️ कीबोर्ड शॉर्टकट</h1>
+          <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4 text-[12px]">
+            <div class="grid grid-cols-2 gap-2">
+              <div class="flex justify-between p-2 bg-slate-900/60 rounded"><span class="text-slate-300">बिलिंग</span><kbd class="text-violet-400 font-mono">F1</kbd></div>
+              <div class="flex justify-between p-2 bg-slate-900/60 rounded"><span class="text-slate-300">रिटर्न</span><kbd class="text-violet-400 font-mono">F2</kbd></div>
+              <div class="flex justify-between p-2 bg-slate-900/60 rounded"><span class="text-slate-300">रिपेयर</span><kbd class="text-violet-400 font-mono">F3</kbd></div>
+              <div class="flex justify-between p-2 bg-slate-900/60 rounded"><span class="text-slate-300">खरीद</span><kbd class="text-violet-400 font-mono">F4</kbd></div>
+              <div class="flex justify-between p-2 bg-slate-900/60 rounded"><span class="text-slate-300">स्टॉक</span><kbd class="text-violet-400 font-mono">F9</kbd></div>
+              <div class="flex justify-between p-2 bg-slate-900/60 rounded"><span class="text-slate-300">सेटिंग्स</span><kbd class="text-violet-400 font-mono">F11</kbd></div>
+            </div>
+          </div>
+        </div>
+      `
+    },
+
+    'tips': {
+      en: `
+        <div class="space-y-4">
+          <h1 class="text-2xl font-black text-white mb-4">💡 Pro Tips & Best Practices</h1>
+
+          <div class="space-y-3">
+            <div class="bg-gradient-to-br from-emerald-950/40 to-slate-950/60 border border-emerald-700/60 rounded-xl p-4">
+              <div class="text-[11px] font-black uppercase text-emerald-400 mb-2">✅ Always Do This</div>
+              <div class="space-y-2 text-[12px] text-emerald-100/90">
+                <div>✓ Backup your data <strong>daily</strong> (Settings → Backup Now)</div>
+                <div>✓ Give staff their own login (never share owner password)</div>
+                <div>✓ Enter IMEI on every phone sale (helps warranty tracking)</div>
+                <div>✓ Update stock prices weekly</div>
+                <div>✓ Use Customer Portal QR on every invoice</div>
+                <div>✓ Set a strong Master PIN (not 1234)</div>
+                <div>✓ Store logo on invoice builds customer trust</div>
+              </div>
+            </div>
+
+            <div class="bg-gradient-to-br from-amber-950/40 to-slate-950/60 border border-amber-700/60 rounded-xl p-4">
+              <div class="text-[11px] font-black uppercase text-amber-400 mb-2">⚡ Speed Boosters</div>
+              <div class="space-y-2 text-[12px] text-amber-100/90">
+                <div>• Save customer as "Party" for repeat business</div>
+                <div>• Use F-keys instead of clicking tabs</div>
+                <div>• Barcode scanner saves 30 sec per item</div>
+                <div>• Set up shortcuts on your phone home screen (PWA)</div>
+                <div>• Bulk-add stock via rapid scan mode</div>
+              </div>
+            </div>
+
+            <div class="bg-gradient-to-br from-rose-950/40 to-slate-950/60 border border-rose-700/60 rounded-xl p-4">
+              <div class="text-[11px] font-black uppercase text-rose-400 mb-2">⚠️ Never Do This</div>
+              <div class="space-y-2 text-[12px] text-rose-100/90">
+                <div>✗ Don't share your master PIN with staff</div>
+                <div>✗ Don't skip backup for more than a week</div>
+                <div>✗ Don't delete invoices without checking stock first</div>
+                <div>✗ Don't use same login on multiple devices for staff</div>
+                <div>✗ Don't ignore low-stock warnings</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `,
+      bn: `
+        <div class="space-y-4">
+          <h1 class="text-2xl font-black text-white mb-4">💡 প্রো টিপস ও সর্বোত্তম প্র্যাকটিস</h1>
+          <div class="space-y-3">
+            <div class="bg-gradient-to-br from-emerald-950/40 to-slate-950/60 border border-emerald-700/60 rounded-xl p-4">
+              <div class="text-[11px] font-black uppercase text-emerald-400 mb-2">✅ সবসময় করবেন</div>
+              <div class="space-y-2 text-[12px] text-emerald-100/90">
+                <div>✓ প্রতিদিন ব্যাকআপ নিন (Settings → Backup Now)</div>
+                <div>✓ স্টাফদের আলাদা লগইন দিন (মালিকের পাসওয়ার্ড শেয়ার করবেন না)</div>
+                <div>✓ প্রতিটি ফোন বিক্রিতে IMEI দিন (warranty track করতে)</div>
+                <div>✓ সপ্তাহে একবার দাম আপডেট করুন</div>
+                <div>✓ প্রতিটি invoice-এ Customer Portal QR দিন</div>
+                <div>✓ শক্তিশালী Master PIN সেট করুন (1234 নয়)</div>
+                <div>✓ Invoice-এ দোকানের লোগো কাস্টমার বিশ্বাস বাড়ায়</div>
+              </div>
+            </div>
+
+            <div class="bg-gradient-to-br from-amber-950/40 to-slate-950/60 border border-amber-700/60 rounded-xl p-4">
+              <div class="text-[11px] font-black uppercase text-amber-400 mb-2">⚡ দ্রুত কাজের টিপস</div>
+              <div class="space-y-2 text-[12px] text-amber-100/90">
+                <div>• বারবার আসা কাস্টমারকে "Party" হিসেবে save করুন</div>
+                <div>• Tab-এ ক্লিক করার বদলে F-key ব্যবহার করুন</div>
+                <div>• Barcode scanner দিয়ে প্রতি item-এ ৩০ সেকেন্ড বাঁচান</div>
+                <div>• ফোনের home screen-এ shortcut বানান (PWA)</div>
+                <div>• Rapid scan mode দিয়ে bulk স্টক যোগ করুন</div>
+              </div>
+            </div>
+
+            <div class="bg-gradient-to-br from-rose-950/40 to-slate-950/60 border border-rose-700/60 rounded-xl p-4">
+              <div class="text-[11px] font-black uppercase text-rose-400 mb-2">⚠️ কখনো করবেন না</div>
+              <div class="space-y-2 text-[12px] text-rose-100/90">
+                <div>✗ Master PIN স্টাফদের সাথে শেয়ার করবেন না</div>
+                <div>✗ এক সপ্তাহের বেশি backup বাদ দেবেন না</div>
+                <div>✗ Stock চেক না করে invoice delete করবেন না</div>
+                <div>✗ একই login একাধিক device-এ ব্যবহার করবেন না</div>
+                <div>✗ Low-stock warning ignore করবেন না</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `,
+      hi: `
+        <div class="space-y-4">
+          <h1 class="text-2xl font-black text-white mb-4">💡 प्रो टिप्स</h1>
+          <div class="bg-emerald-950/40 border border-emerald-700/60 rounded-xl p-4">
+            <div class="text-[11px] font-black uppercase text-emerald-400 mb-2">✅ हमेशा करें</div>
+            <div class="space-y-1.5 text-[12px] text-emerald-100/90">
+              <div>✓ रोजाना बैकअप</div>
+              <div>✓ स्टाफ को अलग लॉगिन</div>
+              <div>✓ हर सेल पर IMEI</div>
+              <div>✓ मजबूत Master PIN</div>
+            </div>
+          </div>
+        </div>
+      `
+    },
+
+    'troubleshooting': {
+      en: `
+        <div class="space-y-4">
+          <h1 class="text-2xl font-black text-white mb-4">🔧 Common Issues & Fixes</h1>
+
+          <div class="space-y-3">
+            <div class="bg-slate-950/60 border border-rose-800/60 rounded-xl p-4">
+              <div class="text-[12.5px] font-bold text-rose-300 mb-2">🔴 Login button spinner আটকে গেছে / hung</div>
+              <div class="space-y-1.5 text-[11.5px] text-slate-300">
+                <div><strong>Cause:</strong> Firestore Rules not published OR internet issue</div>
+                <div><strong>Fix:</strong></div>
+                <div class="pl-4 text-slate-400">1. F12 → Console দেখুন</div>
+                <div class="pl-4 text-slate-400">2. "permission-denied" থাকলে → Firebase Rules publish করুন</div>
+                <div class="pl-4 text-slate-400">3. 30 seconds wait + hard refresh (Ctrl+Shift+R)</div>
+              </div>
+            </div>
+
+            <div class="bg-slate-950/60 border border-rose-800/60 rounded-xl p-4">
+              <div class="text-[12.5px] font-bold text-rose-300 mb-2">🔴 Blank white screen</div>
+              <div class="space-y-1.5 text-[11.5px] text-slate-300">
+                <div><strong>Fix:</strong></div>
+                <div class="pl-4 text-slate-400">1. Hard refresh (Ctrl+Shift+R)</div>
+                <div class="pl-4 text-slate-400">2. F12 → Console check for errors</div>
+                <div class="pl-4 text-slate-400">3. Check Network tab for 404s</div>
+              </div>
+            </div>
+
+            <div class="bg-slate-950/60 border border-rose-800/60 rounded-xl p-4">
+              <div class="text-[12.5px] font-bold text-rose-300 mb-2">🔴 Print dialog blank / no content</div>
+              <div class="space-y-1.5 text-[11.5px] text-slate-300">
+                <div><strong>Cause:</strong> Popup blocker OR slow image load</div>
+                <div><strong>Fix:</strong></div>
+                <div class="pl-4 text-slate-400">1. Chrome → Site settings → Popups → Allow</div>
+                <div class="pl-4 text-slate-400">2. Wait 2 sec after clicking Print</div>
+                <div class="pl-4 text-slate-400">3. Test in Chrome (most reliable)</div>
+              </div>
+            </div>
+
+            <div class="bg-slate-950/60 border border-rose-800/60 rounded-xl p-4">
+              <div class="text-[12.5px] font-bold text-rose-300 mb-2">🔴 Data not syncing between devices</div>
+              <div class="space-y-1.5 text-[11.5px] text-slate-300">
+                <div><strong>Fix:</strong></div>
+                <div class="pl-4 text-slate-400">1. Same email login on both devices verify</div>
+                <div class="pl-4 text-slate-400">2. F12 → Console → check "☁️ Cloud sync engine ready"</div>
+                <div class="pl-4 text-slate-400">3. Internet connection check</div>
+                <div class="pl-4 text-slate-400">4. Firestore rules publish হয়েছে কিনা</div>
+              </div>
+            </div>
+
+            <div class="bg-slate-950/60 border border-rose-800/60 rounded-xl p-4">
+              <div class="text-[12.5px] font-bold text-rose-300 mb-2">🔴 Camera not opening</div>
+              <div class="space-y-1.5 text-[11.5px] text-slate-300">
+                <div><strong>Fix:</strong></div>
+                <div class="pl-4 text-slate-400">1. Chrome address bar → 🔒 → Camera → Allow</div>
+                <div class="pl-4 text-slate-400">2. Close other apps using camera</div>
+                <div class="pl-4 text-slate-400">3. Only works on HTTPS (GitHub Pages ✓)</div>
+              </div>
+            </div>
+
+            <div class="bg-slate-950/60 border border-rose-800/60 rounded-xl p-4">
+              <div class="text-[12.5px] font-bold text-rose-300 mb-2">🔴 Location not detecting</div>
+              <div class="space-y-1.5 text-[11.5px] text-slate-300">
+                <div><strong>Fix:</strong></div>
+                <div class="pl-4 text-slate-400">1. Phone → Settings → Location → On</div>
+                <div class="pl-4 text-slate-400">2. Chrome → Site settings → Location → Allow</div>
+                <div class="pl-4 text-slate-400">3. Attendance will still work without location</div>
+              </div>
+            </div>
+
+            <div class="bg-slate-950/60 border border-rose-800/60 rounded-xl p-4">
+              <div class="text-[12.5px] font-bold text-rose-300 mb-2">🔴 "Storage full" error</div>
+              <div class="space-y-1.5 text-[11.5px] text-slate-300">
+                <div><strong>Fix:</strong></div>
+                <div class="pl-4 text-slate-400">1. Settings → Wipe All Data (backup first!)</div>
+                <div class="pl-4 text-slate-400">2. Data is still safe in Firebase Cloud</div>
+                <div class="pl-4 text-slate-400">3. Clear browser cache also helps</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-sky-950/30 border border-sky-800/60 rounded-xl p-4 mt-3">
+            <div class="text-[11px] font-black uppercase text-sky-400 mb-1.5">📞 Still need help?</div>
+            <p class="text-[12px] text-sky-100/90 leading-relaxed">Contact your system developer with a screenshot of the error. Press F12 → take screenshot of the Console tab.</p>
+          </div>
+        </div>
+      `,
+      bn: `
+        <div class="space-y-4">
+          <h1 class="text-2xl font-black text-white mb-4">🔧 সাধারণ সমস্যা ও সমাধান</h1>
+
+          <div class="space-y-3">
+            <div class="bg-slate-950/60 border border-rose-800/60 rounded-xl p-4">
+              <div class="text-[12.5px] font-bold text-rose-300 mb-2">🔴 Login বাটন ঘুরেই যাচ্ছে</div>
+              <div class="space-y-1.5 text-[11.5px] text-slate-300">
+                <div><strong>কারণ:</strong> Firestore Rules publish হয়নি বা ইন্টারনেট সমস্যা</div>
+                <div><strong>সমাধান:</strong></div>
+                <div class="pl-4 text-slate-400">১. F12 চেপে Console দেখুন</div>
+                <div class="pl-4 text-slate-400">২. "permission-denied" থাকলে Firebase Rules publish করুন</div>
+                <div class="pl-4 text-slate-400">৩. ৩০ সেকেন্ড অপেক্ষা করে hard refresh (Ctrl+Shift+R)</div>
+              </div>
+            </div>
+
+            <div class="bg-slate-950/60 border border-rose-800/60 rounded-xl p-4">
+              <div class="text-[12.5px] font-bold text-rose-300 mb-2">🔴 সাদা স্ক্রিন আসছে</div>
+              <div class="space-y-1.5 text-[11.5px] text-slate-300">
+                <div><strong>সমাধান:</strong></div>
+                <div class="pl-4 text-slate-400">১. Hard refresh (Ctrl+Shift+R)</div>
+                <div class="pl-4 text-slate-400">২. F12 → Console-এ error দেখুন</div>
+                <div class="pl-4 text-slate-400">৩. Network tab-এ 404 error চেক করুন</div>
+              </div>
+            </div>
+
+            <div class="bg-slate-950/60 border border-rose-800/60 rounded-xl p-4">
+              <div class="text-[12.5px] font-bold text-rose-300 mb-2">🔴 প্রিন্ট ডায়ালগে কিছু নেই</div>
+              <div class="space-y-1.5 text-[11.5px] text-slate-300">
+                <div><strong>কারণ:</strong> Popup blocker বা ছবি লোড হচ্ছে না</div>
+                <div><strong>সমাধান:</strong></div>
+                <div class="pl-4 text-slate-400">১. Chrome → Site settings → Popups → Allow</div>
+                <div class="pl-4 text-slate-400">২. Print ক্লিকের পর ২ সেকেন্ড অপেক্ষা করুন</div>
+                <div class="pl-4 text-slate-400">৩. Chrome-এ টেস্ট করুন (সবচেয়ে নির্ভরযোগ্য)</div>
+              </div>
+            </div>
+
+            <div class="bg-slate-950/60 border border-rose-800/60 rounded-xl p-4">
+              <div class="text-[12.5px] font-bold text-rose-300 mb-2">🔴 ডিভাইসের মধ্যে data sync হচ্ছে না</div>
+              <div class="space-y-1.5 text-[11.5px] text-slate-300">
+                <div><strong>সমাধান:</strong></div>
+                <div class="pl-4 text-slate-400">১. দুই ডিভাইসে একই email দিয়ে login করা আছে কিনা verify</div>
+                <div class="pl-4 text-slate-400">২. F12 → Console → "☁️ Cloud sync engine ready" দেখুন</div>
+                <div class="pl-4 text-slate-400">৩. ইন্টারনেট চেক করুন</div>
+                <div class="pl-4 text-slate-400">৪. Firebase Rules publish হয়েছে কিনা</div>
+              </div>
+            </div>
+
+            <div class="bg-slate-950/60 border border-rose-800/60 rounded-xl p-4">
+              <div class="text-[12.5px] font-bold text-rose-300 mb-2">🔴 Camera খুলছে না</div>
+              <div class="space-y-1.5 text-[11.5px] text-slate-300">
+                <div><strong>সমাধান:</strong></div>
+                <div class="pl-4 text-slate-400">১. Chrome → 🔒 icon → Camera → Allow</div>
+                <div class="pl-4 text-slate-400">২. অন্য app camera ব্যবহার করছে কিনা চেক করুন</div>
+                <div class="pl-4 text-slate-400">৩. শুধু HTTPS-এ কাজ করে (GitHub Pages ✓)</div>
+              </div>
+            </div>
+
+            <div class="bg-slate-950/60 border border-rose-800/60 rounded-xl p-4">
+              <div class="text-[12.5px] font-bold text-rose-300 mb-2">🔴 Location আসছে না</div>
+              <div class="space-y-1.5 text-[11.5px] text-slate-300">
+                <div><strong>সমাধান:</strong></div>
+                <div class="pl-4 text-slate-400">১. ফোন → Settings → Location → On</div>
+                <div class="pl-4 text-slate-400">২. Chrome → Site settings → Location → Allow</div>
+                <div class="pl-4 text-slate-400">৩. Location ছাড়াও attendance কাজ করবে</div>
+              </div>
+            </div>
+
+            <div class="bg-slate-950/60 border border-rose-800/60 rounded-xl p-4">
+              <div class="text-[12.5px] font-bold text-rose-300 mb-2">🔴 "Storage full" দেখাচ্ছে</div>
+              <div class="space-y-1.5 text-[11.5px] text-slate-300">
+                <div><strong>সমাধান:</strong></div>
+                <div class="pl-4 text-slate-400">১. Settings → Wipe All Data (আগে backup নিন!)</div>
+                <div class="pl-4 text-slate-400">২. ডেটা Firebase Cloud-এ safe আছে</div>
+                <div class="pl-4 text-slate-400">৩. Browser cache clear করলেও কাজ হবে</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-sky-950/30 border border-sky-800/60 rounded-xl p-4 mt-3">
+            <div class="text-[11px] font-black uppercase text-sky-400 mb-1.5">📞 আরো সাহায্য লাগলে</div>
+            <p class="text-[12px] text-sky-100/90 leading-relaxed">আপনার system developer-এর সাথে যোগাযোগ করুন error-এর screenshot সহ। F12 → Console tab-এর screenshot নিন।</p>
+          </div>
+        </div>
+      `,
+      hi: `
+        <div class="space-y-4">
+          <h1 class="text-2xl font-black text-white mb-4">🔧 सामान्य समस्याएं</h1>
+          <div class="bg-slate-950/60 border border-rose-800/60 rounded-xl p-4">
+            <div class="text-[12.5px] font-bold text-rose-300 mb-2">🔴 लॉगिन बटन घूम रहा है</div>
+            <div class="text-[11.5px] text-slate-300"><strong>समाधान:</strong> Firebase Rules publish करें</div>
+          </div>
+          <div class="bg-slate-950/60 border border-rose-800/60 rounded-xl p-4">
+            <div class="text-[12.5px] font-bold text-rose-300 mb-2">🔴 प्रिंट blank आ रहा है</div>
+            <div class="text-[11.5px] text-slate-300"><strong>समाधान:</strong> Popup allow करें</div>
+          </div>
+        </div>
+      `
+    }
+  };
+
+
+  /* ============================================================
+     INIT
+     ============================================================ */
+  function init_manualModule() {
+    console.log('%c📖 Manual module initialized (v4.4.0)', 'color:#8b5cf6;font-weight:bold');
+
+    /* Load saved language */
+    try {
+      const saved = localStorage.getItem(LANG_KEY);
+      if (saved && T[saved]) MAN.lang = saved;
+    } catch (e) {}
+
+    /* Default section */
+    MAN.currentSection = 'getting-started';
+
+    renderLangButtons();
+    renderSidebar();
+    renderContent();
+    updateHeaderText();
+
+    return { onUnload: () => {} };
+  }
+
+
+  /* ============================================================
+     LANGUAGE
+     ============================================================ */
+  function setLang(lang) {
+    if (!T[lang]) return;
+    MAN.lang = lang;
+    try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+
+    renderLangButtons();
+    renderSidebar();
+    renderContent();
+    updateHeaderText();
+  }
+
+  function renderLangButtons() {
+    document.querySelectorAll('.man-lang-btn').forEach((btn) => {
+      const l = btn.dataset.lang;
+      if (l === MAN.lang) {
+        btn.className = 'man-lang-btn px-3 py-1.5 rounded-md text-[11px] font-bold transition bg-violet-600 text-white';
+      } else {
+        btn.className = 'man-lang-btn px-3 py-1.5 rounded-md text-[11px] font-bold transition text-slate-400 hover:text-white';
+      }
+    });
+  }
+
+  function updateHeaderText() {
+    const t = T[MAN.lang];
+    const titleEl = document.getElementById('manTitle');
+    const subEl = document.getElementById('manSubtitle');
+    const contentsEl = document.getElementById('manContentsLabel');
+    const searchEl = document.getElementById('manSearchInput');
+    if (titleEl) titleEl.textContent = t.title;
+    if (subEl) subEl.textContent = t.subtitle;
+    if (contentsEl) contentsEl.textContent = t.contents;
+    if (searchEl) searchEl.placeholder = t.searchPlaceholder;
+  }
+
+
+  /* ============================================================
+     SIDEBAR
+     ============================================================ */
+  function renderSidebar() {
+    const sidebar = document.getElementById('manSidebar');
+    if (!sidebar) return;
+
+    const sections = Object.keys(T[MAN.lang].sections);
+    const q = MAN.searchQuery.toLowerCase();
+
+    const filtered = q
+      ? sections.filter((key) => {
+          const label = T[MAN.lang].sections[key].toLowerCase();
+          if (label.includes(q)) return true;
+          /* Also search in content */
+          const content = (CONTENT[key]?.[MAN.lang] || '').toLowerCase();
+          return content.includes(q);
+        })
+      : sections;
+
+    if (filtered.length === 0) {
+      sidebar.innerHTML = `<div class="p-3 text-center text-[11px] text-slate-500">${T[MAN.lang].noResults} "${C.escapeHTML(MAN.searchQuery)}"</div>`;
+      return;
+    }
+
+    sidebar.innerHTML = filtered.map((key) => {
+      const label = T[MAN.lang].sections[key];
+      const active = key === MAN.currentSection;
+      return `
+        <button type="button" onclick="SF.manual.goTo('${key}')"
+                class="w-full text-left px-3 py-2 rounded-lg text-[12px] font-semibold transition ${active ? 'bg-violet-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}">
+          ${label}
+        </button>
+      `;
+    }).join('');
+  }
+
+
+  /* ============================================================
+     CONTENT
+     ============================================================ */
+  function renderContent() {
+    const content = document.getElementById('manContent');
+    if (!content) return;
+
+    const html = CONTENT[MAN.currentSection]?.[MAN.lang] || CONTENT[MAN.currentSection]?.['en'] || '<p class="text-slate-400">Content not available.</p>';
+    content.innerHTML = html;
+    content.scrollTop = 0;
+  }
+
+
+  /* ============================================================
+     NAVIGATE
+     ============================================================ */
+  function goTo(sectionKey) {
+    if (!CONTENT[sectionKey]) return;
+    MAN.currentSection = sectionKey;
+    renderSidebar();
+    renderContent();
+    try { localStorage.setItem(SCROLL_KEY, '0'); } catch (e) {}
+  }
+
+
+  /* ============================================================
+     SEARCH
+     ============================================================ */
+  function search() {
+    const el = document.getElementById('manSearchInput');
+    MAN.searchQuery = (el?.value || '').trim();
+    renderSidebar();
+  }
+
+
+  /* ============================================================
+     EXPOSE
+     ============================================================ */
+  window.SF = window.SF || {};
+  window.SF.manual = {
+    init: init_manualModule,
+    setLang,
+    goTo,
+    search,
+    getLang: () => MAN.lang
+  };
+
+  window.init_manualModule = init_manualModule;
+
+  if (document.getElementById('manualModule')) {
+    init_manualModule();
+  }
+})();
+</script>
