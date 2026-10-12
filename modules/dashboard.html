@@ -1,0 +1,1167 @@
+<!-- ============================================================
+     SMARTFIX ERP — Admin Dashboard (Command Center)
+     File: modules/dashboard.html
+     Version: 4.5.0
+     ============================================================ -->
+
+<section id="dashboardModule" class="space-y-4">
+
+  <!-- HEADER -->
+  <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 flex flex-wrap justify-between items-center gap-3">
+    <div class="flex items-center gap-3">
+      <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-700 flex items-center justify-center text-2xl shadow-lg shadow-emerald-500/30">📊</div>
+      <div>
+        <h2 class="text-lg font-black text-white">Business Dashboard</h2>
+        <p class="text-[11px] text-slate-400 mt-0.5">One view of everything happening in your shop</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 flex-wrap">
+      <select id="dbMonth" onchange="SF.dashboard.reload()"
+              class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 font-semibold">
+        <option value="1">January</option>
+        <option value="2">February</option>
+        <option value="3">March</option>
+        <option value="4">April</option>
+        <option value="5">May</option>
+        <option value="6">June</option>
+        <option value="7">July</option>
+        <option value="8">August</option>
+        <option value="9">September</option>
+        <option value="10">October</option>
+        <option value="11">November</option>
+        <option value="12">December</option>
+      </select>
+      <input type="number" id="dbYear" onchange="SF.dashboard.reload()"
+             class="w-24 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 font-mono">
+      <button type="button" onclick="SF.dashboard.reload()"
+              class="bg-sky-600 hover:bg-sky-500 text-white font-bold px-3 py-2 rounded-lg text-xs transition">↻</button>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       KPI CARDS — 6 primary metrics
+       ============================================================ -->
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+
+    <div class="bg-gradient-to-br from-emerald-900 to-emerald-950 border border-emerald-700/60 rounded-2xl p-4">
+      <div class="flex items-center justify-between mb-1">
+        <div class="text-[10px] uppercase font-bold text-emerald-300 tracking-wider">Today's Sale</div>
+        <span class="text-lg">💰</span>
+      </div>
+      <div id="kpiTodaySales" class="text-xl font-black text-white">₹0</div>
+      <div id="kpiTodayCount" class="text-[10px] text-emerald-300/70 mt-1">0 invoices</div>
+    </div>
+
+    <div class="bg-gradient-to-br from-sky-900 to-sky-950 border border-sky-700/60 rounded-2xl p-4">
+      <div class="flex items-center justify-between mb-1">
+        <div class="text-[10px] uppercase font-bold text-sky-300 tracking-wider">Month Sale</div>
+        <span class="text-lg">📈</span>
+      </div>
+      <div id="kpiMonthSales" class="text-xl font-black text-white">₹0</div>
+      <div id="kpiMonthCount" class="text-[10px] text-sky-300/70 mt-1">0 invoices</div>
+    </div>
+
+    <div class="bg-gradient-to-br from-emerald-900 to-teal-950 border border-emerald-700/60 rounded-2xl p-4">
+      <div class="flex items-center justify-between mb-1">
+        <div class="text-[10px] uppercase font-bold text-emerald-300 tracking-wider">Net Profit</div>
+        <span class="text-lg">🎯</span>
+      </div>
+      <div id="kpiProfit" class="text-xl font-black text-white">₹0</div>
+      <div id="kpiProfitMargin" class="text-[10px] text-emerald-300/70 mt-1">0% margin</div>
+    </div>
+
+    <div class="bg-gradient-to-br from-amber-900 to-orange-950 border border-amber-700/60 rounded-2xl p-4">
+      <div class="flex items-center justify-between mb-1">
+        <div class="text-[10px] uppercase font-bold text-amber-300 tracking-wider">Dues Due</div>
+        <span class="text-lg">⏰</span>
+      </div>
+      <div id="kpiDues" class="text-xl font-black text-white">₹0</div>
+      <div id="kpiDuesCount" class="text-[10px] text-amber-300/70 mt-1">0 customers</div>
+    </div>
+
+    <div class="bg-gradient-to-br from-rose-900 to-red-950 border border-rose-700/60 rounded-2xl p-4">
+      <div class="flex items-center justify-between mb-1">
+        <div class="text-[10px] uppercase font-bold text-rose-300 tracking-wider">Low Stock</div>
+        <span class="text-lg">📦</span>
+      </div>
+      <div id="kpiLowStock" class="text-xl font-black text-white">0</div>
+      <div id="kpiLowStockValue" class="text-[10px] text-rose-300/70 mt-1">items</div>
+    </div>
+
+    <div class="bg-gradient-to-br from-violet-900 to-purple-950 border border-violet-700/60 rounded-2xl p-4">
+      <div class="flex items-center justify-between mb-1">
+        <div class="text-[10px] uppercase font-bold text-violet-300 tracking-wider">Repairs</div>
+        <span class="text-lg">🔧</span>
+      </div>
+      <div id="kpiRepairs" class="text-xl font-black text-white">0</div>
+      <div id="kpiRepairsReady" class="text-[10px] text-violet-300/70 mt-1">0 ready</div>
+    </div>
+
+  </div>
+
+  <!-- ============================================================
+       CHARTS ROW 1 — Sales Trend + Payment Split
+       ============================================================ -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+    <!-- Daily Sales Trend (Line) -->
+    <div class="lg:col-span-2 bg-slate-900/70 border border-slate-800 rounded-2xl p-4">
+      <div class="flex justify-between items-center mb-3">
+        <div>
+          <h3 class="text-sm font-black text-white">📈 Daily Sales Trend</h3>
+          <p id="chartTrendSub" class="text-[10px] text-slate-500 mt-0.5">Loading...</p>
+        </div>
+      </div>
+      <div style="position:relative;height:260px">
+        <canvas id="chartDailySales"></canvas>
+      </div>
+    </div>
+
+    <!-- Payment Mode Split (Doughnut) -->
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4">
+      <div class="mb-3">
+        <h3 class="text-sm font-black text-white">💳 Payment Split</h3>
+        <p class="text-[10px] text-slate-500 mt-0.5">By payment method</p>
+      </div>
+      <div style="position:relative;height:260px">
+        <canvas id="chartPaymentSplit"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============================================================
+       CHARTS ROW 2 — Top Products + Repair Status + Monthly Comparison
+       ============================================================ -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+    <!-- Top Selling Products (Bar) -->
+    <div class="lg:col-span-2 bg-slate-900/70 border border-slate-800 rounded-2xl p-4">
+      <div class="mb-3">
+        <h3 class="text-sm font-black text-white">🏆 Top Selling Products</h3>
+        <p class="text-[10px] text-slate-500 mt-0.5">By revenue this month</p>
+      </div>
+      <div style="position:relative;height:280px">
+        <canvas id="chartTopProducts"></canvas>
+      </div>
+    </div>
+
+    <!-- Repair Status Breakdown (Doughnut) -->
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4">
+      <div class="mb-3">
+        <h3 class="text-sm font-black text-white">🔧 Repair Status</h3>
+        <p class="text-[10px] text-slate-500 mt-0.5">Active job cards</p>
+      </div>
+      <div style="position:relative;height:280px">
+        <canvas id="chartRepairStatus"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============================================================
+       CHARTS ROW 3 — 6-Month Comparison (Bar)
+       ============================================================ -->
+  <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4">
+    <div class="mb-3">
+      <h3 class="text-sm font-black text-white">📅 Monthly Comparison</h3>
+      <p class="text-[10px] text-slate-500 mt-0.5">Last 6 months performance</p>
+    </div>
+    <div style="position:relative;height:220px">
+      <canvas id="chartMonthly"></canvas>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       QUICK ACCESS BUTTONS
+       ============================================================ -->
+  <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4">
+    <div class="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-3">⚡ Quick Access</div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+      <button type="button" onclick="SF.go('billing')" class="bg-sky-950/60 hover:bg-sky-900/60 border border-sky-800/60 text-sky-300 font-bold py-3 rounded-xl text-[11px] transition flex flex-col items-center gap-1"><span class="text-lg">🧾</span>New Bill</button>
+      <button type="button" onclick="SF.go('repair')" class="bg-violet-950/60 hover:bg-violet-900/60 border border-violet-800/60 text-violet-300 font-bold py-3 rounded-xl text-[11px] transition flex flex-col items-center gap-1"><span class="text-lg">🔧</span>New Repair</button>
+      <button type="button" onclick="SF.go('inventory')" class="bg-amber-950/60 hover:bg-amber-900/60 border border-amber-800/60 text-amber-300 font-bold py-3 rounded-xl text-[11px] transition flex flex-col items-center gap-1"><span class="text-lg">📦</span>Add Stock</button>
+      <button type="button" onclick="SF.go('purchase')" class="bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-800/60 text-emerald-300 font-bold py-3 rounded-xl text-[11px] transition flex flex-col items-center gap-1"><span class="text-lg">🛒</span>Purchase</button>
+      <button type="button" onclick="SF.go('parties')" class="bg-pink-950/60 hover:bg-pink-900/60 border border-pink-800/60 text-pink-300 font-bold py-3 rounded-xl text-[11px] transition flex flex-col items-center gap-1"><span class="text-lg">👥</span>Parties</button>
+      <button type="button" onclick="SF.go('attendance-report')" class="bg-cyan-950/60 hover:bg-cyan-900/60 border border-cyan-800/60 text-cyan-300 font-bold py-3 rounded-xl text-[11px] transition flex flex-col items-center gap-1"><span class="text-lg">📸</span>Attendance</button>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       LISTS ROW — Low Stock + Top Debtors + Pending Repairs
+       ============================================================ -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+    <!-- Low Stock Alert -->
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden">
+      <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+        <h3 class="text-sm font-black text-white">⚠️ Low Stock Alerts</h3>
+        <span id="lowStockCount" class="text-[10px] bg-rose-950/60 text-rose-300 px-2 py-1 rounded font-mono">0</span>
+      </div>
+      <div id="lowStockList" class="max-h-[320px] overflow-y-auto divide-y divide-slate-800/60">
+        <div class="text-center py-8 text-slate-500 text-xs">Loading...</div>
+      </div>
+    </div>
+
+    <!-- Top Debtors -->
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden">
+      <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+        <h3 class="text-sm font-black text-white">💰 Top Debtors (Udhaar)</h3>
+        <button type="button" onclick="SF.go('parties')" class="text-[10px] text-sky-400 font-bold">View all →</button>
+      </div>
+      <div id="debtorsList" class="max-h-[320px] overflow-y-auto divide-y divide-slate-800/60">
+        <div class="text-center py-8 text-slate-500 text-xs">Loading...</div>
+      </div>
+    </div>
+
+    <!-- Pending Repairs -->
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden">
+      <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+        <h3 class="text-sm font-black text-white">🔧 Repairs In Progress</h3>
+        <button type="button" onclick="SF.go('repair')" class="text-[10px] text-violet-400 font-bold">View all →</button>
+      </div>
+      <div id="pendingRepairsList" class="max-h-[320px] overflow-y-auto divide-y divide-slate-800/60">
+        <div class="text-center py-8 text-slate-500 text-xs">Loading...</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============================================================
+       RECENT ACTIVITY
+       ============================================================ -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+    <!-- Recent Invoices -->
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden">
+      <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+        <h3 class="text-sm font-black text-white">🧾 Recent Invoices</h3>
+        <button type="button" onclick="SF.go('accounting')" class="text-[10px] text-sky-400 font-bold">View all →</button>
+      </div>
+      <div id="recentInvoicesList" class="max-h-[400px] overflow-y-auto divide-y divide-slate-800/60">
+        <div class="text-center py-8 text-slate-500 text-xs">Loading...</div>
+      </div>
+    </div>
+
+    <!-- Recent Repairs -->
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden">
+      <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+        <h3 class="text-sm font-black text-white">🔧 Recent Repair Jobs</h3>
+        <button type="button" onclick="SF.go('repair')" class="text-[10px] text-violet-400 font-bold">View all →</button>
+      </div>
+      <div id="recentRepairsList" class="max-h-[400px] overflow-y-auto divide-y divide-slate-800/60">
+        <div class="text-center py-8 text-slate-500 text-xs">Loading...</div>
+      </div>
+    </div>
+
+  </div>
+
+</section>
+
+
+<script>
+(function () {
+  'use strict';
+
+  const S = window.SF?.state?.state;
+  const C = window.SF?.common;
+
+  if (!S || !C) { console.error('Dashboard: SF globals not ready'); return; }
+
+  /* ============================================================
+     CHART.JS LOADER
+     ============================================================ */
+  let chartJsLoaded = false;
+  async function ensureChartJs() {
+    if (chartJsLoaded && typeof Chart !== 'undefined') return true;
+    if (typeof Chart !== 'undefined') { chartJsLoaded = true; return true; }
+    try {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+        s.onload = resolve;
+        s.onerror = reject;
+        document.head.appendChild(s);
+      });
+      chartJsLoaded = true;
+      return true;
+    } catch (e) {
+      console.error('Chart.js load failed:', e);
+      return false;
+    }
+  }
+
+  /* ============================================================
+     STATE
+     ============================================================ */
+  const DB = {
+    month: new Date().getMonth() + 1,
+    year: new Date().getFullYear(),
+    charts: {}
+  };
+
+  const CHART_COLORS = {
+    sky:     '#0ea5e9',
+    violet:  '#8b5cf6',
+    emerald: '#10b981',
+    amber:   '#f59e0b',
+    rose:    '#ef4444',
+    cyan:    '#06b6d4',
+    pink:    '#ec4899',
+    indigo:  '#6366f1',
+    orange:  '#f97316',
+    teal:    '#14b8a6',
+    purple:  '#a855f7',
+    lime:    '#84cc16'
+  };
+
+  const PALETTE = Object.values(CHART_COLORS);
+
+
+  /* ============================================================
+     INIT
+     ============================================================ */
+  async function init_dashboardModule() {
+    console.log('%c📊 Dashboard initialized (v4.5.0)', 'color:#10b981;font-weight:bold');
+
+    if (!window.SF?.perms?.can?.('dashboard.view')) {
+      const c = document.getElementById('moduleContainer');
+      if (c) c.innerHTML = '<div style="max-width:520px;margin:60px auto;padding:28px;background:#1e1b2e;border:1px solid #7f1d1d;border-radius:16px;text-align:center;"><div style="font-size:42px;margin-bottom:12px">🔒</div><div style="font-size:16px;font-weight:800;color:#fca5a5;">Access Denied</div></div>';
+      return { onUnload: destroyCharts };
+    }
+
+    await ensureChartJs();
+
+    /* Set default month/year dropdowns */
+    const mEl = document.getElementById('dbMonth');
+    const yEl = document.getElementById('dbYear');
+    if (mEl) mEl.value = DB.month;
+    if (yEl) yEl.value = DB.year;
+
+    reload();
+
+    /* Auto-refresh every 60 seconds */
+    const refreshTimer = setInterval(() => {
+      if (document.getElementById('dashboardModule') && window.SF?.router?.current?.() === 'dashboard') {
+        reload();
+      }
+    }, 60000);
+
+    return {
+      onUnload: () => {
+        clearInterval(refreshTimer);
+        destroyCharts();
+      }
+    };
+  }
+
+  function destroyCharts() {
+    Object.values(DB.charts).forEach((chart) => {
+      try { chart?.destroy(); } catch (e) {}
+    });
+    DB.charts = {};
+  }
+
+
+  /* ============================================================
+     RELOAD
+     ============================================================ */
+  function reload() {
+    DB.month = parseInt(document.getElementById('dbMonth')?.value, 10) || (new Date().getMonth() + 1);
+    DB.year  = parseInt(document.getElementById('dbYear')?.value, 10) || new Date().getFullYear();
+
+    const invoices = S.invoices || [];
+    const repairs = loadRepairs();
+    const inventory = S.inventory || [];
+    const parties = S.parties || [];
+
+    /* Compute all metrics */
+    computeKPIs(invoices, repairs, inventory, parties);
+    renderAllCharts(invoices, repairs, inventory);
+    renderAllLists(invoices, repairs, inventory, parties);
+  }
+
+
+  /* ============================================================
+     DATA LOADERS
+     ============================================================ */
+  function loadRepairs() {
+    try {
+      const raw = localStorage.getItem('sfp_repairs');
+      if (raw) {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) return arr;
+      }
+    } catch (e) {}
+    return S.repairs || [];
+  }
+
+  function inMonth(dateStr, month, year) {
+    if (!dateStr) return false;
+    try {
+      const d = new Date(dateStr + 'T12:00:00');
+      return d.getMonth() + 1 === month && d.getFullYear() === year;
+    } catch (e) { return false; }
+  }
+
+  function isToday(dateStr) {
+    if (!dateStr) return false;
+    return dateStr === C.fmtDate(new Date());
+  }
+
+
+  /* ============================================================
+     KPIs
+     ============================================================ */
+  function computeKPIs(invoices, repairs, inventory, parties) {
+    const now = new Date();
+    const todayStr = C.fmtDate(now);
+
+    /* Today's sales */
+    let todaySales = 0, todayCount = 0;
+    invoices.forEach((inv) => {
+      if (isToday(inv.date)) {
+        todaySales += inv.totalGross || 0;
+        todayCount++;
+      }
+    });
+
+    /* Month sales */
+    let monthSales = 0, monthCount = 0;
+    let monthPurchaseCost = 0, monthExpense = 0, monthReturn = 0;
+    invoices.forEach((inv) => {
+      if (inMonth(inv.date, DB.month, DB.year)) {
+        monthSales += inv.totalGross || 0;
+        monthPurchaseCost += inv.totalPurchaseCost || 0;
+        monthCount++;
+      }
+    });
+
+    (S.creditNotes || []).forEach((c) => {
+      if (inMonth(c.date, DB.month, DB.year)) {
+        monthReturn += c.refundTotal || 0;
+      }
+    });
+
+    (S.vouchers || []).forEach((v) => {
+      if (inMonth(v.date, DB.month, DB.year) && v.type === 'EXPENSE') {
+        monthExpense += v.amount || 0;
+      }
+    });
+
+    const netSales = monthSales - monthReturn;
+    const profit = netSales - monthPurchaseCost - monthExpense;
+    const margin = netSales > 0 ? (profit / netSales) * 100 : 0;
+
+    /* Dues receivable */
+    let duesTotal = 0, duesCount = 0;
+    parties.forEach((p) => {
+      if (p.type === 'CUSTOMER') {
+        const bal = computePartyBalance(p, invoices, parties);
+        if (bal > 0.01) {
+          duesTotal += bal;
+          duesCount++;
+        }
+      }
+    });
+
+    /* Low stock — items where stock for that model <= 1 */
+    const lowStockItems = findLowStock(inventory);
+
+    /* Repairs */
+    const activeRepairs = repairs.filter((r) => !['DELIVERED', 'CANCELLED'].includes(r.status));
+    const readyRepairs = repairs.filter((r) => r.status === 'READY');
+
+    /* Update KPIs */
+    setText('kpiTodaySales', '₹' + fmtShort(todaySales));
+    setText('kpiTodayCount', todayCount + ' invoice' + (todayCount !== 1 ? 's' : ''));
+    setText('kpiMonthSales', '₹' + fmtShort(monthSales));
+    setText('kpiMonthCount', monthCount + ' invoice' + (monthCount !== 1 ? 's' : ''));
+    setText('kpiProfit', '₹' + fmtShort(profit));
+    setText('kpiProfitMargin', margin.toFixed(1) + '% margin');
+    setText('kpiDues', '₹' + fmtShort(duesTotal));
+    setText('kpiDuesCount', duesCount + ' customer' + (duesCount !== 1 ? 's' : ''));
+    setText('kpiLowStock', lowStockItems.length);
+    setText('kpiLowStockValue', 'items low');
+    setText('kpiRepairs', activeRepairs.length);
+    setText('kpiRepairsReady', readyRepairs.length + ' ready');
+
+    /* Chart subtitle */
+    const monthNames = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    setText('chartTrendSub', monthNames[DB.month] + ' ' + DB.year);
+  }
+
+  function computePartyBalance(p, invoices, parties) {
+    let balance = p.opening || 0;
+    if (p.type === 'CUSTOMER') {
+      invoices.forEach((inv) => {
+        if (inv.partyId === p.id && inv.ledger === 'Credit / Sundry Debtors') {
+          balance += inv.totalGross || 0;
+        }
+      });
+      (S.creditNotes || []).forEach((crn) => {
+        if (crn.customerName && crn.customerName.toLowerCase() === p.name.toLowerCase()) {
+          balance -= crn.refundTotal || 0;
+        }
+      });
+      (S.vouchers || []).forEach((v) => {
+        if (v.type === 'RECEIPT' && v.partyId === p.id) balance -= v.amount || 0;
+      });
+    }
+    if (p.drCr === 'CR') balance = -balance;
+    return balance;
+  }
+
+  function findLowStock(inventory) {
+    /* Group by model, count available */
+    const groups = {};
+    inventory.forEach((it) => {
+      if (it.status === 'Sold') return;
+      const key = (it.model || '').toLowerCase();
+      if (!groups[key]) groups[key] = { model: it.model, category: it.category, count: 0, minCost: Infinity, totalValue: 0 };
+      groups[key].count++;
+      if (it.cost && it.cost < groups[key].minCost) groups[key].minCost = it.cost;
+      groups[key].totalValue += (it.cost || 0);
+    });
+    return Object.values(groups)
+      .filter((g) => g.count <= 2)
+      .sort((a, b) => a.count - b.count)
+      .slice(0, 20);
+  }
+
+
+  /* ============================================================
+     CHARTS
+     ============================================================ */
+  async function renderAllCharts(invoices, repairs, inventory) {
+    if (typeof Chart === 'undefined') return;
+
+    /* Global chart defaults */
+    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+    Chart.defaults.font.size = 11;
+
+    renderDailySalesChart(invoices);
+    renderPaymentSplitChart(invoices);
+    renderTopProductsChart(invoices);
+    renderRepairStatusChart(repairs);
+    renderMonthlyComparisonChart(invoices);
+  }
+
+  function renderDailySalesChart(invoices) {
+    const ctx = document.getElementById('chartDailySales');
+    if (!ctx) return;
+
+    const daysInMonth = new Date(DB.year, DB.month, 0).getDate();
+    const labels = [];
+    const data = [];
+    for (let d = 1; d <= daysInMonth; d++) {
+      labels.push(d);
+      let total = 0;
+      invoices.forEach((inv) => {
+        if (!inMonth(inv.date, DB.month, DB.year)) return;
+        const day = parseInt((inv.date || '').split('-')[2], 10);
+        if (day === d) total += inv.totalGross || 0;
+      });
+      data.push(total);
+    }
+
+    if (DB.charts.daily) DB.charts.daily.destroy();
+
+    const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 260);
+    gradient.addColorStop(0, 'rgba(139, 92, 246, 0.4)');
+    gradient.addColorStop(1, 'rgba(139, 92, 246, 0.02)');
+
+    DB.charts.daily = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Sales (₹)',
+          data,
+          borderColor: CHART_COLORS.violet,
+          backgroundColor: gradient,
+          borderWidth: 2.5,
+          tension: 0.4,
+          fill: true,
+          pointBackgroundColor: CHART_COLORS.violet,
+          pointBorderColor: '#fff',
+          pointBorderWidth: 1.5,
+          pointRadius: 3,
+          pointHoverRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+            borderColor: '#8b5cf6',
+            borderWidth: 1,
+            titleColor: '#fff',
+            bodyColor: '#e2e8f0',
+            padding: 10,
+            callbacks: {
+              label: (c) => '₹ ' + Number(c.parsed.y).toLocaleString('en-IN')
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(148, 163, 184, 0.08)' },
+            ticks: { color: '#64748b', font: { size: 10 } }
+          },
+          y: {
+            grid: { color: 'rgba(148, 163, 184, 0.08)' },
+            ticks: {
+              color: '#64748b',
+              font: { size: 10 },
+              callback: (v) => v >= 1000 ? '₹' + (v / 1000).toFixed(0) + 'k' : '₹' + v
+            }
+          }
+        }
+      }
+    });
+  }
+
+  function renderPaymentSplitChart(invoices) {
+    const ctx = document.getElementById('chartPaymentSplit');
+    if (!ctx) return;
+
+    const byLedger = {
+      'Cash-in-Hand': 0,
+      'Bank / UPI': 0,
+      'Card Payment': 0,
+      'Bajaj / EMI Finance': 0,
+      'Credit / Sundry Debtors': 0
+    };
+
+    invoices.forEach((inv) => {
+      if (!inMonth(inv.date, DB.month, DB.year)) return;
+      const l = inv.ledger || 'Cash-in-Hand';
+      if (byLedger[l] !== undefined) byLedger[l] += inv.totalGross || 0;
+    });
+
+    const labels = [];
+    const data = [];
+    const colors = [];
+    const colorMap = {
+      'Cash-in-Hand': CHART_COLORS.emerald,
+      'Bank / UPI': CHART_COLORS.sky,
+      'Card Payment': CHART_COLORS.violet,
+      'Bajaj / EMI Finance': CHART_COLORS.amber,
+      'Credit / Sundry Debtors': CHART_COLORS.rose
+    };
+    const labelMap = {
+      'Cash-in-Hand': 'Cash',
+      'Bank / UPI': 'UPI / Bank',
+      'Card Payment': 'Card',
+      'Bajaj / EMI Finance': 'Bajaj EMI',
+      'Credit / Sundry Debtors': 'Udhaar'
+    };
+
+    Object.entries(byLedger).forEach(([k, v]) => {
+      if (v > 0) {
+        labels.push(labelMap[k] || k);
+        data.push(v);
+        colors.push(colorMap[k] || CHART_COLORS.indigo);
+      }
+    });
+
+    if (data.length === 0) {
+      labels.push('No data');
+      data.push(1);
+      colors.push('#334155');
+    }
+
+    if (DB.charts.payment) DB.charts.payment.destroy();
+    DB.charts.payment = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels,
+        datasets: [{
+          data,
+          backgroundColor: colors,
+          borderColor: '#020617',
+          borderWidth: 2,
+          hoverOffset: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '65%',
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              color: '#cbd5e1',
+              font: { size: 10, weight: '600' },
+              padding: 8,
+              boxWidth: 10,
+              boxHeight: 10,
+              usePointStyle: true
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+            borderColor: '#0ea5e9',
+            borderWidth: 1,
+            padding: 10,
+            callbacks: {
+              label: (c) => {
+                const val = c.parsed;
+                const total = c.dataset.data.reduce((a, b) => a + b, 0);
+                const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                return c.label + ': ₹' + Number(val).toLocaleString('en-IN') + ' (' + pct + '%)';
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  function renderTopProductsChart(invoices) {
+    const ctx = document.getElementById('chartTopProducts');
+    if (!ctx) return;
+
+    const products = {};
+    invoices.forEach((inv) => {
+      if (!inMonth(inv.date, DB.month, DB.year)) return;
+      (inv.items || []).forEach((it) => {
+        const name = it.model || 'Unknown';
+        if (!products[name]) products[name] = 0;
+        products[name] += (it.rate || 0) * (it.qty || 1);
+      });
+    });
+
+    const sorted = Object.entries(products).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    const labels = sorted.map((s) => s[0].length > 20 ? s[0].slice(0, 19) + '…' : s[0]);
+    const data = sorted.map((s) => s[1]);
+
+    if (data.length === 0) {
+      labels.push('No sales');
+      data.push(0);
+    }
+
+    if (DB.charts.topProducts) DB.charts.topProducts.destroy();
+    DB.charts.topProducts = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Revenue (₹)',
+          data,
+          backgroundColor: [
+            CHART_COLORS.sky, CHART_COLORS.violet, CHART_COLORS.emerald, CHART_COLORS.amber,
+            CHART_COLORS.rose, CHART_COLORS.cyan, CHART_COLORS.pink, CHART_COLORS.indigo
+          ],
+          borderRadius: 6,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+            borderColor: '#0ea5e9',
+            borderWidth: 1,
+            padding: 10,
+            callbacks: {
+              label: (c) => '₹ ' + Number(c.parsed.x).toLocaleString('en-IN')
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(148, 163, 184, 0.08)' },
+            ticks: {
+              color: '#64748b',
+              font: { size: 10 },
+              callback: (v) => v >= 1000 ? '₹' + (v / 1000).toFixed(0) + 'k' : '₹' + v
+            }
+          },
+          y: {
+            grid: { display: false },
+            ticks: { color: '#cbd5e1', font: { size: 10, weight: '600' } }
+          }
+        }
+      }
+    });
+  }
+
+  function renderRepairStatusChart(repairs) {
+    const ctx = document.getElementById('chartRepairStatus');
+    if (!ctx) return;
+
+    const statusMap = {
+      RECEIVED:         { label: 'Received',  color: CHART_COLORS.sky },
+      DIAGNOSED:        { label: 'Diagnosed', color: CHART_COLORS.purple },
+      WAITING_APPROVAL: { label: 'Waiting',   color: CHART_COLORS.amber },
+      IN_REPAIR:        { label: 'In Repair', color: CHART_COLORS.orange },
+      READY:            { label: 'Ready',     color: CHART_COLORS.emerald },
+      DELIVERED:        { label: 'Delivered', color: CHART_COLORS.violet },
+      CANCELLED:        { label: 'Cancelled', color: CHART_COLORS.rose }
+    };
+
+    const counts = {};
+    Object.keys(statusMap).forEach((k) => counts[k] = 0);
+    repairs.forEach((r) => {
+      if (counts[r.status] !== undefined) counts[r.status]++;
+    });
+
+    const labels = [];
+    const data = [];
+    const colors = [];
+    Object.entries(counts).forEach(([k, v]) => {
+      if (v > 0) {
+        labels.push(statusMap[k].label);
+        data.push(v);
+        colors.push(statusMap[k].color);
+      }
+    });
+
+    if (data.length === 0) {
+      labels.push('No repairs');
+      data.push(1);
+      colors.push('#334155');
+    }
+
+    if (DB.charts.repairStatus) DB.charts.repairStatus.destroy();
+    DB.charts.repairStatus = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels,
+        datasets: [{
+          data,
+          backgroundColor: colors,
+          borderColor: '#020617',
+          borderWidth: 2,
+          hoverOffset: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '65%',
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              color: '#cbd5e1',
+              font: { size: 10, weight: '600' },
+              padding: 8,
+              boxWidth: 10,
+              boxHeight: 10,
+              usePointStyle: true
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+            borderColor: '#8b5cf6',
+            borderWidth: 1,
+            padding: 10,
+            callbacks: {
+              label: (c) => c.label + ': ' + c.parsed + ' job' + (c.parsed !== 1 ? 's' : '')
+            }
+          }
+        }
+      }
+    });
+  }
+
+  function renderMonthlyComparisonChart(invoices) {
+    const ctx = document.getElementById('chartMonthly');
+    if (!ctx) return;
+
+    /* Last 6 months */
+    const labels = [];
+    const salesData = [];
+    const profitData = [];
+
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(DB.year, DB.month - 1 - i, 1);
+      const m = d.getMonth() + 1;
+      const y = d.getFullYear();
+      labels.push(monthNames[m - 1] + ' ' + String(y).slice(-2));
+
+      let sales = 0, purchase = 0, expense = 0, returns = 0;
+      invoices.forEach((inv) => {
+        if (inMonth(inv.date, m, y)) {
+          sales += inv.totalGross || 0;
+          purchase += inv.totalPurchaseCost || 0;
+        }
+      });
+      (S.creditNotes || []).forEach((c) => {
+        if (inMonth(c.date, m, y)) returns += c.refundTotal || 0;
+      });
+      (S.vouchers || []).forEach((v) => {
+        if (inMonth(v.date, m, y) && v.type === 'EXPENSE') expense += v.amount || 0;
+      });
+
+      salesData.push(sales);
+      profitData.push(sales - returns - purchase - expense);
+    }
+
+    if (DB.charts.monthly) DB.charts.monthly.destroy();
+    DB.charts.monthly = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Sales',
+            data: salesData,
+            backgroundColor: CHART_COLORS.sky,
+            borderRadius: 6,
+            borderSkipped: false
+          },
+          {
+            label: 'Profit',
+            data: profitData,
+            backgroundColor: CHART_COLORS.emerald,
+            borderRadius: 6,
+            borderSkipped: false
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              color: '#cbd5e1',
+              font: { size: 11, weight: '600' },
+              padding: 12,
+              boxWidth: 12,
+              boxHeight: 12,
+              usePointStyle: true
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+            borderColor: '#0ea5e9',
+            borderWidth: 1,
+            padding: 10,
+            callbacks: {
+              label: (c) => c.dataset.label + ': ₹' + Number(c.parsed.y).toLocaleString('en-IN')
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { color: '#94a3b8', font: { size: 11, weight: '600' } }
+          },
+          y: {
+            grid: { color: 'rgba(148, 163, 184, 0.08)' },
+            ticks: {
+              color: '#64748b',
+              font: { size: 10 },
+              callback: (v) => v >= 1000 ? '₹' + (v / 1000).toFixed(0) + 'k' : '₹' + v
+            }
+          }
+        }
+      }
+    });
+  }
+
+
+  /* ============================================================
+     LISTS
+     ============================================================ */
+  function renderAllLists(invoices, repairs, inventory, parties) {
+    renderLowStockList(inventory);
+    renderTopDebtors(parties, invoices);
+    renderPendingRepairs(repairs);
+    renderRecentInvoices(invoices);
+    renderRecentRepairs(repairs);
+  }
+
+  function renderLowStockList(inventory) {
+    const el = document.getElementById('lowStockList');
+    const cntEl = document.getElementById('lowStockCount');
+    if (!el) return;
+
+    const low = findLowStock(inventory);
+    if (cntEl) cntEl.textContent = low.length;
+
+    if (low.length === 0) {
+      el.innerHTML = '<div class="text-center py-8 text-emerald-400 text-xs">✅ All items well stocked!</div>';
+      return;
+    }
+
+    el.innerHTML = low.map((item) => `
+      <div class="flex items-center justify-between p-3 hover:bg-slate-800/30">
+        <div class="min-w-0 flex-1">
+          <div class="text-[12px] font-bold text-white truncate">${C.escapeHTML(item.model)}</div>
+          <div class="text-[10px] text-slate-500">${C.escapeHTML(item.category || '')}</div>
+        </div>
+        <div class="text-right flex-shrink-0">
+          <div class="text-[10px] font-bold text-rose-400 font-mono">${item.count} left</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderTopDebtors(parties, invoices) {
+    const el = document.getElementById('debtorsList');
+    if (!el) return;
+
+    const debtors = parties
+      .filter((p) => p.type === 'CUSTOMER')
+      .map((p) => ({ ...p, balance: computePartyBalance(p, invoices, parties) }))
+      .filter((p) => p.balance > 0.01)
+      .sort((a, b) => b.balance - a.balance)
+      .slice(0, 10);
+
+    if (debtors.length === 0) {
+      el.innerHTML = '<div class="text-center py-8 text-emerald-400 text-xs">✅ No pending dues!</div>';
+      return;
+    }
+
+    el.innerHTML = debtors.map((p) => `
+      <div class="flex items-center justify-between p-3 hover:bg-slate-800/30">
+        <div class="min-w-0 flex-1">
+          <div class="text-[12px] font-bold text-white truncate">${C.escapeHTML(p.name)}</div>
+          <div class="text-[10px] text-slate-500 font-mono">${C.escapeHTML(p.phone || '')}</div>
+        </div>
+        <div class="text-right flex-shrink-0">
+          <div class="text-[11px] font-bold text-amber-400 font-mono">₹${Math.round(p.balance).toLocaleString('en-IN')}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderPendingRepairs(repairs) {
+    const el = document.getElementById('pendingRepairsList');
+    if (!el) return;
+
+    const STATUS_LABEL = {
+      RECEIVED: '📥 Received',
+      DIAGNOSED: '🔬 Diagnosed',
+      WAITING_APPROVAL: '⏳ Waiting',
+      IN_REPAIR: '🔧 In Repair',
+      READY: '✅ Ready'
+    };
+
+    const pending = repairs
+      .filter((r) => !['DELIVERED', 'CANCELLED'].includes(r.status))
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 10);
+
+    if (pending.length === 0) {
+      el.innerHTML = '<div class="text-center py-8 text-slate-500 text-xs">No active repairs.</div>';
+      return;
+    }
+
+    el.innerHTML = pending.map((r) => `
+      <div class="flex items-center justify-between p-3 hover:bg-slate-800/30">
+        <div class="min-w-0 flex-1">
+          <div class="text-[12px] font-bold text-white truncate">${C.escapeHTML(r.jobNo || '')}</div>
+          <div class="text-[10px] text-slate-400 truncate">${C.escapeHTML(r.customerName || '')} • ${C.escapeHTML(r.deviceModel || '')}</div>
+        </div>
+        <div class="text-right flex-shrink-0">
+          <div class="text-[10px] font-bold text-violet-300">${STATUS_LABEL[r.status] || r.status}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderRecentInvoices(invoices) {
+    const el = document.getElementById('recentInvoicesList');
+    if (!el) return;
+
+    const recent = invoices.slice(0, 10);
+    if (recent.length === 0) {
+      el.innerHTML = '<div class="text-center py-8 text-slate-500 text-xs">No invoices yet.</div>';
+      return;
+    }
+
+    el.innerHTML = recent.map((inv) => `
+      <div class="flex items-center justify-between p-3 hover:bg-slate-800/30">
+        <div class="min-w-0 flex-1">
+          <div class="text-[12px] font-bold text-white truncate">${C.escapeHTML(inv.invoiceNo || '')}</div>
+          <div class="text-[10px] text-slate-400 truncate">${C.escapeHTML(inv.customerName || 'Cash')} • ${C.escapeHTML(inv.date || '')}</div>
+        </div>
+        <div class="text-right flex-shrink-0">
+          <div class="text-[11px] font-bold text-emerald-400 font-mono">₹${(inv.totalGross || 0).toFixed(0)}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderRecentRepairs(repairs) {
+    const el = document.getElementById('recentRepairsList');
+    if (!el) return;
+
+    const recent = repairs.slice(0, 10);
+    if (recent.length === 0) {
+      el.innerHTML = '<div class="text-center py-8 text-slate-500 text-xs">No repairs yet.</div>';
+      return;
+    }
+
+    el.innerHTML = recent.map((r) => {
+      const balance = (r.finalCost || r.estimatedCost || 0) - (r.advancePaid || 0);
+      return `
+        <div class="flex items-center justify-between p-3 hover:bg-slate-800/30">
+          <div class="min-w-0 flex-1">
+            <div class="text-[12px] font-bold text-white truncate">${C.escapeHTML(r.jobNo || '')}</div>
+            <div class="text-[10px] text-slate-400 truncate">${C.escapeHTML(r.customerName || '')} • ${C.escapeHTML(r.deviceModel || '')}</div>
+          </div>
+          <div class="text-right flex-shrink-0">
+            <div class="text-[11px] font-bold ${balance > 0 ? 'text-amber-400' : 'text-emerald-400'} font-mono">
+              ₹${Math.abs(balance).toFixed(0)}
+            </div>
+            <div class="text-[9px] text-slate-500">${balance > 0 ? 'due' : 'paid'}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+
+  /* ============================================================
+     HELPERS
+     ============================================================ */
+  function setText(id, text) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  }
+
+  function fmtShort(n) {
+    const v = Number(n) || 0;
+    if (Math.abs(v) >= 10000000) return (v / 10000000).toFixed(2) + 'Cr';
+    if (Math.abs(v) >= 100000) return (v / 100000).toFixed(2) + 'L';
+    if (Math.abs(v) >= 1000) return (v / 1000).toFixed(1) + 'k';
+    return Math.round(v).toLocaleString('en-IN');
+  }
+
+
+  /* ============================================================
+     EXPOSE
+     ============================================================ */
+  window.SF = window.SF || {};
+  window.SF.dashboard = {
+    init: init_dashboardModule,
+    reload
+  };
+
+  window.init_dashboardModule = init_dashboardModule;
+
+  if (document.getElementById('dashboardModule')) {
+    init_dashboardModule();
+  }
+})();
+</script>
