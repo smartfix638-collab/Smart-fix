@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+<meta name="googlebot" content="noindex, nofollow">
+<title>System Console</title>
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='100' fill='%231a1a1a'/%3E%3Ctext x='50%25' y='65%25' font-size='300' text-anchor='middle' fill='%23dc2626'%3E%E2%9A%A0%3C/text%3E%3C/svg%3E">
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+  * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0a0a1a; color: #e2e8f0;
+    overflow-x: hidden;
+  }
+  .bg-mesh {
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(220, 38, 38, 0.12), transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.12), transparent 50%);
+    pointer-events: none;
+  }
+  .glass {
+    background: linear-gradient(135deg, rgba(30, 27, 75, 0.6), rgba(15, 23, 42, 0.75));
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+  }
+  .input-field {
+    width: 100%;
+    background: rgba(10, 10, 26, 0.7);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: #e2e8f0;
+    font-size: 13px;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .input-field::placeholder { color: #64748b; }
+  .input-field:focus {
+    outline: none;
+    border-color: rgba(220, 38, 38, 0.6);
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+  }
+  .btn-primary {
+    width: 100%;
+    padding: 13px;
+    border-radius: 10px;
+    border: none;
+    font-weight: 700;
+    font-size: 13.5px;
+    color: white;
+    cursor: pointer;
+    background: linear-gradient(135deg, #dc2626, #991b1b);
+    box-shadow: 0 8px 24px rgba(220, 38, 38, 0.35);
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(220, 38, 38, 0.5);
+  }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 999px; font-size: 10px; font-weight: 700; }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 6px; vertical-align: -2px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .hidden { display: none !important; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: #0a0a1a; }
+  ::-webkit-scrollbar-thumb { background: rgba(220, 38, 38, 0.3); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<div class="bg-mesh"></div>
+
+
+<!-- ============================================================
+     STAGE 1: LOGIN (email + password)
+     ============================================================ -->
+<div id="stage1" class="relative z-10 min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-md">
+    <div class="text-center mb-6">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 border border-rose-800/40 shadow-2xl mb-3">
+        <span class="text-3xl">⚙️</span>
+      </div>
+      <h1 class="text-xl font-black text-white">System Console</h1>
+      <p class="text-[10px] text-slate-500 mt-1 font-mono">Stage 1 of 2 — Authentication</p>
+    </div>
+
+    <div class="glass rounded-2xl p-6 space-y-4">
+      <div>
+        <label class="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-wider">Email</label>
+        <input id="adminEmail" type="email" placeholder="email@domain.com" class="input-field" autocapitalize="none" spellcheck="false" autocomplete="off">
+      </div>
+      <div>
+        <label class="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-wider">Password</label>
+        <input id="adminPass" type="password" placeholder="••••••••" class="input-field" autocomplete="off" onkeydown="if(event.key==='Enter')stage1Login()">
+      </div>
+      <button id="loginBtn" onclick="stage1Login()" class="btn-primary">
+        Continue →
+      </button>
+      <div id="loginError" class="text-rose-400 text-xs text-center min-h-[16px] font-mono"></div>
+    </div>
+
+    <div class="text-center mt-4">
+      <div class="text-[9px] text-slate-600 font-mono">v1.0 · Restricted Access</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     STAGE 2: PIN VERIFICATION
+     ============================================================ -->
+<div id="stage2" class="relative z-10 min-h-screen flex items-center justify-center p-4 hidden">
+  <div class="w-full max-w-md">
+    <div class="text-center mb-6">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-rose-600 to-rose-900 shadow-2xl shadow-rose-500/40 mb-3">
+        <span class="text-3xl">🔐</span>
+      </div>
+      <h1 class="text-xl font-black text-white">Second Factor Required</h1>
+      <p class="text-[10px] text-slate-500 mt-1 font-mono">Stage 2 of 2 — Secret PIN</p>
+      <p class="text-[11px] text-slate-400 mt-2" id="stage2User">—</p>
+    </div>
+
+    <div class="glass rounded-2xl p-6 space-y-4">
+      <div>
+        <label class="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-wider">Master Access PIN</label>
+        <input id="adminPin" type="password" inputmode="numeric" placeholder="••••" maxlength="10"
+               class="input-field text-center text-lg font-mono tracking-widest"
+               autocomplete="off"
+               onkeydown="if(event.key==='Enter')stage2Verify()">
+      </div>
+      <button id="pinBtn" onclick="stage2Verify()" class="btn-primary">
+        🔓 Unlock Console
+      </button>
+      <div id="pinError" class="text-rose-400 text-xs text-center min-h-[16px] font-mono"></div>
+      <button type="button" onclick="stage1Back()" class="w-full text-[11px] text-slate-500 hover:text-slate-300 font-bold py-1">← Back</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     DASHBOARD (only after both stages pass)
+     ============================================================ -->
+<div id="dashboard" class="relative z-10 hidden">
+  <div class="max-w-[1600px] mx-auto p-4 space-y-4">
+
+    <div class="glass rounded-2xl p-4 flex flex-wrap justify-between items-center gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-rose-500 to-rose-800 flex items-center justify-center text-2xl shadow-lg shadow-rose-500/30">🛡️</div>
+        <div>
+          <h1 class="text-lg font-black text-white">Control Center</h1>
+          <p class="text-[11px] text-slate-400 mt-0.5">
+            Admin: <span id="adminEmailDisplay" class="text-rose-300 font-mono">—</span>
+          </p>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="loadAll()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-3 py-2 rounded-lg text-xs transition">↻ Refresh</button>
+        <button onclick="adminLogout()" class="bg-rose-950/60 hover:bg-rose-900/60 border border-rose-800/60 text-rose-300 font-bold px-3 py-2 rounded-lg text-xs transition">⏏ Exit</button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
+      <div class="glass rounded-xl p-4">
+        <div class="text-[10px] uppercase font-bold text-rose-300 tracking-wider">Total Stores</div>
+        <div id="statTotal" class="text-2xl font-black text-white mt-1">0</div>
+      </div>
+      <div class="glass rounded-xl p-4">
+        <div class="text-[10px] uppercase font-bold text-emerald-300 tracking-wider">Active</div>
+        <div id="statActive" class="text-2xl font-black text-white mt-1">0</div>
+      </div>
+      <div class="glass rounded-xl p-4">
+        <div class="text-[10px] uppercase font-bold text-amber-300 tracking-wider">Trial</div>
+        <div id="statTrial" class="text-2xl font-black text-white mt-1">0</div>
+      </div>
+      <div class="glass rounded-xl p-4">
+        <div class="text-[10px] uppercase font-bold text-rose-400 tracking-wider">Suspended</div>
+        <div id="statSuspended" class="text-2xl font-black text-white mt-1">0</div>
+      </div>
+      <div class="glass rounded-xl p-4">
+        <div class="text-[10px] uppercase font-bold text-violet-300 tracking-wider">Total Users</div>
+        <div id="statUsers" class="text-2xl font-black text-white mt-1">0</div>
+      </div>
+    </div>
+
+    <div class="glass rounded-2xl p-3 flex flex-wrap gap-2">
+      <input id="searchBox" oninput="renderStores()" placeholder="🔍 Search by shop name, email, code, phone..." class="flex-1 min-w-[200px] bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200">
+      <select id="filterStatus" onchange="renderStores()" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200">
+        <option value="ALL">All Status</option>
+        <option value="trial">Trial</option>
+        <option value="active">Active</option>
+        <option value="suspended">Suspended</option>
+      </select>
+      <select id="sortBy" onchange="renderStores()" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200">
+        <option value="newest">Newest First</option>
+        <option value="oldest">Oldest First</option>
+        <option value="name">Shop Name A-Z</option>
+      </select>
+    </div>
+
+    <div class="glass rounded-2xl overflow-hidden">
+      <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+        <h2 class="font-bold text-sm text-white">📋 All Stores</h2>
+        <span id="storeCount" class="text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded font-mono">0</span>
+      </div>
+      <div id="storeList" class="divide-y divide-slate-800/60 max-h-[600px] overflow-y-auto">
+        <div class="text-center py-12 text-slate-500 text-xs">Loading...</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- STORE MODAL -->
+<div id="storeModal" class="fixed inset-0 z-[9999] hidden" style="background:rgba(0,0,0,0.85); backdrop-filter:blur(8px);">
+  <div class="flex items-end sm:items-center justify-center h-full p-0 sm:p-4">
+    <div class="glass rounded-t-2xl sm:rounded-2xl max-w-4xl w-full max-h-[95vh] sm:max-h-[92vh] overflow-hidden flex flex-col">
+      <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950/70 flex-shrink-0">
+        <div class="min-w-0 flex-1">
+          <h3 id="modalStoreName" class="font-black text-white text-base truncate">Store</h3>
+          <p id="modalStoreEmail" class="text-[11px] text-slate-400 mt-0.5 font-mono truncate">—</p>
+        </div>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-white text-2xl font-bold w-9 h-9 rounded-lg hover:bg-slate-800">✕</button>
+      </div>
+      <div id="modalBody" class="p-4 overflow-y-auto flex-1 space-y-3"></div>
+      <div class="p-3 border-t border-slate-800 bg-slate-950/70 flex flex-wrap gap-2 flex-shrink-0">
+        <button id="modalToggleBtn" onclick="toggleStoreStatus()" class="flex-1 min-w-[130px] font-bold py-2.5 rounded-lg text-xs transition">⏸ Suspend</button>
+        <button onclick="resetCounters()" class="flex-1 min-w-[130px] bg-slate-700 hover:bg-slate-600 text-white font-bold py-2.5 rounded-lg text-xs transition">🔄 Reset Counters</button>
+        <button onclick="wipeStoreData()" class="flex-1 min-w-[130px] bg-amber-700 hover:bg-amber-600 text-white font-bold py-2.5 rounded-lg text-xs transition">⚠️ Wipe Data</button>
+        <button onclick="deleteStoreEntirely()" class="flex-1 min-w-[130px] bg-rose-700 hover:bg-rose-600 text-white font-bold py-2.5 rounded-lg text-xs transition">☢️ Delete Store</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script type="module">
+/* ============================================================
+   SmartFix System Console
+   Security: Email NOT hardcoded here. Firestore Rules enforce access.
+   ============================================================ */
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import {
+  getFirestore, collection, getDocs, doc, getDoc, setDoc, deleteDoc,
+  writeBatch, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+import { firebaseConfig } from './js/firebase-config.js';
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+/* ============================================================
+   ADMIN STATE (in-memory only, never persisted)
+   ============================================================ */
+const ADMIN = {
+  user: null,
+  stage1Email: '',
+  stores: [],
+  currentStore: null,
+  totalUsers: 0,
+  pinVerified: false,
+  sessionStart: null
+};
+
+/* ============================================================
+   STAGE 1: LOGIN
+   ============================================================ */
+window.stage1Login = async function () {
+  const email = (document.getElementById('adminEmail')?.value || '').trim().toLowerCase();
+  const pass = document.getElementById('adminPass')?.value || '';
+  const errEl = document.getElementById('loginError');
+  const btn = document.getElementById('loginBtn');
+
+  errEl.textContent = '';
+
+  if (!email || !pass) {
+    errEl.textContent = 'Enter email and password.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Authenticating...';
+
+  try {
+    const cred = await signInWithEmailAndPassword(auth, email, pass);
+    ADMIN.stage1Email = email;
+    console.log('Stage 1 auth OK:', cred.user.uid);
+
+    /* Try reading protected data — this is where Firestore Rules gate access */
+    try {
+      await getDocs(collection(db, 'stores'));
+      /* If we got here, email IS whitelisted */
+      showStage2();
+
+    } catch (ruleErr) {
+      /* Email authenticated but NOT in Firestore whitelist */
+      console.warn('Access denied by Firestore Rules:', ruleErr.code);
+      await signOut(auth);
+      errEl.textContent = '❌ Access denied. Contact administrator.';
+      btn.disabled = false;
+      btn.innerHTML = 'Continue →';
+    }
+
+  } catch (e) {
+    console.error('Login failed:', e);
+    errEl.textContent = friendlyErr(e.code);
+    btn.disabled = false;
+    btn.innerHTML = 'Continue →';
+  }
+};
+
+/* ============================================================
+   STAGE 2: PIN VERIFICATION
+   ============================================================ */
+function showStage2() {
+  document.getElementById('stage1').classList.add('hidden');
+  document.getElementById('stage2').classList.remove('hidden');
+  document.getElementById('stage2User').textContent = 'Signed in: ' + ADMIN.stage1Email;
+  setTimeout(() => document.getElementById('adminPin')?.focus(), 200);
+}
+
+window.stage1Back = async function () {
+  await signOut(auth);
+  document.getElementById('stage1').classList.remove('hidden');
+  document.getElementById('stage2').classList.add('hidden');
+  document.getElementById('adminEmail').value = '';
+  document.getElementById('adminPass').value = '';
+  document.getElementById('adminPin').value = '';
+  document.getElementById('loginBtn').disabled = false;
+  document.getElementById('loginBtn').innerHTML = 'Continue →';
+};
+
+window.stage2Verify = async function () {
+  const pin = (document.getElementById('adminPin')?.value || '').trim();
+  const errEl = document.getElementById('pinError');
+  const btn = document.getElementById('pinBtn');
+
+  errEl.textContent = '';
+
+  if (!pin) {
+    errEl.textContent = 'Enter PIN.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Verifying...';
+
+  try {
+    /* Read the admin PIN doc from Firestore */
+    const pinSnap = await getDoc(doc(db, 'adminConfig', 'security'));
+    if (!pinSnap.exists()) {
+      errEl.textContent = '❌ Admin security config not found. Contact developer.';
+      btn.disabled = false;
+      btn.innerHTML = '🔓 Unlock Console';
+      return;
+    }
+
+    const data = pinSnap.data();
+
+    /* Check if current user is in the authorized admin list */
+    const email = (auth.currentUser?.email || '').toLowerCase();
+    const admins = Array.isArray(data.admins) ? data.admins.map((e) => e.toLowerCase()) : [];
+    if (!admins.includes(email)) {
+      errEl.textContent = '❌ Your email is not in admin list.';
+      await signOut(auth);
+      btn.disabled = false;
+      btn.innerHTML = '🔓 Unlock Console';
+      return;
+    }
+
+    /* Verify PIN */
+    if (String(data.pin) !== String(pin)) {
+      errEl.textContent = '❌ Invalid PIN.';
+      btn.disabled = false;
+      btn.innerHTML = '🔓 Unlock Console';
+      return;
+    }
+
+    /* Success — show dashboard */
+    ADMIN.pinVerified = true;
+    ADMIN.sessionStart = Date.now();
+
+    console.log('✅ Admin access granted');
+    document.getElementById('stage1').classList.add('hidden');
+    document.getElementById('stage2').classList.add('hidden');
+    document.getElementById('dashboard').classList.remove('hidden');
+    document.getElementById('adminEmailDisplay').textContent = auth.currentUser.email;
+
+    loadAll();
+
+  } catch (e) {
+    console.error('PIN verify failed:', e);
+    errEl.textContent = '❌ Error: ' + (e.code || e.message);
+    btn.disabled = false;
+    btn.innerHTML = '🔓 Unlock Console';
+  }
+};
+
+/* ============================================================
+   AUTO LOGOUT ON TAB CLOSE (session security)
+   ============================================================ */
+window.addEventListener('beforeunload', () => {
+  /* Firebase Auth persists by default, but we don't need to do anything here */
+});
+
+/* ============================================================
+   INACTIVITY AUTO-LOGOUT (15 minutes)
+   ============================================================ */
+let inactivityTimer = null;
+function resetInactivity() {
+  if (inactivityTimer) clearTimeout(inactivityTimer);
+  if (ADMIN.pinVerified) {
+    inactivityTimer = setTimeout(() => {
+      alert('⏰ Session expired (15 min inactivity). Logging out.');
+      adminLogout();
+    }, 15 * 60 * 1000);
+  }
+}
+['click', 'keydown', 'touchstart'].forEach((evt) => {
+  window.addEventListener(evt, resetInactivity);
+});
+
+/* ============================================================
+   LOGOUT
+   ============================================================ */
+window.adminLogout = async function () {
+  if (ADMIN.pinVerified && !confirm('Exit System Console?')) return;
+  try {
+    await signOut(auth);
+  } catch (e) {}
+  location.reload();
+};
+
+/* ============================================================
+   LOAD STORES
+   ============================================================ */
+window.loadAll = async function () {
+  const listEl = document.getElementById('storeList');
+  listEl.innerHTML = '<div class="text-center py-12 text-slate-500 text-xs">Loading stores...</div>';
+
+  try {
+    const storesSnap = await getDocs(collection(db, 'stores'));
+    const stores = [];
+
+    storesSnap.forEach((d) => {
+      stores.push({ id: d.id, ...d.data() });
+    });
+
+    for (const store of stores) {
+      try {
+        const staffSnap = await getDocs(collection(db, 'stores', store.id, 'staffUsers'));
+        store._staffCount = staffSnap.size;
+      } catch (e) {
+        store._staffCount = 0;
+      }
+    }
+
+    ADMIN.stores = stores;
+    ADMIN.totalUsers = stores.reduce((sum, s) => sum + 1 + (s._staffCount || 0), 0);
+
+    const total = stores.length;
+    const active = stores.filter(s => (s.plan || 'trial') === 'active').length;
+    const trial = stores.filter(s => (s.plan || 'trial') === 'trial').length;
+    const suspended = stores.filter(s => s.plan === 'suspended').length;
+
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statActive').textContent = active;
+    document.getElementById('statTrial').textContent = trial;
+    document.getElementById('statSuspended').textContent = suspended;
+    document.getElementById('statUsers').textContent = ADMIN.totalUsers;
+    document.getElementById('storeCount').textContent = total + ' stores';
+
+    renderStores();
+
+  } catch (e) {
+    console.error('Failed to load stores:', e);
+    listEl.innerHTML = `
+      <div class="text-center py-12 px-4">
+        <div class="text-4xl mb-3">⚠️</div>
+        <div class="text-rose-300 font-bold mb-2">Cannot access stores</div>
+        <div class="text-slate-400 text-xs">${escapeHTML(e.code || e.message)}</div>
+      </div>
+    `;
+  }
+};
+
+/* ============================================================
+   RENDER STORES
+   ============================================================ */
+window.renderStores = function () {
+  const listEl = document.getElementById('storeList');
+  const q = (document.getElementById('searchBox')?.value || '').trim().toLowerCase();
+  const filterStatus = document.getElementById('filterStatus')?.value || 'ALL';
+  const sortBy = document.getElementById('sortBy')?.value || 'newest';
+
+  let filtered = ADMIN.stores.slice();
+
+  if (q) {
+    filtered = filtered.filter((s) => {
+      const blob = ((s.shopName || '') + ' ' + (s.ownerEmail || '') + ' ' + (s.shopCode || '') + ' ' + (s.ownerPhone || '')).toLowerCase();
+      return blob.includes(q);
+    });
+  }
+
+  if (filterStatus !== 'ALL') filtered = filtered.filter((s) => (s.plan || 'trial') === filterStatus);
+
+  if (sortBy === 'newest') filtered.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+  else if (sortBy === 'oldest') filtered.sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
+  else if (sortBy === 'name') filtered.sort((a, b) => (a.shopName || '').localeCompare(b.shopName || ''));
+
+  if (filtered.length === 0) {
+    listEl.innerHTML = '<div class="text-center py-12 text-slate-500 text-xs">No stores match your filters.</div>';
+    return;
+  }
+
+  listEl.innerHTML = filtered.map((s) => {
+    const plan = s.plan || 'trial';
+    const planBadge = {
+      'trial': 'bg-sky-950/60 text-sky-300 border-sky-800/60',
+      'active': 'bg-emerald-950/60 text-emerald-300 border-emerald-800/60',
+      'suspended': 'bg-rose-950/60 text-rose-300 border-rose-800/60'
+    }[plan] || 'bg-slate-950/60 text-slate-300 border-slate-800/60';
+
+    const planIcon = { trial: '🎁', active: '✅', suspended: '⛔' }[plan] || '📦';
+    const createdDate = s.createdAt?.seconds
+      ? new Date(s.createdAt.seconds * 1000).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'})
+      : '—';
+
+    return `
+      <div class="p-4 hover:bg-slate-800/30 transition cursor-pointer" onclick="openStore('${s.id}')">
+        <div class="flex justify-between items-start gap-3 flex-wrap">
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2 flex-wrap mb-1">
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded border ${planBadge}">${planIcon} ${plan.toUpperCase()}</span>
+              ${s.shopCode ? `<span class="text-[10px] font-mono bg-slate-800 text-sky-300 px-2 py-0.5 rounded">${escapeHTML(s.shopCode)}</span>` : ''}
+              <span class="text-[10px] text-slate-500">Created ${createdDate}</span>
+            </div>
+            <div class="text-[14px] font-black text-white truncate">${escapeHTML(s.shopName || '(No name)')}</div>
+            <div class="text-[11px] text-slate-400 mt-0.5 truncate">
+              ✉️ ${escapeHTML(s.ownerEmail || '—')}
+              ${s.ownerPhone ? ' • 📞 ' + escapeHTML(s.ownerPhone) : ''}
+            </div>
+          </div>
+          <div class="text-right flex-shrink-0">
+            <div class="text-[10px] text-slate-500 uppercase font-bold">Staff</div>
+            <div class="text-lg font-black text-violet-300 font-mono">${s._staffCount || 0}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+};
+
+/* ============================================================
+   OPEN STORE
+   ============================================================ */
+window.openStore = async function (storeId) {
+  const store = ADMIN.stores.find((s) => s.id === storeId);
+  if (!store) return;
+
+  ADMIN.currentStore = store;
+
+  document.getElementById('modalStoreName').textContent = store.shopName || 'Store';
+  document.getElementById('modalStoreEmail').textContent = store.ownerEmail || '—';
+  document.getElementById('storeModal').classList.remove('hidden');
+
+  const body = document.getElementById('modalBody');
+  body.innerHTML = '<div class="text-center py-8 text-slate-500 text-xs"><span class="spinner"></span>Loading...</div>';
+
+  const plan = store.plan || 'trial';
+  const toggleBtn = document.getElementById('modalToggleBtn');
+  if (plan === 'suspended') {
+    toggleBtn.textContent = '▶ Activate';
+    toggleBtn.className = 'flex-1 min-w-[130px] bg-emerald-700 hover:bg-emerald-600 text-white font-bold py-2.5 rounded-lg text-xs transition';
+  } else {
+    toggleBtn.textContent = '⏸ Suspend';
+    toggleBtn.className = 'flex-1 min-w-[130px] bg-amber-700 hover:bg-amber-600 text-white font-bold py-2.5 rounded-lg text-xs transition';
+  }
+
+  try {
+    const collections = ['invoices', 'creditNotes', 'repairs', 'purchases', 'vouchers', 'inventory', 'parties', 'staff', 'salaryPayments', 'attendance', 'auditLog', 'staffUsers'];
+    const counts = {};
+
+    for (const coll of collections) {
+      try {
+        const snap = await getDocs(collection(db, 'stores', storeId, coll));
+        counts[coll] = snap.size;
+      } catch (e) {
+        counts[coll] = '?';
+      }
+    }
+
+    let profile = {};
+    try {
+      const profileSnap = await getDoc(doc(db, 'stores', storeId, 'profile', 'main'));
+      if (profileSnap.exists()) profile = profileSnap.data();
+    } catch (e) {}
+
+    let categories = [];
+    try {
+      const catSnap = await getDoc(doc(db, 'stores', storeId, 'categories', 'main'));
+      if (catSnap.exists() && Array.isArray(catSnap.data().list)) {
+        categories = catSnap.data().list;
+      }
+    } catch (e) {}
+
+    let counters = {};
+    try {
+      const cntSnap = await getDoc(doc(db, 'stores', storeId, 'counters', 'main'));
+      if (cntSnap.exists()) counters = cntSnap.data();
+    } catch (e) {}
+
+    let staffUsers = [];
+    try {
+      const su = await getDocs(collection(db, 'stores', storeId, 'staffUsers'));
+      su.forEach((d) => staffUsers.push({ id: d.id, ...d.data() }));
+    } catch (e) {}
+
+    const createdDate = store.createdAt?.seconds
+      ? new Date(store.createdAt.seconds * 1000).toLocaleString('en-IN')
+      : '—';
+
+    body.innerHTML = `
+      <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-3 space-y-1.5 text-[11px]">
+        <div class="flex justify-between"><span class="text-slate-500">Store ID:</span><span class="font-mono text-sky-400 text-[10px]">${storeId}</span></div>
+        <div class="flex justify-between"><span class="text-slate-500">Shop Name:</span><span class="font-bold text-white">${escapeHTML(store.shopName || '—')}</span></div>
+        <div class="flex justify-between"><span class="text-slate-500">Shop Code:</span><span class="font-mono text-sky-400">${escapeHTML(store.shopCode || '—')}</span></div>
+        <div class="flex justify-between"><span class="text-slate-500">Owner:</span><span class="font-mono text-slate-200">${escapeHTML(store.ownerEmail || '—')}</span></div>
+        <div class="flex justify-between"><span class="text-slate-500">Phone:</span><span class="font-mono text-slate-200">${escapeHTML(store.ownerPhone || '—')}</span></div>
+        <div class="flex justify-between"><span class="text-slate-500">Plan:</span><span class="font-bold text-white uppercase">${plan}</span></div>
+        <div class="flex justify-between"><span class="text-slate-500">Created:</span><span class="text-slate-300">${createdDate}</span></div>
+      </div>
+
+      ${profile.name ? `
+        <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-3">
+          <div class="text-[10px] font-bold uppercase text-sky-400 mb-2">🏪 Store Profile</div>
+          <div class="space-y-1 text-[11px]">
+            ${profile.gstin ? `<div class="flex justify-between"><span class="text-slate-500">GSTIN:</span><span class="font-mono text-slate-200">${escapeHTML(profile.gstin)}</span></div>` : ''}
+            ${profile.phone ? `<div class="flex justify-between"><span class="text-slate-500">Phone:</span><span class="text-slate-200">${escapeHTML(profile.phone)}</span></div>` : ''}
+            ${profile.address ? `<div class="flex justify-between"><span class="text-slate-500">Address:</span><span class="text-slate-300 text-right">${escapeHTML(profile.address)}</span></div>` : ''}
+            ${profile.upiId ? `<div class="flex justify-between"><span class="text-slate-500">UPI:</span><span class="font-mono text-slate-200">${escapeHTML(profile.upiId)}</span></div>` : ''}
+          </div>
+        </div>
+      ` : ''}
+
+      <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-3">
+        <div class="text-[10px] font-bold uppercase text-sky-400 mb-2">🔢 Counters</div>
+        <div class="grid grid-cols-3 gap-2 text-[11px]">
+          <div class="bg-slate-900 rounded p-2 text-center"><div class="text-slate-500 text-[9px]">Invoices</div><div class="font-mono text-sky-300 font-bold">${counters.invSeq || 0}</div></div>
+          <div class="bg-slate-900 rounded p-2 text-center"><div class="text-slate-500 text-[9px]">Returns</div><div class="font-mono text-sky-300 font-bold">${counters.crnSeq || 0}</div></div>
+          <div class="bg-slate-900 rounded p-2 text-center"><div class="text-slate-500 text-[9px]">Purchases</div><div class="font-mono text-sky-300 font-bold">${counters.purSeq || 0}</div></div>
+        </div>
+      </div>
+
+      <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-3">
+        <div class="text-[10px] font-bold uppercase text-sky-400 mb-2">📊 Data Counts</div>
+        <div class="grid grid-cols-3 sm:grid-cols-4 gap-2 text-[11px]">
+          ${[
+            ['Invoices', counts.invoices, '🧾'],
+            ['Repairs', counts.repairs, '🔧'],
+            ['Returns', counts.creditNotes, '↩️'],
+            ['Purchases', counts.purchases, '🛒'],
+            ['Vouchers', counts.vouchers, '📒'],
+            ['Inventory', counts.inventory, '📦'],
+            ['Parties', counts.parties, '👥'],
+            ['Staff', counts.staff, '👨‍💼'],
+            ['Salaries', counts.salaryPayments, '💰'],
+            ['Attendance', counts.attendance, '📸'],
+            ['Audit Log', counts.auditLog, '📝'],
+            ['Staff Logins', counts.staffUsers, '🔑']
+          ].map(([label, count, icon]) => `
+            <div class="bg-slate-900 rounded p-2 text-center">
+              <div class="text-[9px] text-slate-500">${icon} ${label}</div>
+              <div class="font-mono text-white font-bold text-sm">${count}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      ${staffUsers.length > 0 ? `
+        <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-3">
+          <div class="text-[10px] font-bold uppercase text-violet-400 mb-2">🔑 Staff Logins (${staffUsers.length})</div>
+          <div class="space-y-1.5 max-h-48 overflow-y-auto">
+            ${staffUsers.map((u) => `
+              <div class="bg-slate-900 rounded p-2 flex justify-between items-center gap-2 text-[11px]">
+                <div class="min-w-0 flex-1">
+                  <div class="font-bold text-white truncate">${escapeHTML(u.name || '—')}</div>
+                  <div class="text-[10px] text-slate-400 font-mono truncate">${escapeHTML(u.phone || '')} • ${escapeHTML(u.email || '')}</div>
+                </div>
+                <div class="text-right flex-shrink-0">
+                  <div class="text-[9px] font-bold text-violet-300 uppercase">${u.role || '—'}</div>
+                  ${u.disabled ? '<div class="text-[9px] text-rose-400 font-bold">DISABLED</div>' : '<div class="text-[9px] text-emerald-400 font-bold">ACTIVE</div>'}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      ${categories.length > 0 ? `
+        <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-3">
+          <div class="text-[10px] font-bold uppercase text-sky-400 mb-2">🏷️ Categories (${categories.length})</div>
+          <div class="flex flex-wrap gap-1">
+            ${categories.map((c) => `<span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded">${escapeHTML(c)}</span>`).join('')}
+          </div>
+        </div>
+      ` : ''}
+    `;
+
+  } catch (e) {
+    console.error('Failed to load store:', e);
+    body.innerHTML = `
+      <div class="text-center py-8">
+        <div class="text-4xl mb-2">⚠️</div>
+        <div class="text-rose-300 font-bold mb-1">Cannot load</div>
+        <div class="text-slate-400 text-xs">${escapeHTML(e.code || e.message)}</div>
+      </div>
+    `;
+  }
+};
+
+window.closeModal = function () {
+  document.getElementById('storeModal').classList.add('hidden');
+  ADMIN.currentStore = null;
+};
+
+/* ============================================================
+   TOGGLE STATUS
+   ============================================================ */
+window.toggleStoreStatus = async function () {
+  const store = ADMIN.currentStore;
+  if (!store) return;
+  const currentPlan = store.plan || 'trial';
+  const newPlan = currentPlan === 'suspended' ? 'trial' : 'suspended';
+  const action = newPlan === 'suspended' ? 'SUSPEND' : 'ACTIVATE';
+
+  const ok = confirm(
+    (newPlan === 'suspended' ? '⏸ Suspend Store?\n\n' : '▶ Activate Store?\n\n') +
+    'Store: ' + (store.shopName || '') + '\n' +
+    'Owner: ' + (store.ownerEmail || '') + '\n\n' +
+    (newPlan === 'suspended' ? 'Owner will NOT be able to login.' : 'Owner will regain access.')
+  );
+  if (!ok) return;
+
+  try {
+    await setDoc(doc(db, 'stores', store.id), { plan: newPlan, updatedAt: serverTimestamp() }, { merge: true });
+    await logAdminAction(action, store.id, store.shopName);
+    alert('✅ Store ' + action + 'ED');
+    closeModal();
+    await loadAll();
+  } catch (e) {
+    alert('❌ Failed: ' + (e.code || e.message));
+  }
+};
+
+/* ============================================================
+   RESET COUNTERS
+   ============================================================ */
+window.resetCounters = async function () {
+  const store = ADMIN.currentStore;
+  if (!store) return;
+  const ok = confirm('🔄 Reset Counters?\n\n' + (store.shopName || '') + '\n\nNext invoice starts at 0001.\n\nContinue?');
+  if (!ok) return;
+  try {
+    await setDoc(doc(db, 'stores', store.id, 'counters', 'main'), { invSeq: 0, crnSeq: 0, purSeq: 0, updatedAt: serverTimestamp() }, { merge: true });
+    await logAdminAction('RESET_COUNTERS', store.id, store.shopName);
+    alert('✅ Counters reset');
+    await openStore(store.id);
+  } catch (e) {
+    alert('❌ Failed: ' + (e.code || e.message));
+  }
+};
+
+/* ============================================================
+   WIPE STORE DATA
+   ============================================================ */
+window.wipeStoreData = async function () {
+  const store = ADMIN.currentStore;
+  if (!store) return;
+
+  const ok1 = confirm(
+    '⚠️ WIPE ALL DATA?\n\n' +
+    'Store: ' + (store.shopName || '') + '\n\n' +
+    'Deletes: invoices, repairs, purchases, vouchers, inventory, parties, staff records, salaries, attendance.\n\n' +
+    'Kept: login, profile, shop code, staff logins\n\n' +
+    'Continue?'
+  );
+  if (!ok1) return;
+
+  const typed = prompt('Type "WIPE" to confirm:');
+  if (typed !== 'WIPE') { alert('Cancelled.'); return; }
+
+  const collections = ['invoices', 'creditNotes', 'repairs', 'purchases', 'vouchers', 'inventory', 'parties', 'staff', 'salaryPayments', 'attendance', 'auditLog'];
+
+  let totalDeleted = 0;
+  for (const coll of collections) {
+    try {
+      const snap = await getDocs(collection(db, 'stores', store.id, coll));
+      if (snap.empty) continue;
+      const items = [];
+      snap.forEach((d) => items.push(d.ref));
+      const BATCH = 400;
+      for (let i = 0; i < items.length; i += BATCH) {
+        const batch = writeBatch(db);
+        items.slice(i, i + BATCH).forEach((ref) => batch.delete(ref));
+        await batch.commit();
+        totalDeleted += Math.min(BATCH, items.length - i);
+      }
+    } catch (e) {}
+  }
+
+  try {
+    await setDoc(doc(db, 'stores', store.id, 'counters', 'main'), { invSeq: 0, crnSeq: 0, purSeq: 0, updatedAt: serverTimestamp() }, { merge: true });
+  } catch (e) {}
+
+  await logAdminAction('WIPE_DATA', store.id, store.shopName + ' | ' + totalDeleted + ' items');
+
+  alert('✅ Wiped ' + totalDeleted + ' items');
+  await openStore(store.id);
+  await loadAll();
+};
+
+/* ============================================================
+   DELETE STORE ENTIRELY
+   ============================================================ */
+window.deleteStoreEntirely = async function () {
+  const store = ADMIN.currentStore;
+  if (!store) return;
+
+  const ok1 = confirm(
+    '☢️ DELETE ENTIRE STORE?\n\n' +
+    'Store: ' + (store.shopName || '') + '\n' +
+    'Owner: ' + (store.ownerEmail || '') + '\n\n' +
+    'Deletes EVERYTHING including profile and staff logins.\n\n' +
+    'CANNOT BE UNDONE!'
+  );
+  if (!ok1) return;
+
+  const typed = prompt('Type "DELETE" to confirm:');
+  if (typed !== 'DELETE') { alert('Cancelled.'); return; }
+
+  const collections = ['invoices', 'creditNotes', 'repairs', 'purchases', 'vouchers', 'inventory', 'parties', 'staff', 'salaryPayments', 'attendance', 'auditLog', 'staffUsers', 'profile', 'categories', 'counters'];
+
+  let totalDeleted = 0;
+  for (const coll of collections) {
+    try {
+      const snap = await getDocs(collection(db, 'stores', store.id, coll));
+      if (snap.empty) continue;
+      const items = [];
+      snap.forEach((d) => items.push(d.ref));
+      const BATCH = 400;
+      for (let i = 0; i < items.length; i += BATCH) {
+        const batch = writeBatch(db);
+        items.slice(i, i + BATCH).forEach((ref) => batch.delete(ref));
+        await batch.commit();
+        totalDeleted += Math.min(BATCH, items.length - i);
+      }
+    } catch (e) {}
+  }
+
+  try {
+    if (store.shopCode) await deleteDoc(doc(db, 'publicStoreCodes', store.shopCode));
+  } catch (e) {}
+
+  try {
+    await deleteDoc(doc(db, 'stores', store.id));
+  } catch (e) {}
+
+  await logAdminAction('DELETE_STORE', store.id, store.shopName + ' | ' + totalDeleted + ' items');
+
+  alert('✅ Store deleted. ' + totalDeleted + ' items removed.');
+  closeModal();
+  await loadAll();
+};
+
+/* ============================================================
+   ADMIN ACTION LOG
+   ============================================================ */
+async function logAdminAction(action, storeId, details) {
+  try {
+    const id = 'adm-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+    await setDoc(doc(db, 'adminLog', id), {
+      id,
+      action,
+      storeId: storeId || '',
+      details: details || '',
+      adminEmail: auth.currentUser?.email || '',
+      adminUid: auth.currentUser?.uid || '',
+      timestamp: serverTimestamp(),
+      userAgent: navigator.userAgent.substring(0, 200)
+    });
+  } catch (e) {
+    console.warn('Log failed:', e);
+  }
+}
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function friendlyErr(code) {
+  const map = {
+    'auth/invalid-credential': 'Invalid email or password.',
+    'auth/wrong-password': 'Incorrect password.',
+    'auth/user-not-found': 'No account.',
+    'auth/too-many-requests': 'Too many attempts. Wait.',
+    'auth/network-request-failed': 'No internet.'
+  };
+  return map[code] || ('Error: ' + code);
+}
+
+function escapeHTML(str) {
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+console.log('🛡️ System Console loaded (secure mode)');
+</script>
+
+</body>
+</html>
