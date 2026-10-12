@@ -1,5 +1,5 @@
 /* ============================================================
-   SMARTFIX ERP — SPA Router (v4.3.0)
+   SMARTFIX ERP — SPA Router (v4.4.0)
    File: js/router.js
    ============================================================ */
 
@@ -20,13 +20,14 @@ export const ROUTES = {
   staff:                { id: 'staffTab',            label: 'Staff',       icon: '👨‍💼', file: './modules/staff.html',            shortcut: 'F10', description: 'Staff & Salary' },
   settings:             { id: 'settingsTab',         label: 'Settings',    icon: '⚙️', file: './modules/settings.html',           shortcut: 'F11', description: 'Store Settings & Backup' },
   attendance:           { id: 'attendanceTab',       label: 'Attendance',  icon: '📸', file: './modules/attendance.html',         shortcut: 'F12', description: 'Selfie Check-In / Check-Out' },
-  'attendance-report':  { id: 'attendanceReportTab', label: 'Att. Report', icon: '📈', file: './modules/attendance-report.html',  shortcut: 'F13', description: 'Team Attendance Summary' }
+  'attendance-report':  { id: 'attendanceReportTab', label: 'Att. Report', icon: '📈', file: './modules/attendance-report.html',  shortcut: 'F13', description: 'Team Attendance Summary' },
+  manual:               { id: 'manualTab',           label: 'Manual',      icon: '📖', file: './modules/manual.html',             shortcut: 'F14', description: 'User Manual & Help Center' }
 };
 
 export const ROUTE_ORDER = [
   'billing', 'returns', 'repair', 'purchase', 'vouchers',
   'accounting', 'books', 'parties', 'inventory', 'staff',
-  'settings', 'attendance', 'attendance-report'
+  'settings', 'attendance', 'attendance-report', 'manual'
 ];
 
 
@@ -310,4 +311,4 @@ window.addEventListener('popstate', () => {
   }
 });
 
-console.log('%c🧭 Router ready (v4.3.0)', 'color:#06b6d4;font-weight:bold;font-size:11px', `| ${ROUTE_ORDER.length} routes`);
+console.log('%c🧭 Router ready (v4.4.0)', 'color:#06b6d4;font-weight:bold;font-size:11px', `| ${ROUTE_ORDER.length} routes`);
