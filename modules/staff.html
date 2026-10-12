@@ -1,7 +1,7 @@
 <!-- ============================================================
-     SMARTFIX ERP — Staff & Salary Module (v4.2.1)
+     SMARTFIX ERP — Staff & Salary Module (v4.5.1)
      File: modules/staff.html
-     Print fix: iframe-based A5 landscape for mobile
+     Fixed: deletePayment() also deletes linked voucher from cloud
      ============================================================ -->
 
 <section id="staffModule" class="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -130,8 +130,12 @@
     return true;
   }
 
+
+  /* ============================================================
+     INIT
+     ============================================================ */
   function init_staffModule() {
-    console.log('%c👨‍💼 Staff module initialized (v4.2.1)', 'color:#8b5cf6;font-weight:bold');
+    console.log('%c👨‍💼 Staff module initialized (v4.5.1)', 'color:#8b5cf6;font-weight:bold');
 
     if (!window.SF?.perms?.can?.('staff.view')) {
       const container = document.getElementById('moduleContainer');
@@ -189,6 +193,10 @@
     return { onUnload: () => {} };
   }
 
+
+  /* ============================================================
+     SAVE STAFF
+     ============================================================ */
   async function save() {
     if (!requirePerm('staff.create', 'Only owner can create staff')) return;
 
@@ -236,6 +244,7 @@
     updateStats();
   }
 
+
   function resetForm() {
     SM.editingId = null;
     ['stfName','stfDesignation','stfPhone','stfSalary','stfAddress'].forEach((id) => {
@@ -253,6 +262,7 @@
     const saveBtn = document.getElementById('stfSaveBtn');
     if (saveBtn) saveBtn.textContent = '💾 Save Staff';
   }
+
 
   function edit(id) {
     if (!requirePerm('staff.edit', 'Only owner can edit staff')) return;
@@ -273,6 +283,7 @@
     document.querySelector('#staffModule')?.scrollIntoView({ behavior: 'smooth' });
   }
 
+
   async function deleteStaff(id) {
     if (!requirePerm('staff.delete', 'Only owner can delete staff')) return;
     const s = (S.staff || []).find((x) => x.id === id);
@@ -291,6 +302,7 @@
     updateStats();
   }
 
+
   function populateStaffDropdown() {
     const sel = document.getElementById('stfSalaryStaff');
     if (!sel) return;
@@ -299,6 +311,7 @@
     sel.innerHTML = '<option value="">— Choose staff —</option>' + staff.map((s) => `<option value="${s.id}">${C.escapeHTML(s.name)} — ₹${(s.salary || 0).toFixed(0)}</option>`).join('');
     if (currentVal && staff.some((s) => s.id === currentVal)) sel.value = currentVal;
   }
+
 
   function onStaffSelected() {
     const sel = document.getElementById('stfSalaryStaff');
@@ -310,6 +323,10 @@
     if (amtEl) amtEl.value = s.salary || 0;
   }
 
+
+  /* ============================================================
+     PAY SALARY
+     ============================================================ */
   async function paySalary() {
     if (!requirePerm('staff.pay', 'Only owner can pay salary')) return;
 
@@ -384,6 +401,10 @@
     }, 1300);
   }
 
+
+  /* ============================================================
+     RENDER LIST
+     ============================================================ */
   function renderStaffList() {
     const body = document.getElementById('stfListBody');
     if (!body) return;
@@ -416,6 +437,7 @@
     `).join('');
   }
 
+
   function quickPay(staffId) {
     if (!requirePerm('staff.pay')) return;
     const sel = document.getElementById('stfSalaryStaff');
@@ -424,6 +446,7 @@
     document.getElementById('stfSalaryStaff')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     setTimeout(() => { const amtEl = document.getElementById('stfSalaryAmount'); if (amtEl) amtEl.focus(); }, 400);
   }
+
 
   function renderPayHistory() {
     const body = document.getElementById('stfPayHistoryBody');
@@ -459,6 +482,10 @@
     }).join('');
   }
 
+
+  /* ============================================================
+     ⭐ DELETE PAYMENT — FIXED (also deletes linked voucher)
+     ============================================================ */
   async function deletePayment(idx) {
     if (!requirePerm('staff.pay', 'Only owner can delete payments')) return;
     const payments = S.salaryPayments || [];
@@ -469,24 +496,42 @@
     if (pin !== (S.profile?.masterPin || '1234')) { C.toast('Incorrect PIN', 'error'); C.playErrorBeep(); return; }
     const ok = await C.confirmDialog('Delete Payment?', p.staffName + '\n' + p.monthLabel + '\n₹' + (p.total || 0).toFixed(2), 'Delete', true);
     if (!ok) return;
-    if (p.id) {
+
+    /* ⭐ Find linked vouchers BEFORE deletion */
+    const linkedVouchers = (S.vouchers || []).filter((v) => v._sourcePaymentId === p.id);
+
+    /* ⭐ Remove from local state */
+    if (linkedVouchers.length > 0) {
       S.vouchers = (S.vouchers || []).filter((v) => v._sourcePaymentId !== p.id);
       C.safeSave('sfp_vouchers', S.vouchers);
     }
     payments.splice(idx, 1);
     C.safeSave('sfp_salary_payments', S.salaryPayments);
+
+    /* ⭐ Delete payment + linked vouchers from cloud */
     try { await Cl.deleteOne('salaryPayments', p.id); } catch (e) {}
-    C.toast('Deleted', 'success');
+    for (const v of linkedVouchers) {
+      try { await Cl.deleteOne('vouchers', v.id); } catch (e) {}
+    }
+
+    try {
+      window.SF.state.logAudit('SALARY_DELETE', p.staffName + ' | ' + p.monthLabel + ' | ₹' + p.total);
+    } catch (e) {}
+
+    C.toast('Salary payment deleted', 'success');
     renderPayHistory();
     updateStats();
-  }
 
-  function printSlip(id) { printSalarySlip(id); }
+    /* Refresh dashboard if open */
+    try { window.SF.dashboard?.reload?.(); } catch (e) {}
+  }
 
 
   /* ============================================================
-     PRINT SALARY SLIP — iframe-based A5 landscape
+     PRINT SALARY SLIP
      ============================================================ */
+  function printSlip(id) { printSalarySlip(id); }
+
   function printSalarySlip(paymentId) {
     const p = (S.salaryPayments || []).find((x) => x.id === paymentId);
     if (!p) { C.toast('Payment not found', 'error'); return; }
@@ -592,14 +637,10 @@
       </div>
     `;
 
-    /* iframe print */
     const iframe = document.createElement('iframe');
     iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;pointer-events:none;';
-    iframe.setAttribute('aria-hidden', 'true');
     document.body.appendChild(iframe);
-
     const doc = iframe.contentDocument || iframe.contentWindow.document;
-
     doc.open();
     doc.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Salary Slip</title><style>
       @page { size: A4 landscape; margin: 5mm; }
@@ -616,7 +657,6 @@
         iframe.contentWindow.focus();
         iframe.contentWindow.print();
       } catch (e) {
-        console.error('iframe.print failed:', e);
         C.toast('Print dialog blocked. Allow popups.', 'error', 4000);
       }
       setTimeout(() => {
@@ -633,6 +673,9 @@
   }
 
 
+  /* ============================================================
+     STATS + HELPERS
+     ============================================================ */
   function updateStats() {
     const staff = S.staff || [];
     const payments = S.salaryPayments || [];
@@ -655,6 +698,10 @@
   function fmt0(n) { return (Number(n) || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 }); }
   function fmt2(n) { return (Number(n) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
+
+  /* ============================================================
+     EXPOSE
+     ============================================================ */
   window.SF = window.SF || {};
   window.SF.staff = {
     init: init_staffModule,
