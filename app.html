@@ -14,40 +14,30 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="SmartFix ERP">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="application-name" content="SmartFix ERP">
 
 <script src="https://cdn.tailwindcss.com"></script>
 
 <style>
 * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-
-html, body {
-  margin: 0; padding: 0; min-height: 100vh;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-  background: #020617; color: #e2e8f0; overflow-x: hidden;
-}
-
+html, body { margin: 0; padding: 0; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; background: #020617; color: #e2e8f0; overflow-x: hidden; }
 .bg-blob { position: fixed; border-radius: 50%; filter: blur(100px); opacity: 0.25; pointer-events: none; z-index: 0; }
 .blob-1 { width: 500px; height: 500px; top: -200px; left: -200px; background: radial-gradient(circle, #0ea5e9 0%, transparent 70%); animation: float1 25s ease-in-out infinite; }
 .blob-2 { width: 400px; height: 400px; bottom: -180px; right: -180px; background: radial-gradient(circle, #6366f1 0%, transparent 70%); animation: float2 30s ease-in-out infinite; }
 @keyframes float1 { 0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(60px,40px) scale(1.1);} }
 @keyframes float2 { 0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(-50px,-40px) scale(1.05);} }
-
 .glass-header { background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border-bottom: 1px solid rgba(56, 189, 248, 0.12); }
 .glass-tabbar { background: rgba(2, 6, 23, 0.92); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border-bottom: 1px solid rgba(30, 41, 59, 0.6); }
-
 .sf-tab-btn { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; border-radius: 10px; font-size: 12.5px; font-weight: 700; color: #94a3b8; background: transparent; border: 1px solid transparent; cursor: pointer; white-space: nowrap; transition: all 0.15s ease; font-family: inherit; user-select: none; }
 .sf-tab-btn:hover { color: #e2e8f0; background: rgba(30, 41, 59, 0.5); }
 .sf-tab-btn.sf-tab-active { color: #ffffff; background: linear-gradient(135deg, rgba(14, 165, 233, 0.95), rgba(3, 105, 161, 0.95)); border-color: rgba(56, 189, 248, 0.5); box-shadow: 0 4px 14px rgba(14, 165, 233, 0.35); }
 .sf-tab-icon { font-size: 14px; }
 .sf-tab-label { font-size: 12px; letter-spacing: 0.01em; }
 @media (max-width: 640px) { .sf-tab-btn { padding: 8px 12px; font-size: 12px; } .sf-tab-icon { font-size: 13px; } .sf-tab-label { font-size: 11.5px; } }
-
 .icon-btn { width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; border: 1px solid rgba(51, 65, 85, 0.7); background: rgba(15, 23, 42, 0.6); color: #cbd5e1; cursor: pointer; font-size: 16px; transition: all 0.15s ease; font-family: inherit; }
 .icon-btn:hover { background: rgba(30, 41, 59, 0.9); border-color: rgba(56, 189, 248, 0.4); color: #38bdf8; transform: translateY(-1px); }
-
+.icon-btn.help-btn { color: #c4b5fd; border-color: rgba(139, 92, 246, 0.5); background: rgba(139, 92, 246, 0.12); }
+.icon-btn.help-btn:hover { background: rgba(139, 92, 246, 0.25); border-color: rgba(139, 92, 246, 0.8); color: #ddd6fe; }
 #moduleContainer { min-height: calc(100vh - 180px); }
-
 @media screen { #isolatedPrintContainer { display: none !important; } }
 @media print {
   @page { size: A4 portrait; margin: 4mm; }
@@ -56,23 +46,18 @@ html, body {
   #isolatedPrintContainer { display: flex !important; flex-direction: column !important; justify-content: space-between !important; position: static !important; width: 100% !important; max-width: 202mm !important; min-height: 285mm !important; height: 285mm !important; margin: 0 auto !important; padding: 2mm 3mm !important; box-sizing: border-box !important; page-break-after: avoid !important; page-break-inside: avoid !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   tr { page-break-inside: avoid !important; }
 }
-
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
 ::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.3); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(56, 189, 248, 0.5); }
-
 .sf-spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(56, 189, 248, 0.2); border-top-color: #0ea5e9; border-radius: 50%; animation: sfSpin 0.7s linear infinite; }
 @keyframes sfSpin { to { transform: rotate(360deg); } }
-
 @media (max-width: 480px) { .hide-xs { display: none !important; } }
 @media (max-width: 768px) { .hide-sm { display: none !important; } }
-
 .status-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; }
 .pill-online { background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
 .pill-offline { background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
 .pill-code { background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); font-family: ui-monospace, 'SF Mono', Menlo, monospace; }
-
 .fade-in { animation: sfFadeIn 0.35s ease-out; }
 @keyframes sfFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 </style>
@@ -80,21 +65,16 @@ html, body {
 
 <body>
 
-<!-- AMBIENT BACKGROUND -->
 <div class="bg-blob blob-1"></div>
 <div class="bg-blob blob-2"></div>
 
-<!-- PRINT-ONLY CONTAINER -->
 <div id="isolatedPrintContainer"></div>
 
-<!-- HEADER -->
 <header class="glass-header sticky top-0 z-50 no-print">
   <div class="max-w-[1600px] mx-auto px-3 sm:px-4 py-2.5 flex items-center gap-2 sm:gap-3">
 
     <div class="flex items-center gap-2.5 min-w-0 flex-1">
-      <div class="w-9 h-9 flex-shrink-0 rounded-xl bg-gradient-to-br from-sky-500 to-sky-800 flex items-center justify-center text-white text-base shadow-lg shadow-sky-500/30">
-        🔧
-      </div>
+      <div class="w-9 h-9 flex-shrink-0 rounded-xl bg-gradient-to-br from-sky-500 to-sky-800 flex items-center justify-center text-white text-base shadow-lg shadow-sky-500/30">🔧</div>
       <div class="min-w-0 flex-1">
         <div class="flex items-center gap-2 min-w-0">
           <span class="text-sm sm:text-base font-black tracking-tight text-white truncate" data-store-name>Loading...</span>
@@ -109,6 +89,7 @@ html, body {
     </div>
 
     <div class="flex items-center gap-1.5 flex-shrink-0">
+      <button type="button" onclick="SF.go('manual')" class="icon-btn help-btn" title="User Manual & Help">📖</button>
       <button type="button" id="quickBackupBtn" class="icon-btn" title="Backup data">💾</button>
       <button type="button" id="quickSyncBtn" class="icon-btn hide-xs" title="Force cloud sync">☁️</button>
       <button type="button" id="quickRefreshBtn" class="icon-btn hide-xs" title="Reload app">🔄</button>
@@ -118,7 +99,6 @@ html, body {
   </div>
 </header>
 
-<!-- TAB BAR -->
 <nav class="glass-tabbar sticky top-[57px] z-40 no-print">
   <div class="max-w-[1600px] mx-auto">
     <div id="sfTabBar" class="flex items-center gap-1 px-2 sm:px-3 py-1.5 overflow-x-auto scroll-smooth" style="scrollbar-width: none; -ms-overflow-style: none;">
@@ -128,7 +108,6 @@ html, body {
   <style>#sfTabBar::-webkit-scrollbar { display: none; }</style>
 </nav>
 
-<!-- MAIN CONTENT -->
 <main class="relative z-10 max-w-[1600px] mx-auto px-3 sm:px-4 py-4 no-print">
   <div id="moduleContainer" class="fade-in">
     <div style="display:flex;align-items:center;justify-content:center;padding:80px 20px;flex-direction:column;gap:14px">
@@ -138,33 +117,20 @@ html, body {
   </div>
 </main>
 
-<!-- FOOTER -->
 <footer class="relative z-10 max-w-[1600px] mx-auto px-4 py-6 text-center no-print">
   <div class="text-[10px] text-slate-500 space-y-0.5">
-    <div>
-      SmartFix ERP © 2026 • Developed by Debapriya Sarkar
-      <span class="hide-xs">• <span id="appVersion">v4.3.0</span></span>
-    </div>
-    <div class="hide-sm">
-      Owner: <span data-owner-email style="color:#64748b;">—</span>
-    </div>
+    <div>SmartFix ERP © 2026 • Developed by Debapriya Sarkar <span class="hide-xs">• <span id="appVersion">v4.4.0</span></span></div>
+    <div class="hide-sm">Owner: <span data-owner-email style="color:#64748b;">—</span></div>
   </div>
 </footer>
 
-<!-- MOBILE SAFE AREA -->
 <style>
-@supports(padding: max(0px)) {
-  body { padding-bottom: env(safe-area-inset-bottom, 0); }
-}
+@supports(padding: max(0px)) { body { padding-bottom: env(safe-area-inset-bottom, 0); } }
 </style>
 
-<!-- APP BOOTSTRAP -->
 <script type="module" src="./js/app-init.js"></script>
-
-<!-- PWA Install helper -->
 <script type="module" src="./js/pwa-install.js"></script>
 
-<!-- SERVICE WORKER -->
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -175,7 +141,6 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 
-<!-- HASH RESET HELPER -->
 <script>
 window.addEventListener('load', () => {
   if (!window.location.hash) {
