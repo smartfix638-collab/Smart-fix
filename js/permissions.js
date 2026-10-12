@@ -1,5 +1,5 @@
 /* ============================================================
-   SMARTFIX ERP — Permissions & Role Engine (v4.4.0)
+   SMARTFIX ERP — Permissions & Role Engine (v4.5.0)
    File: js/permissions.js
    ============================================================ */
 
@@ -26,6 +26,7 @@ const PERMISSIONS = {
   OWNER: ['*'],
 
   MANAGER: [
+    'dashboard.view',
     'billing.view', 'billing.create', 'billing.reprint',
     'returns.view', 'returns.create',
     'purchase.view', 'purchase.create',
@@ -58,6 +59,7 @@ const PERMISSIONS = {
   ],
 
   CA: [
+    'dashboard.view',
     'accounting.view', 'books.view',
     'billing.view', 'returns.view', 'purchase.view', 'vouchers.view',
     'parties.view', 'inventory.view', 'staff.view',
@@ -102,6 +104,7 @@ export function can(perm) {
 
 export function canAccessRoute(routeKey) {
   const ROUTE_PERMS = {
+    dashboard:             'dashboard.view',
     billing:               'billing.view',
     returns:               'returns.view',
     purchase:              'purchase.view',
@@ -140,4 +143,4 @@ window.SF.perms = {
   isOwner, can, guard, canAccessRoute, getAccessibleRoutes
 };
 
-console.log('%c🔐 Permissions engine ready (v4.4.0)', 'color:#f59e0b;font-weight:bold;font-size:11px');
+console.log('%c🔐 Permissions engine ready (v4.5.0)', 'color:#f59e0b;font-weight:bold;font-size:11px');
