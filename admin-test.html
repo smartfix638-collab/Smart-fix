@@ -3,158 +3,317 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Login Test</title>
-<script src="https://cdn.tailwindcss.com"></script>
+<title>Admin Diagnostic Test</title>
 <style>
-  body { background: #0a0a1a; color: #e2e8f0; font-family: -apple-system, sans-serif; min-height: 100vh; padding: 20px; }
-  .card { max-width: 500px; margin: 0 auto; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 16px; padding: 20px; }
-  .input { width: 100%; background: #0a0a1a; border: 1px solid #334155; border-radius: 10px; padding: 12px; color: #e2e8f0; margin-bottom: 12px; font-family: inherit; }
-  .btn { width: 100%; padding: 14px; border-radius: 10px; background: linear-gradient(135deg, #dc2626, #991b1b); color: white; font-weight: 700; border: none; cursor: pointer; font-size: 14px; }
-  .btn:disabled { opacity: 0.5; }
-  .log { font-family: ui-monospace, monospace; font-size: 11px; background: #0a0a1a; border: 1px solid #1e293b; border-radius: 8px; padding: 12px; max-height: 400px; overflow-y: auto; margin-top: 12px; line-height: 1.6; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 20px;
+    background: #0a0a1a; color: #e2e8f0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    min-height: 100vh;
+  }
+  .card {
+    max-width: 520px; margin: 0 auto;
+    background: #0f172a; border: 1px solid rgba(139, 92, 246, 0.3);
+    border-radius: 16px; padding: 20px;
+  }
+  h1 { font-size: 20px; font-weight: 900; color: #fff; margin: 0 0 6px; }
+  .sub { font-size: 11px; color: #94a3b8; margin-bottom: 20px; }
+  .input {
+    width: 100%; background: #0a0a1a;
+    border: 1px solid #334155; border-radius: 10px;
+    padding: 13px; color: #e2e8f0; font-size: 13px;
+    margin-bottom: 12px; font-family: inherit;
+  }
+  .input:focus { outline: none; border-color: #dc2626; }
+  .btn {
+    width: 100%; padding: 14px; border-radius: 10px;
+    background: linear-gradient(135deg, #dc2626, #991b1b);
+    color: white; font-weight: 700; font-size: 14px;
+    border: none; cursor: pointer; font-family: inherit;
+  }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .log {
+    font-family: ui-monospace, monospace; font-size: 11px;
+    background: #0a0a1a; border: 1px solid #1e293b;
+    border-radius: 8px; padding: 12px; margin-top: 16px;
+    max-height: 400px; overflow-y: auto; line-height: 1.7;
+    white-space: pre-wrap; word-break: break-word;
+  }
   .ok { color: #10b981; }
   .err { color: #ef4444; }
   .info { color: #38bdf8; }
   .warn { color: #f59e0b; }
+  .muted { color: #64748b; }
+  .status {
+    display: inline-block; padding: 4px 10px;
+    border-radius: 999px; font-size: 11px; font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .status.loading { background: #78350f; color: #fbbf24; }
+  .status.ready { background: #064e3b; color: #34d399; }
+  .status.error { background: #7f1d1d; color: #f87171; }
 </style>
 </head>
 <body>
 
 <div class="card">
-  <h1 class="text-xl font-black mb-2 text-white">🔬 Admin Login Test</h1>
-  <p class="text-[11px] text-slate-400 mb-4">Diagnostic tool — shows exactly where login fails</p>
+  <h1>🔬 Admin Diagnostic</h1>
+  <div class="sub">Shows exactly where admin login fails</div>
 
-  <input id="email" type="email" class="input" placeholder="debapriyasarakara@gmail.com" value="debapriyasarakara@gmail.com">
-  <input id="pass" type="password" class="input" placeholder="Password">
-  <button id="btn" class="btn" onclick="runTest()">Run Diagnostic</button>
+  <div id="status" class="status loading">⏳ Loading Firebase SDK...</div>
 
-  <div id="log" class="log">
-    <div class="info">Ready. Enter password and click Run Diagnostic.</div>
-  </div>
+  <input id="email" type="email" class="input" placeholder="email" value="debapriyasarakara@gmail.com" autocapitalize="none">
+  <input id="pass" type="password" class="input" placeholder="Password" autocomplete="current-password">
+  <button id="btn" class="btn" disabled>Waiting for SDK...</button>
+
+  <div id="log" class="log"><span class="muted">Loading Firebase... please wait 2-3 seconds</span></div>
 </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { firebaseConfig } from './js/firebase-config.js';
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+<script type="module">
+/* ============================================================
+   ADMIN DIAGNOSTIC — Self-contained with error visibility
+   ============================================================ */
 
 const logEl = document.getElementById('log');
+const statusEl = document.getElementById('status');
+const btnEl = document.getElementById('btn');
 
 function log(msg, cls) {
-  const d = document.createElement('div');
-  d.className = cls || '';
-  d.textContent = msg;
-  logEl.appendChild(d);
+  const line = document.createElement('div');
+  line.className = cls || 'muted';
+  line.textContent = msg;
+  logEl.appendChild(line);
   logEl.scrollTop = logEl.scrollHeight;
   console.log(msg);
 }
 
-window.runTest = async function () {
+function clearLog() {
   logEl.innerHTML = '';
-  const email = document.getElementById('email').value.trim();
-  const pass = document.getElementById('pass').value;
-  const btn = document.getElementById('btn');
+}
 
-  log('🔬 Diagnostic started', 'info');
-  log('   Email: ' + email, 'info');
-  log('   Config project: ' + firebaseConfig.projectId, 'info');
+function setStatus(state, text) {
+  statusEl.className = 'status ' + state;
+  statusEl.textContent = text;
+}
 
-  if (!pass) {
-    log('❌ Password is empty', 'err');
-    return;
-  }
+/* ============================================================
+   Firebase Config (INLINE — no external file needed)
+   ============================================================ */
+const firebaseConfig = {
+  apiKey:            "AIzaSyDbAlfyb040xKffRx20SGBvwuitsA1zTSE",
+  authDomain:        "smartfix-a6733.firebaseapp.com",
+  projectId:         "smartfix-a6733",
+  storageBucket:     "smartfix-a6733.firebasestorage.app",
+  messagingSenderId: "346183509613",
+  appId:             "1:346183509613:web:d710eb153e1aef89cb8164"
+};
 
-  btn.disabled = true;
-  btn.textContent = 'Testing...';
+log('🚀 Diagnostic page loaded', 'info');
+log('Project ID: ' + firebaseConfig.projectId, 'info');
 
-  /* --- TEST 1: Firebase Auth --- */
-  log('');
-  log('━━━ TEST 1: Firebase Auth Login ━━━', 'info');
-  let cred = null;
+/* ============================================================
+   Load Firebase SDK via dynamic import
+   ============================================================ */
+let auth = null;
+let db = null;
+
+(async () => {
   try {
-    cred = await signInWithEmailAndPassword(auth, email, pass);
-    log('✅ Auth SUCCESS', 'ok');
+    setStatus('loading', '⏳ Loading Firebase modules...');
+    log('');
+    log('📦 Loading Firebase SDK from CDN...', 'info');
+
+    const [appMod, authMod, fsMod] = await Promise.all([
+      import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js'),
+      import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js'),
+      import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js')
+    ]);
+
+    log('✅ Firebase SDK loaded', 'ok');
+    log('   Auth module: loaded', 'ok');
+    log('   Firestore module: loaded', 'ok');
+
+    const app = appMod.initializeApp(firebaseConfig);
+    auth = authMod.getAuth(app);
+    db = fsMod.getFirestore(app);
+
+    /* Save modules for later use */
+    window._fb = {
+      authMod, fsMod, auth, db
+    };
+
+    setStatus('ready', '✅ Ready — enter password & click Run');
+    btnEl.disabled = false;
+    btnEl.textContent = '▶ Run Diagnostic';
+    btnEl.onclick = runTest;
+
+    log('');
+    log('✅ Firebase initialized successfully', 'ok');
+    log('Ready to test login.', 'ok');
+    log('');
+    log('👉 Enter your password and tap "Run Diagnostic"', 'warn');
+
+  } catch (e) {
+    setStatus('error', '❌ SDK load failed');
+    log('');
+    log('❌ Failed to load Firebase SDK', 'err');
+    log('   Error: ' + e.message, 'err');
+    log('', 'err');
+    log('💡 Possible causes:', 'warn');
+    log('   • No internet connection', 'warn');
+    log('   • gstatic.com blocked by network', 'warn');
+    log('   • Ad blocker blocking Firebase', 'warn');
+    log('', 'err');
+    log('Try: Disable ad blocker, use WiFi, then reload', 'warn');
+    btnEl.textContent = '❌ SDK Failed';
+  }
+})();
+
+/* ============================================================
+   Main Test Function
+   ============================================================ */
+async function runTest() {
+  const email = document.getElementById('email').value.trim().toLowerCase();
+  const pass = document.getElementById('pass').value;
+
+  if (!email) { alert('Enter email'); return; }
+  if (!pass) { alert('Enter password'); return; }
+  if (!auth || !db) { alert('Firebase not ready'); return; }
+
+  btnEl.disabled = true;
+  btnEl.textContent = '⏳ Testing...';
+  clearLog();
+
+  log('🔬 Diagnostic Started', 'info');
+  log('Email: ' + email, 'info');
+  log('', 'muted');
+
+  let cred = null;
+
+  /* ═══ TEST 1: Auth Login ═══ */
+  log('━━━ TEST 1: Firebase Auth Login ━━━', 'info');
+  try {
+    cred = await window._fb.authMod.signInWithEmailAndPassword(auth, email, pass);
+    log('✅ Login SUCCESS', 'ok');
     log('   UID: ' + cred.user.uid, 'ok');
     log('   Email Verified: ' + cred.user.emailVerified, cred.user.emailVerified ? 'ok' : 'warn');
-    log('   Provider: ' + (cred.user.providerData[0]?.providerId || 'unknown'), 'info');
+    log('   Provider: ' + (cred.user.providerData[0]?.providerId || '?'), 'ok');
   } catch (e) {
-    log('❌ Auth FAILED', 'err');
-    log('   Code: ' + (e.code || 'unknown'), 'err');
+    log('❌ Login FAILED', 'err');
+    log('   Code: ' + (e.code || '?'), 'err');
     log('   Message: ' + (e.message || ''), 'err');
-    btn.disabled = false;
-    btn.textContent = 'Run Diagnostic';
+    log('', 'err');
+
+    if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password') {
+      log('💡 Fix: Password is wrong.', 'warn');
+      log('   → Firebase Console → Authentication → Users', 'warn');
+      log('   → your email → ⋮ → Reset password', 'warn');
+    } else if (e.code === 'auth/user-not-found') {
+      log('💡 Fix: No account with this email.', 'warn');
+      log('   → Firebase Console → Authentication → Add user', 'warn');
+    } else if (e.code === 'auth/operation-not-allowed') {
+      log('💡 Fix: Email/Password auth disabled.', 'warn');
+      log('   → Authentication → Sign-in method → Enable Email/Password', 'warn');
+    } else if (e.code === 'auth/too-many-requests') {
+      log('💡 Fix: Too many attempts. Wait 5 minutes.', 'warn');
+    } else if (e.code === 'auth/network-request-failed') {
+      log('💡 Fix: Check internet connection.', 'warn');
+    }
+
+    btnEl.disabled = false;
+    btnEl.textContent = '🔄 Try Again';
     return;
   }
 
-  /* --- TEST 2: Read adminConfig (Rules test) --- */
-  log('');
+  log('', 'muted');
+
+  /* ═══ TEST 2: Read adminConfig ═══ */
   log('━━━ TEST 2: Read adminConfig/security ━━━', 'info');
   try {
-    const snap = await getDoc(doc(db, 'adminConfig', 'security'));
-    if (snap.exists()) {
-      const data = snap.data();
-      log('✅ adminConfig read OK', 'ok');
-      log('   admins: ' + JSON.stringify(data.admins || []), 'ok');
-      log('   pin: ' + (data.pin ? data.pin.substring(0, 2) + '***' : '(missing)'), 'ok');
+    const snap = await window._fb.fsMod.getDoc(
+      window._fb.fsMod.doc(db, 'adminConfig', 'security')
+    );
 
-      /* Verify email is in admins */
-      const emailLower = email.toLowerCase();
-      const admins = Array.isArray(data.admins) ? data.admins.map(a => a.toLowerCase()) : [];
-      if (admins.includes(emailLower)) {
-        log('✅ Email IS in admins array', 'ok');
-      } else {
-        log('❌ Email NOT in admins array!', 'err');
-        log('   Expected: ' + emailLower, 'err');
-        log('   Found: ' + admins.join(', '), 'err');
-      }
+    if (!snap.exists()) {
+      log('❌ Document does NOT exist', 'err');
+      log('   Path: /adminConfig/security', 'err');
+      log('', 'err');
+      log('💡 Fix: Create it in Firebase Console → Firestore → Data', 'warn');
+      log('   Collection ID: adminConfig', 'warn');
+      log('   Document ID: security', 'warn');
+      log('   Field: admins (array) = ["' + email + '"]', 'warn');
+      log('   Field: pin (string) = "yourPIN"', 'warn');
     } else {
-      log('❌ adminConfig/security document NOT FOUND', 'err');
+      const data = snap.data();
+      log('✅ Document exists', 'ok');
+      log('   admins: ' + JSON.stringify(data.admins || []), 'ok');
+      log('   pin: ' + (data.pin ? String(data.pin).substring(0, 2) + '***' : '(missing)'), 'ok');
+
+      /* Check if email is in admins */
+      const admins = Array.isArray(data.admins) ? data.admins.map(a => String(a).toLowerCase()) : [];
+      if (admins.includes(email)) {
+        log('✅ Your email IS in admins list', 'ok');
+      } else {
+        log('❌ Your email NOT in admins list', 'err');
+        log('   Expected: ' + email, 'err');
+        log('   Found: ' + admins.join(', '), 'err');
+        log('', 'err');
+        log('💡 Fix: Add "' + email + '" to admins array', 'warn');
+      }
     }
   } catch (e) {
     log('❌ Read FAILED', 'err');
-    log('   Code: ' + (e.code || 'unknown'), 'err');
+    log('   Code: ' + (e.code || '?'), 'err');
     log('   Message: ' + (e.message || ''), 'err');
+
     if (e.code === 'permission-denied') {
-      log('   ➜ Firestore Rules are blocking you', 'warn');
-      log('   ➜ Check isSuperAdmin() in Rules', 'warn');
-      log('   ➜ Make sure email_verified check is removed if email not verified', 'warn');
+      log('', 'err');
+      log('💡 Firestore Rules are blocking you!', 'warn');
+      log('   Most likely cause: email_verified check', 'warn');
+      log('', 'muted');
+      log('   Fix Rules → remove this line:', 'warn');
+      log('   // && request.auth.token.email_verified == true', 'warn');
+      log('', 'muted');
+      log('   Then Publish. Wait 30 sec. Try again.', 'warn');
     }
   }
 
-  /* --- TEST 3: Read stores collection --- */
-  log('');
+  log('', 'muted');
+
+  /* ═══ TEST 3: Read stores ═══ */
   log('━━━ TEST 3: Read stores collection ━━━', 'info');
   try {
-    const snap = await getDocs(collection(db, 'stores'));
+    const snap = await window._fb.fsMod.getDocs(
+      window._fb.fsMod.collection(db, 'stores')
+    );
     log('✅ Stores read OK', 'ok');
     log('   Found ' + snap.size + ' stores', 'ok');
   } catch (e) {
     log('❌ Stores read FAILED', 'err');
-    log('   Code: ' + (e.code || 'unknown'), 'err');
-    log('   ➜ This means Firestore Rules denied access', 'warn');
+    log('   Code: ' + (e.code || '?'), 'err');
+    log('   ➜ Rules denying access — same fix as Test 2', 'warn');
   }
 
-  /* --- Summary --- */
-  log('');
-  log('━━━ SUMMARY ━━━', 'info');
-  if (cred && cred.user.emailVerified === false) {
-    log('⚠️  Email NOT verified — this may cause issues', 'warn');
-    log('   Fix: Firebase Console → Authentication → Users → your email → ⋮ → Mark email as verified', 'warn');
-  }
+  log('', 'muted');
+  log('━━━ COMPLETE ━━━', 'info');
+  log('', 'muted');
+  log('📸 Screenshot this entire log and send to dev', 'warn');
+  log('', 'muted');
 
-  log('');
-  log('Diagnostic complete. Screenshot this log and send.', 'info');
+  /* Cleanup session */
+  try {
+    await window._fb.authMod.signOut(auth);
+    log('🧹 Test session cleaned up', 'muted');
+  } catch (e) {}
 
-  btn.disabled = false;
-  btn.textContent = 'Run Diagnostic Again';
-};
+  btnEl.disabled = false;
+  btnEl.textContent = '🔄 Test Again';
+}
 
-console.log('🔬 Admin test page loaded');
+/* Global fallback */
+window.runTest = runTest;
 </script>
 
 </body>
