@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartFix — Data Cleanup</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { background: #020617; color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-height: 100vh; padding: 20px; }
+  .glass { background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(56, 189, 248, 0.15); border-radius: 16px; backdrop-filter: blur(20px); }
+  .log { font-family: ui-monospace, monospace; font-size: 11px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<div class="max-w-2xl mx-auto space-y-4">
+
+  <div class="glass p-5">
+    <div class="flex items-center gap-3 mb-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-700 flex items-center justify-center text-xl">🧹</div>
+      <div>
+        <h1 class="text-lg font-black text-white">Data Cleanup Tool</h1>
+        <p class="text-[11px] text-slate-400">Remove orphan vouchers from salary/repair deletions</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="glass p-5">
+    <button id="runBtn" onclick="runCleanup()"
+            class="w-full bg-gradient-to-r from-amber-600 to-orange-700 hover:from-amber-500 hover:to-orange-600 text-white font-black py-4 rounded-xl text-sm shadow-lg transition">
+      🧹 Run Cleanup Now
+    </button>
+    <p class="text-[10px] text-slate-500 mt-3 text-center">
+      App not ready হলে 10 sec অপেক্ষা করে আবার click করুন
+    </p>
+  </div>
+
+  <div class="glass p-5">
+    <div class="text-[10px] font-black uppercase tracking-wider text-sky-400 mb-2">📋 Log</div>
+    <div id="logBox" class="log bg-slate-950/70 border border-slate-800 rounded-lg p-3 max-h-96 overflow-y-auto space-y-1">
+      <div class="text-slate-500">Waiting for button click...</div>
+    </div>
+  </div>
+
+  <div class="glass p-5">
+    <div class="text-[10px] font-black uppercase tracking-wider text-emerald-400 mb-2">✅ After Cleanup</div>
+    <p class="text-[11px] text-slate-400 leading-relaxed">
+      1. এই page থেকে বেরিয়ে যান<br>
+      2. <strong class="text-white">app.html</strong> reload করুন (hard refresh)<br>
+      3. Dashboard-এ data ঠিক দেখবেন<br>
+      4. এই <strong class="text-white">cleanup.html</strong> file GitHub থেকে delete করে দিন
+    </p>
+  </div>
+
+</div>
+
+
+<script>
+(function () {
+  'use strict';
+
+  const logBox = document.getElementById('logBox');
+
+  function log(msg, color) {
+    const d = document.createElement('div');
+    d.style.color = color || '#94a3b8';
+    d.textContent = new Date().toLocaleTimeString() + '  ' + msg;
+    logBox.appendChild(d);
+    logBox.scrollTop = logBox.scrollHeight;
+    console.log(msg);
+  }
+
+  window.runCleanup = async function () {
+    logBox.innerHTML = '';
+    log('🚀 Starting cleanup...', '#38bdf8');
+
+    /* Wait for SF to be ready */
+    const start = Date.now();
+    while (Date.now() - start < 15000) {
+      if (window.SF?.state?.state && window.SF?.cloud) break;
+      await new Promise(r => setTimeout(r, 300));
+    }
+
+    const S = window.SF?.state?.state;
+    const Cl = window.SF?.cloud;
+
+    if (!S || !Cl) {
+      log('❌ App not ready. Make sure you opened this page with app.html already loaded once.', '#ef4444');
+      log('👉 Tip: First open app.html and login, then come back here.', '#fbbf24');
+      return;
+    }
+
+    log('✅ App loaded successfully', '#10b981');
+    log('   Store ID: ' + (window.SF?.perms?.getUserMeta?.()?.storeId || 'unknown'));
+    log('   Role: ' + (window.SF?.perms?.getRole?.() || 'unknown'));
+
+    /* Check if logged in */
+    if (!window.SF?.perms?.isOwner?.()) {
+      log('⚠️ You must be logged in as Owner to run this', '#f59e0b');
+      log('👉 Open app.html, login as owner, then come back', '#fbbf24');
+      return;
+    }
+
+    /* Load repairs */
+    let repairs = [];
+    try {
+      repairs = JSON.parse(localStorage.getItem('sfp_repairs') || '[]');
+      log('📦 Loaded ' + repairs.length + ' repairs from local storage', '#94a3b8');
+    } catch (e) {}
+
+    /* Build valid ID sets */
+    const validPaymentIds = new Set((S.salaryPayments || []).map(p => p.id));
+    const validRepairIds = new Set(repairs.map(r => r.id));
+
+    log('🔐 Valid salary payments: ' + validPaymentIds.size, '#94a3b8');
+    log('🔐 Valid repair jobs: ' + validRepairIds.size, '#94a3b8');
+
+    /* Find orphans */
+    const allVouchers = S.vouchers || [];
+    log('📋 Total vouchers: ' + allVouchers.length, '#94a3b8');
+
+    const orphans = allVouchers.filter(v => {
+      if (v._sourcePaymentId && !validPaymentIds.has(v._sourcePaymentId)) return true;
+      if (v._sourceRepairId && !validRepairIds.has(v._sourceRepairId)) return true;
+      return false;
+    });
+
+    if (orphans.length === 0) {
+      log('✅ No orphan vouchers found — everything is clean!', '#10b981');
+      return;
+    }
+
+    log('🗑️ Found ' + orphans.length + ' orphan voucher(s):', '#f59e0b');
+    orphans.forEach(v => {
+      log('   • ' + (v.category || v.id) + ' — ₹' + (v.amount || 0).toFixed(2), '#fbbf24');
+    });
+
+    /* Delete from cloud */
+    log('☁️ Deleting from cloud...', '#38bdf8');
+    let deleted = 0;
+    for (const v of orphans) {
+      try {
+        await Cl.deleteOne('vouchers', v.id);
+        deleted++;
+        log('   ✅ Deleted: ' + v.id, '#10b981');
+      } catch (e) {
+        log('   ❌ Failed: ' + v.id + ' — ' + (e.message || e.code), '#ef4444');
+      }
+    }
+
+    /* Remove from local */
+    const orphanIds = new Set(orphans.map(v => v.id));
+    S.vouchers = allVouchers.filter(v => !orphanIds.has(v.id));
+    try {
+      localStorage.setItem('sfp_vouchers', JSON.stringify(S.vouchers));
+      log('💾 Local storage updated', '#10b981');
+    } catch (e) {
+      log('⚠️ Local save failed: ' + e.message, '#f59e0b');
+    }
+
+    /* Summary */
+    log('', '#94a3b8');
+    log('🎉 CLEANUP COMPLETE', '#10b981');
+    log('   Deleted: ' + deleted + ' / ' + orphans.length, '#10b981');
+    log('   Remaining vouchers: ' + S.vouchers.length, '#94a3b8');
+
+    /* Auto refresh dashboard */
+    try { window.SF.dashboard?.reload?.(); } catch (e) {}
+  };
+
+  /* Auto-run after 3 seconds */
+  window.addEventListener('load', () => {
+    log('⏳ Auto-starting in 3 seconds...', '#38bdf8');
+    setTimeout(() => {
+      window.runCleanup();
+    }, 3000);
+  });
+})();
+</script>
+
+</body>
+</html>
