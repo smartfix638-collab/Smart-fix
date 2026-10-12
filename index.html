@@ -3,166 +3,799 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>SmartFix ERP — Cloud Login</title>
+<title>SmartFix ERP — #1 Cloud POS for Mobile Shops & Repair Centers</title>
 
 <link rel="manifest" href="./manifest.json">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%230ea5e9'/%3E%3Cstop offset='1' stop-color='%230369a1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='100' fill='url(%23g)'/%3E%3Ctext x='50%25' y='65%25' font-size='300' text-anchor='middle' fill='white'%3E%F0%9F%94%A7%3C/text%3E%3C/svg%3E">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%230ea5e9'/%3E%3Cstop offset='1' stop-color='%230369a1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='100' fill='url(%23g)'/%3E%3Ctext x='50%25' y='65%25' font-size='300' text-anchor='middle' fill='white'%3E%F0%9F%94%A7%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%238b5cf6'/%3E%3Cstop offset='1' stop-color='%236366f1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='100' fill='url(%23g)'/%3E%3Ctext x='50%25' y='65%25' font-size='300' text-anchor='middle' fill='white'%3E%F0%9F%94%A7%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%238b5cf6'/%3E%3Cstop offset='1' stop-color='%236366f1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='100' fill='url(%23g)'/%3E%3Ctext x='50%25' y='65%25' font-size='300' text-anchor='middle' fill='white'%3E%F0%9F%94%A7%3C/text%3E%3C/svg%3E">
 
-<meta name="theme-color" content="#0284c7">
+<meta name="theme-color" content="#6366f1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="SmartFix ERP">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="application-name" content="SmartFix ERP">
+<meta name="description" content="Cloud-based POS + Repair management for mobile shops. Multi-device sync, GST billing, IMEI tracking, job cards, WhatsApp reminders.">
 
 <script src="https://cdn.tailwindcss.com"></script>
 
 <style>
   * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; background: #020617; color: #e2e8f0; overflow-x: hidden; }
-  .bg-blob { position: fixed; border-radius: 50%; filter: blur(90px); opacity: 0.4; pointer-events: none; z-index: 0; }
-  .blob-1 { width: 420px; height: 420px; top: -140px; left: -140px; background: radial-gradient(circle, #0ea5e9 0%, transparent 70%); animation: float1 18s ease-in-out infinite; }
-  .blob-2 { width: 380px; height: 380px; bottom: -120px; right: -120px; background: radial-gradient(circle, #6366f1 0%, transparent 70%); animation: float2 22s ease-in-out infinite; }
-  .blob-3 { width: 300px; height: 300px; top: 45%; left: 55%; background: radial-gradient(circle, #06b6d4 0%, transparent 70%); opacity: 0.25; animation: float1 15s ease-in-out infinite reverse; }
-  @keyframes float1 { 0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(40px,30px) scale(1.1);} }
-  @keyframes float2 { 0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(-40px,-30px) scale(1.05);} }
-  .glass { background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%); border: 1px solid rgba(56, 189, 248, 0.15); box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5); }
-  .logo-pulse { animation: pulseGlow 3s ease-in-out infinite; }
-  @keyframes pulseGlow { 0%,100%{box-shadow:0 0 0 0 rgba(14,165,233,0.6);} 50%{box-shadow:0 0 0 20px rgba(14,165,233,0);} }
-  .tab-active { background: linear-gradient(135deg, #0ea5e9, #0369a1); color: #ffffff !important; box-shadow: 0 4px 14px rgba(14, 165, 233, 0.35); }
-  .input-field { width: 100%; background: rgba(15, 23, 42, 0.6); border: 1px solid #334155; border-radius: 10px; padding: 12px 14px; color: #e2e8f0; font-size: 14px; font-family: inherit; transition: all 0.15s ease; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    background: #0a0a1a;
+    color: #e2e8f0;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+  }
+
+  /* ---------- PREMIUM AMBIENT ---------- */
+  .bg-mesh {
+    position: fixed; inset: 0; z-index: 0;
+    background: radial-gradient(circle at 15% 20%, rgba(139, 92, 246, 0.28), transparent 45%),
+                radial-gradient(circle at 85% 15%, rgba(99, 102, 241, 0.25), transparent 50%),
+                radial-gradient(circle at 75% 85%, rgba(56, 189, 248, 0.20), transparent 50%),
+                radial-gradient(circle at 10% 90%, rgba(168, 85, 247, 0.22), transparent 45%);
+    pointer-events: none;
+  }
+  .bg-grid {
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(148, 163, 184, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148, 163, 184, 0.06) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+    pointer-events: none;
+  }
+  .bg-glow {
+    position: fixed; z-index: 0; pointer-events: none;
+    border-radius: 50%; filter: blur(100px);
+  }
+  .glow-1 { width: 500px; height: 500px; top: -200px; left: -150px; background: radial-gradient(circle, #8b5cf6, transparent 70%); opacity: 0.35; animation: float1 20s ease-in-out infinite; }
+  .glow-2 { width: 450px; height: 450px; top: 40%; right: -200px; background: radial-gradient(circle, #6366f1, transparent 70%); opacity: 0.30; animation: float2 25s ease-in-out infinite; }
+  .glow-3 { width: 380px; height: 380px; bottom: -150px; left: 30%; background: radial-gradient(circle, #06b6d4, transparent 70%); opacity: 0.25; animation: float1 22s ease-in-out infinite reverse; }
+  @keyframes float1 { 0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(60px,40px) scale(1.15);} }
+  @keyframes float2 { 0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(-50px,-30px) scale(1.1);} }
+
+  /* ---------- GLASS ---------- */
+  .glass {
+    background: linear-gradient(135deg, rgba(30, 27, 75, 0.6), rgba(15, 23, 42, 0.7));
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(139, 92, 246, 0.22);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .glass-soft {
+    background: rgba(20, 18, 50, 0.5);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(148, 163, 184, 0.12);
+  }
+
+  /* ---------- LOGO ---------- */
+  .logo-mark {
+    background: linear-gradient(135deg, #8b5cf6, #6366f1, #4f46e5);
+    box-shadow: 0 12px 40px rgba(139, 92, 246, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    animation: pulse-glow 3.5s ease-in-out infinite;
+  }
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 12px 40px rgba(139, 92, 246, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2); }
+    50%      { box-shadow: 0 12px 60px rgba(139, 92, 246, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.3); }
+  }
+
+  /* ---------- TYPOGRAPHY ---------- */
+  .gradient-text {
+    background: linear-gradient(135deg, #a78bfa 0%, #818cf8 40%, #60a5fa 70%, #22d3ee 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+  .brand-pro {
+    background: linear-gradient(135deg, #c4b5fd, #a78bfa);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  /* ---------- FEATURE CARD ---------- */
+  .feature-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+  .feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.6), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+  }
+  .feature-card:hover::before { transform: translateX(100%); }
+  .feature-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(139, 92, 246, 0.4);
+    box-shadow: 0 20px 50px rgba(139, 92, 246, 0.2);
+  }
+
+  /* ---------- ICON BOX ---------- */
+  .icon-box {
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+    border: 1px solid;
+  }
+  .icon-violet { background: rgba(139, 92, 246, 0.15); border-color: rgba(139, 92, 246, 0.35); }
+  .icon-blue   { background: rgba(59, 130, 246, 0.15); border-color: rgba(59, 130, 246, 0.35); }
+  .icon-emerald{ background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.35); }
+  .icon-amber  { background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.35); }
+  .icon-rose   { background: rgba(244, 63, 94, 0.15);  border-color: rgba(244, 63, 94, 0.35);  }
+  .icon-cyan   { background: rgba(6, 182, 212, 0.15);  border-color: rgba(6, 182, 212, 0.35);  }
+  .icon-fuchsia{ background: rgba(217, 70, 239, 0.15); border-color: rgba(217, 70, 239, 0.35); }
+  .icon-orange { background: rgba(249, 115, 22, 0.15); border-color: rgba(249, 115, 22, 0.35); }
+
+  /* ---------- INPUTS ---------- */
+  .input-field {
+    width: 100%;
+    background: rgba(10, 10, 26, 0.7);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 12px;
+    padding: 13px 14px;
+    color: #e2e8f0;
+    font-size: 14px;
+    font-family: inherit;
+    transition: all 0.2s ease;
+  }
   .input-field::placeholder { color: #64748b; }
-  .input-field:focus { outline: none; border-color: #0ea5e9; box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15); background: rgba(15, 23, 42, 0.9); }
-  .btn-primary { width: 100%; padding: 12px; border-radius: 10px; border: none; font-weight: 700; font-size: 14px; color: white; cursor: pointer; background: linear-gradient(135deg, #0ea5e9, #0369a1); transition: all 0.2s ease; font-family: inherit; }
-  .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 12px 30px rgba(14, 165, 233, 0.45); }
+  .input-field:focus {
+    outline: none;
+    border-color: rgba(139, 92, 246, 0.6);
+    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.12);
+    background: rgba(10, 10, 26, 0.95);
+  }
+
+  /* ---------- BUTTON ---------- */
+  .btn-primary {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    font-weight: 700;
+    font-size: 14px;
+    color: white;
+    cursor: pointer;
+    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 50%, #4f46e5 100%);
+    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4);
+    transition: all 0.25s ease;
+    font-family: inherit;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%; width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+  }
+  .btn-primary:hover::before { left: 100%; }
+  .btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 40px rgba(139, 92, 246, 0.55);
+  }
   .btn-primary:disabled { opacity: 0.55; cursor: wait; }
-  .fade-in { animation: fadeInUp 0.4s ease-out; }
-  @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-  .err-text { color: #f87171; font-size: 12px; text-align: center; min-height: 16px; padding-top: 4px; font-weight: 500; }
+
+  /* ---------- TABS ---------- */
+  .tab-item {
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: 1px solid transparent;
+    background: transparent;
+    color: #94a3b8;
+    font-family: inherit;
+  }
+  .tab-item:hover { color: white; background: rgba(139, 92, 246, 0.08); }
+  .tab-item.active {
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    color: white;
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+    border-color: rgba(167, 139, 250, 0.4);
+  }
+
+  /* ---------- BADGE ---------- */
+  .badge-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #34d399;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .badge-live .dot {
+    width: 6px; height: 6px;
+    background: #34d399;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #34d399;
+    animation: blink 1.8s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+
+  .badge-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(139, 92, 246, 0.12);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    color: #c4b5fd;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+  }
+
+  /* ---------- STAT ---------- */
+  .stat-block { text-align: center; }
+  .stat-value {
+    font-size: 26px;
+    font-weight: 900;
+    line-height: 1;
+    background: linear-gradient(135deg, #c4b5fd, #a78bfa);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .stat-label {
+    font-size: 10px;
+    color: #64748b;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    margin-top: 4px;
+  }
+
+  /* ---------- ANIMATE ---------- */
+  .fade-up { animation: fadeUp 0.7s ease-out both; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .d-1 { animation-delay: 0.05s; }
+  .d-2 { animation-delay: 0.15s; }
+  .d-3 { animation-delay: 0.25s; }
+  .d-4 { animation-delay: 0.35s; }
+  .d-5 { animation-delay: 0.45s; }
+
+  /* ---------- MISC ---------- */
+  .err-text { color: #f87171; font-size: 12px; text-align: center; min-height: 16px; padding-top: 6px; font-weight: 500; }
   .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 8px; vertical-align: -2px; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .hidden { display: none !important; }
-  @media (max-width: 420px) { .glass { padding: 20px 18px !important; } .logo-pulse { animation: none; } }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: #0a0a1a; }
+  ::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.3); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(139, 92, 246, 0.5); }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (min-width: 1024px) {
+    .desktop-grid { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 60px; align-items: start; }
+    .feature-two-col { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  }
+  @media (max-width: 1023px) {
+    .desktop-grid { display: block; }
+    .feature-two-col { display: block; }
+    .feature-two-col > * + * { margin-top: 12px; }
+    .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  }
 </style>
 </head>
 <body>
 
-<div class="bg-blob blob-1"></div>
-<div class="bg-blob blob-2"></div>
-<div class="bg-blob blob-3"></div>
+<!-- Background layers -->
+<div class="bg-mesh"></div>
+<div class="bg-grid"></div>
+<div class="bg-glow glow-1"></div>
+<div class="bg-glow glow-2"></div>
+<div class="bg-glow glow-3"></div>
 
-<main class="relative z-10 min-h-screen flex items-center justify-center p-4 py-8">
-  <div class="w-full max-w-md fade-in">
 
-    <!-- Logo -->
-    <div class="text-center mb-6">
-      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-500 to-sky-800 logo-pulse shadow-2xl shadow-sky-500/40">
-        <span class="text-3xl">🔧</span>
+<!-- ============================================================
+     MAIN
+     ============================================================ -->
+<main class="relative z-10 min-h-screen">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-12">
+
+    <!-- ============================================================
+         TOP BAR
+         ============================================================ -->
+    <nav class="flex items-center justify-between mb-10 lg:mb-16 fade-up">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-xl logo-mark flex items-center justify-center">
+          <span class="text-2xl">🔧</span>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-lg font-black tracking-tight text-white leading-none">SMARTFIX</span>
+            <span class="text-lg font-black brand-pro leading-none">PRO</span>
+          </div>
+          <div class="text-[9px] text-slate-500 font-bold tracking-wider uppercase mt-0.5">Workshop OS & POS</div>
+        </div>
       </div>
-      <h1 class="mt-3 text-2xl font-black tracking-tight text-white leading-none">
-        SMARTFIX<span class="text-sky-400">ERP</span>
-      </h1>
-      <p class="text-[11px] text-slate-400 mt-1.5 tracking-wide">Cloud Edition • Multi-Device Sync • v4.4</p>
+
+      <div class="hidden sm:flex items-center gap-2">
+        <span class="badge-live"><span class="dot"></span> Cloud v4.4 Active</span>
+      </div>
+    </nav>
+
+
+    <!-- ============================================================
+         HERO + LOGIN GRID
+         ============================================================ -->
+    <div class="desktop-grid">
+
+      <!-- ============================================================
+           LEFT: HERO + FEATURES
+           ============================================================ -->
+      <div class="space-y-10 lg:space-y-12">
+
+        <!-- HERO -->
+        <div class="fade-up d-1">
+          <div class="flex items-center gap-2 mb-5 flex-wrap">
+            <span class="badge-tag">⚡ #1 CHOICE FOR MOBILE SHOPS</span>
+            <span class="badge-tag">🇮🇳 MADE IN INDIA</span>
+          </div>
+
+          <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight text-white mb-4">
+            The <span class="gradient-text">Complete ERP</span><br>
+            For Modern Mobile<br>
+            Shops & Repair Centers
+          </h1>
+
+          <p class="text-sm sm:text-base text-slate-400 leading-relaxed max-w-xl">
+            Stop juggling between registers, WhatsApp, and Excel. SmartFix PRO
+            unifies your <strong class="text-slate-200">billing, inventory, repairs, staff,
+            GST, and customer communication</strong> — into one beautifully fast,
+            cloud-synced platform.
+          </p>
+
+          <!-- Trust stats -->
+          <div class="stat-grid mt-8 lg:mt-10 glass-soft rounded-2xl p-5">
+            <div class="stat-block">
+              <div class="stat-value">10,000+</div>
+              <div class="stat-label">Invoices/Month</div>
+            </div>
+            <div class="stat-block">
+              <div class="stat-value">5 min</div>
+              <div class="stat-label">Setup Time</div>
+            </div>
+            <div class="stat-block">
+              <div class="stat-value">100%</div>
+              <div class="stat-label">Cloud Sync</div>
+            </div>
+            <div class="stat-block">
+              <div class="stat-value">₹0</div>
+              <div class="stat-label">Setup Fee</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FEATURE SECTION HEADING -->
+        <div class="fade-up d-2">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="h-px flex-1 bg-gradient-to-r from-transparent via-violet-500/40 to-transparent"></div>
+            <span class="text-[10px] font-black tracking-[0.25em] text-violet-400 uppercase">Features</span>
+            <div class="h-px flex-1 bg-gradient-to-r from-transparent via-violet-500/40 to-transparent"></div>
+          </div>
+          <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight text-center">
+            Everything Your <span class="gradient-text">Mobile Repair Shop</span> Needs
+          </h2>
+          <p class="text-sm text-slate-500 text-center mt-3 max-w-xl mx-auto">
+            Built by shop owners, for shop owners. Every feature you see below
+            is included — no hidden premium tier.
+          </p>
+        </div>
+
+        <!-- FEATURES — PRIMARY (6 big) -->
+        <div class="feature-two-col fade-up d-3">
+
+          <div class="feature-card glass rounded-2xl p-4 flex items-start gap-3">
+            <div class="icon-box icon-violet">🖨️</div>
+            <div>
+              <div class="font-bold text-white text-[13.5px]">Thermal & A4 Billing</div>
+              <div class="text-[11.5px] text-slate-400 mt-1 leading-relaxed">
+                58mm/80mm dual-print + A4 GST invoice. Print, save PDF, or share on WhatsApp in 1 tap.
+              </div>
+            </div>
+          </div>
+
+          <div class="feature-card glass rounded-2xl p-4 flex items-start gap-3">
+            <div class="icon-box icon-blue">☁️</div>
+            <div>
+              <div class="font-bold text-white text-[13.5px]">Real-time Cloud Sync</div>
+              <div class="text-[11.5px] text-slate-400 mt-1 leading-relaxed">
+                Multiple phones & computers, one truth. Cashier bills on mobile, owner sees live.
+              </div>
+            </div>
+          </div>
+
+          <div class="feature-card glass rounded-2xl p-4 flex items-start gap-3">
+            <div class="icon-box icon-amber">📦</div>
+            <div>
+              <div class="font-bold text-white text-[13.5px]">IMEI Stock & Inventory</div>
+              <div class="text-[11.5px] text-slate-400 mt-1 leading-relaxed">
+                Every device tracked by unique IMEI. Barcode scan, live stock value, low-stock alerts.
+              </div>
+            </div>
+          </div>
+
+          <div class="feature-card glass rounded-2xl p-4 flex items-start gap-3">
+            <div class="icon-box icon-cyan">🔧</div>
+            <div>
+              <div class="font-bold text-white text-[13.5px]">Repair Job Cards</div>
+              <div class="text-[11.5px] text-slate-400 mt-1 leading-relaxed">
+                Customer intake, selfie-free status tracking, technician assign, WhatsApp updates.
+              </div>
+            </div>
+          </div>
+
+          <div class="feature-card glass rounded-2xl p-4 flex items-start gap-3">
+            <div class="icon-box icon-emerald">💬</div>
+            <div>
+              <div class="font-bold text-white text-[13.5px]">WhatsApp Automation</div>
+              <div class="text-[11.5px] text-slate-400 mt-1 leading-relaxed">
+                One-click due reminders, invoice share, warranty expiry alerts, service reminders.
+              </div>
+            </div>
+          </div>
+
+          <div class="feature-card glass rounded-2xl p-4 flex items-start gap-3">
+            <div class="icon-box icon-rose">💰</div>
+            <div>
+              <div class="font-bold text-white text-[13.5px]">Cash, UPI & Daybook</div>
+              <div class="text-[11.5px] text-slate-400 mt-1 leading-relaxed">
+                Auto cash book, bank book, trial balance, P&L, GST reports — accountant-ready.
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- FEATURES — SECONDARY (grid of mini) -->
+        <div class="fade-up d-4">
+          <div class="text-[10px] font-black tracking-[0.25em] text-slate-500 uppercase mb-4 text-center">
+            Plus, everything else you need
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+
+            <div class="glass-soft rounded-xl p-3 flex items-center gap-2.5">
+              <span class="text-base">👥</span>
+              <div class="text-[11px] font-semibold text-slate-300">Customer Portal</div>
+            </div>
+
+            <div class="glass-soft rounded-xl p-3 flex items-center gap-2.5">
+              <span class="text-base">📸</span>
+              <div class="text-[11px] font-semibold text-slate-300">Selfie Attendance</div>
+            </div>
+
+            <div class="glass-soft rounded-xl p-3 flex items-center gap-2.5">
+              <span class="text-base">🔐</span>
+              <div class="text-[11px] font-semibold text-slate-300">Role-based Access</div>
+            </div>
+
+            <div class="glass-soft rounded-xl p-3 flex items-center gap-2.5">
+              <span class="text-base">🧾</span>
+              <div class="text-[11px] font-semibold text-slate-300">GST + Non-GST</div>
+            </div>
+
+            <div class="glass-soft rounded-xl p-3 flex items-center gap-2.5">
+              <span class="text-base">📊</span>
+              <div class="text-[11px] font-semibold text-slate-300">Live P&L Dashboard</div>
+            </div>
+
+            <div class="glass-soft rounded-xl p-3 flex items-center gap-2.5">
+              <span class="text-base">📥</span>
+              <div class="text-[11px] font-semibold text-slate-300">Excel CA Export</div>
+            </div>
+
+            <div class="glass-soft rounded-xl p-3 flex items-center gap-2.5">
+              <span class="text-base">🏢</span>
+              <div class="text-[11px] font-semibold text-slate-300">Multi-branch Ready</div>
+            </div>
+
+            <div class="glass-soft rounded-xl p-3 flex items-center gap-2.5">
+              <span class="text-base">💾</span>
+              <div class="text-[11px] font-semibold text-slate-300">Auto Daily Backup</div>
+            </div>
+
+            <div class="glass-soft rounded-xl p-3 flex items-center gap-2.5">
+              <span class="text-base">🌐</span>
+              <div class="text-[11px] font-semibold text-slate-300">Works Offline</div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- WHY US -->
+        <div class="fade-up d-5 glass rounded-2xl p-6">
+          <div class="text-[10px] font-black tracking-[0.25em] text-violet-400 uppercase mb-3">
+            Why shopkeepers choose SmartFix
+          </div>
+          <div class="space-y-3.5">
+
+            <div class="flex items-start gap-3">
+              <div class="w-6 h-6 rounded-full bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center text-emerald-400 text-xs font-bold flex-shrink-0 mt-0.5">✓</div>
+              <div>
+                <div class="text-[12.5px] font-bold text-white">No monthly subscription wall</div>
+                <div class="text-[11px] text-slate-400 mt-0.5">Start free with all features. Scale when your business grows.</div>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-3">
+              <div class="w-6 h-6 rounded-full bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center text-emerald-400 text-xs font-bold flex-shrink-0 mt-0.5">✓</div>
+              <div>
+                <div class="text-[12.5px] font-bold text-white">Set up in under 5 minutes</div>
+                <div class="text-[11px] text-slate-400 mt-0.5">No training needed. Designed for shopkeepers, not accountants.</div>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-3">
+              <div class="w-6 h-6 rounded-full bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center text-emerald-400 text-xs font-bold flex-shrink-0 mt-0.5">✓</div>
+              <div>
+                <div class="text-[12.5px] font-bold text-white">Your data, always yours</div>
+                <div class="text-[11px] text-slate-400 mt-0.5">AES-256 encrypted. Export everything anytime as JSON or Excel.</div>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-3">
+              <div class="w-6 h-6 rounded-full bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center text-emerald-400 text-xs font-bold flex-shrink-0 mt-0.5">✓</div>
+              <div>
+                <div class="text-[12.5px] font-bold text-white">Installs like a native app</div>
+                <div class="text-[11px] text-slate-400 mt-0.5">Add to home screen on any phone or computer. Works offline.</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+
+      <!-- ============================================================
+           RIGHT: LOGIN / REGISTER CARD
+           ============================================================ -->
+      <div class="mt-12 lg:mt-0 fade-up d-2">
+        <div class="lg:sticky lg:top-8">
+
+          <div class="glass rounded-3xl p-6 sm:p-7 shadow-2xl">
+
+            <!-- Header -->
+            <div class="text-center mb-6">
+              <div class="inline-flex items-center gap-2 mb-2">
+                <span class="badge-live"><span class="dot"></span> Cloud v4.4 Active</span>
+              </div>
+              <h2 class="text-xl font-black text-white tracking-tight">Owner Authorization</h2>
+              <p class="text-[11.5px] text-slate-400 mt-1">Sign in with your registered workshop credentials</p>
+            </div>
+
+            <!-- Tabs -->
+            <div class="grid grid-cols-4 gap-1 p-1 rounded-xl bg-slate-950/60 border border-slate-800/80 mb-5">
+              <button type="button" onclick="switchAuthTab('login')" id="tab-login" class="tab-item active">Sign In</button>
+              <button type="button" onclick="switchAuthTab('staff')" id="tab-staff" class="tab-item">Staff</button>
+              <button type="button" onclick="switchAuthTab('register')" id="tab-register" class="tab-item">Register</button>
+              <button type="button" onclick="switchAuthTab('customer')" id="tab-customer" class="tab-item">Customer</button>
+            </div>
+
+            <!-- ============ OWNER LOGIN ============ -->
+            <section id="panel-login" class="space-y-3.5">
+              <div>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Owner Email Address *</label>
+                <div class="relative">
+                  <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm">✉️</span>
+                  <input id="ownerEmail" type="email" placeholder="owner@gmail.com" autocomplete="email" autocapitalize="none" spellcheck="false" class="input-field" style="padding-left: 38px;">
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Password *</label>
+                <div class="relative">
+                  <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm">🔒</span>
+                  <input id="ownerPass" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter'){event.preventDefault();ownerLogin();}" class="input-field" style="padding-left: 38px; padding-right: 44px;">
+                  <button type="button" onclick="togglePass('ownerPass', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 text-sm" tabindex="-1">👁</button>
+                </div>
+              </div>
+
+              <button id="ownerLoginBtn" type="button" onclick="ownerLogin()" class="btn-primary mt-2">
+                Sign In to Dashboard →
+              </button>
+
+              <div class="flex justify-between items-center pt-1">
+                <button type="button" onclick="ownerForgotPassword()" class="text-[11px] text-violet-400 hover:text-violet-300 font-semibold bg-transparent border-0 cursor-pointer">Forgot password?</button>
+                <button type="button" onclick="switchAuthTab('customer')" class="text-[11px] text-slate-400 hover:text-white font-semibold bg-transparent border-0 cursor-pointer">Customer? →</button>
+              </div>
+
+              <div id="ownerError" class="err-text"></div>
+            </section>
+
+            <!-- ============ STAFF LOGIN ============ -->
+            <section id="panel-staff" class="space-y-3.5 hidden">
+              <div class="text-center pb-2">
+                <div class="text-[12px] text-slate-300 font-bold">Staff Sign In</div>
+                <div class="text-[10.5px] text-slate-500 mt-0.5">Use the phone number registered by your owner.</div>
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Phone Number *</label>
+                <div class="relative">
+                  <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm">📞</span>
+                  <input id="staffPhoneLogin" type="tel" placeholder="10-digit phone" maxlength="10" inputmode="numeric" autocomplete="tel" class="input-field" style="padding-left: 38px; font-family: ui-monospace, monospace;">
+                </div>
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Password *</label>
+                <div class="relative">
+                  <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm">🔒</span>
+                  <input id="staffPassLogin" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter'){event.preventDefault();staffLogin();}" class="input-field" style="padding-left: 38px; padding-right: 44px;">
+                  <button type="button" onclick="togglePass('staffPassLogin', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 text-sm" tabindex="-1">👁</button>
+                </div>
+              </div>
+              <button id="staffLoginBtn" type="button" onclick="staffLogin()" class="btn-primary mt-2">Sign In →</button>
+              <div class="flex justify-between items-center pt-1">
+                <button type="button" onclick="staffForgotPassword()" class="text-[11px] text-violet-400 hover:text-violet-300 font-semibold bg-transparent border-0 cursor-pointer">Forgot password?</button>
+                <button type="button" onclick="switchAuthTab('login')" class="text-[11px] text-slate-400 hover:text-white font-semibold bg-transparent border-0 cursor-pointer">Owner? →</button>
+              </div>
+              <div id="staffError" class="err-text"></div>
+            </section>
+
+            <!-- ============ REGISTER ============ -->
+            <section id="panel-register" class="space-y-3.5 hidden">
+              <div class="text-center pb-2">
+                <div class="text-[12px] text-slate-300 font-bold">Register New Store</div>
+                <div class="text-[10.5px] text-slate-500 mt-0.5">Free forever plan. No credit card needed.</div>
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Shop / Trade Name *</label>
+                <input id="regShop" type="text" placeholder="e.g. Shree Mobile Shop" autocomplete="organization" class="input-field">
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Shop Phone (optional)</label>
+                <input id="regPhone" type="tel" placeholder="10-digit" inputmode="numeric" maxlength="10" autocomplete="tel" class="input-field" style="font-family: ui-monospace, monospace;">
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Email *</label>
+                <input id="regEmail" type="email" placeholder="owner@gmail.com" autocomplete="email" autocapitalize="none" spellcheck="false" class="input-field">
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Password *</label>
+                <div class="relative">
+                  <input id="regPass" type="password" placeholder="Min 6 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter'){event.preventDefault();ownerRegister();}" class="input-field" style="padding-right: 44px;">
+                  <button type="button" onclick="togglePass('regPass', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 text-sm" tabindex="-1">👁</button>
+                </div>
+              </div>
+              <button id="regBtn" type="button" onclick="ownerRegister()" class="btn-primary mt-2">Create Free Store →</button>
+              <div id="regError" class="err-text"></div>
+              <p class="text-[10px] text-slate-500 text-center leading-relaxed pt-1">
+                By registering you agree to our Terms. All features included — no trial limits.
+              </p>
+            </section>
+
+            <!-- ============ CUSTOMER PORTAL ============ -->
+            <section id="panel-customer" class="space-y-3.5 hidden">
+              <div class="text-center pb-2">
+                <div class="text-[12px] text-slate-300 font-bold">Customer Login</div>
+                <div class="text-[10.5px] text-slate-500 mt-0.5">Track your bills, warranties & repairs.</div>
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Shop Code <span class="text-slate-600 font-normal normal-case">(ask your dealer)</span></label>
+                <input id="custShop" type="text" placeholder="e.g. shreemobile" autocapitalize="none" spellcheck="false" class="input-field" style="font-family: ui-monospace, monospace;">
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Your Mobile Number</label>
+                <input id="custPhone" type="tel" placeholder="9876543210" inputmode="numeric" maxlength="10" class="input-field" style="font-family: ui-monospace, monospace;">
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">IMEI (last 6) or Invoice / Job No</label>
+                <input id="custCode" type="text" placeholder="345678 OR JOB-2425-0001" onkeydown="if(event.key==='Enter'){event.preventDefault();customerLookup();}" class="input-field" style="font-family: ui-monospace, monospace; text-transform: uppercase;">
+              </div>
+              <button id="custBtn" type="button" onclick="customerLookup()" class="btn-primary mt-2">Find My Bill →</button>
+              <div id="custError" class="err-text"></div>
+              <p class="text-[10px] text-slate-500 text-center leading-relaxed pt-1">
+                💡 Shop Code appears on your printed invoice or job card.
+              </p>
+            </section>
+
+          </div>
+
+          <!-- Trust under card -->
+          <div class="mt-5 flex items-center justify-center gap-4 text-[10px] text-slate-500">
+            <div class="flex items-center gap-1.5">
+              <span class="text-emerald-400">🔒</span>
+              <span>SSL Encrypted</span>
+            </div>
+            <span class="text-slate-700">•</span>
+            <div class="flex items-center gap-1.5">
+              <span class="text-emerald-400">✓</span>
+              <span>GDPR Compliant</span>
+            </div>
+            <span class="text-slate-700">•</span>
+            <div class="flex items-center gap-1.5">
+              <span class="text-emerald-400">⚡</span>
+              <span>99.9% Uptime</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
     </div>
 
-    <!-- Tabs -->
-    <div class="grid grid-cols-4 gap-1 p-1 rounded-xl bg-slate-900/60 border border-slate-800 mb-4 backdrop-blur-sm">
-      <button type="button" onclick="switchAuthTab('login')" id="tab-login" class="py-2.5 rounded-lg text-[11px] font-bold tab-active transition">Owner</button>
-      <button type="button" onclick="switchAuthTab('staff')" id="tab-staff" class="py-2.5 rounded-lg text-[11px] font-bold text-slate-400 hover:text-white transition">Staff</button>
-      <button type="button" onclick="switchAuthTab('register')" id="tab-register" class="py-2.5 rounded-lg text-[11px] font-bold text-slate-400 hover:text-white transition">Register</button>
-      <button type="button" onclick="switchAuthTab('customer')" id="tab-customer" class="py-2.5 rounded-lg text-[11px] font-bold text-slate-400 hover:text-white transition">Customer</button>
+
+    <!-- ============================================================
+         BOTTOM CTA STRIP
+         ============================================================ -->
+    <div class="mt-16 lg:mt-24 glass rounded-3xl p-6 sm:p-8 text-center relative overflow-hidden fade-up">
+      <div class="absolute -top-20 -right-20 w-60 h-60 bg-violet-500/20 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -bottom-20 -left-20 w-60 h-60 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div class="relative">
+        <div class="badge-tag mb-4 inline-flex">🚀 READY IN 5 MINUTES</div>
+        <h3 class="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight mb-3">
+          Ready to upgrade your shop?
+        </h3>
+        <p class="text-sm text-slate-400 max-w-xl mx-auto mb-6">
+          Join hundreds of mobile shop owners running a modern, GST-ready,
+          cloud-connected business. All features included, forever free to start.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
+          <button type="button" onclick="switchAuthTab('register')" class="btn-primary sm:!w-auto sm:px-8">
+            Start Free — Create Store →
+          </button>
+          <button type="button" onclick="document.querySelector('.desktop-grid').scrollIntoView({behavior:'smooth'})" class="w-full sm:w-auto bg-slate-900/60 hover:bg-slate-800 border border-slate-700 text-slate-200 font-bold py-3.5 px-8 rounded-xl text-sm transition">
+            Sign In
+          </button>
+        </div>
+      </div>
     </div>
 
-    <!-- Card -->
-    <div class="glass rounded-2xl p-6 sm:p-7">
 
-      <!-- OWNER LOGIN -->
-      <section id="panel-login" class="space-y-3">
-        <header class="mb-3">
-          <h2 class="text-base font-bold text-white">Owner Sign In</h2>
-          <p class="text-[11px] text-slate-400 mt-0.5">Full access to your store.</p>
-        </header>
-        <input id="ownerEmail" type="email" placeholder="owner@shop.com" autocomplete="email" autocapitalize="none" spellcheck="false" class="input-field">
-        <input id="ownerPass" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter'){event.preventDefault();ownerLogin();}" class="input-field">
-        <button id="ownerLoginBtn" type="button" onclick="ownerLogin()" class="btn-primary">Sign In →</button>
-        <div class="flex justify-between items-center pt-1">
-          <button type="button" onclick="ownerForgotPassword()" class="text-[11px] text-sky-400 hover:text-sky-300 font-semibold bg-transparent border-0 cursor-pointer">Forgot password?</button>
-          <button type="button" onclick="switchAuthTab('customer')" class="text-[11px] text-slate-400 hover:text-white font-semibold bg-transparent border-0 cursor-pointer">Customer? →</button>
-        </div>
-        <div id="ownerError" class="err-text"></div>
-      </section>
-
-      <!-- STAFF LOGIN -->
-      <section id="panel-staff" class="space-y-3 hidden">
-        <header class="mb-3">
-          <h2 class="text-base font-bold text-white">Staff Sign In</h2>
-          <p class="text-[11px] text-slate-400 mt-0.5">Use the phone number your owner registered for you.</p>
-        </header>
-        <input id="staffPhoneLogin" type="tel" placeholder="10-digit phone" maxlength="10" inputmode="numeric" autocomplete="tel" class="input-field" style="font-family: ui-monospace, monospace;">
-        <input id="staffPassLogin" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter'){event.preventDefault();staffLogin();}" class="input-field">
-        <button id="staffLoginBtn" type="button" onclick="staffLogin()" class="btn-primary">Sign In →</button>
-        <div class="flex justify-between items-center pt-1">
-          <button type="button" onclick="staffForgotPassword()" class="text-[11px] text-sky-400 hover:text-sky-300 font-semibold bg-transparent border-0 cursor-pointer">Forgot password?</button>
-          <button type="button" onclick="switchAuthTab('login')" class="text-[11px] text-slate-400 hover:text-white font-semibold bg-transparent border-0 cursor-pointer">Owner login →</button>
-        </div>
-        <div id="staffError" class="err-text"></div>
-      </section>
-
-      <!-- REGISTER -->
-      <section id="panel-register" class="space-y-3 hidden">
-        <header class="mb-3">
-          <h2 class="text-base font-bold text-white">Create your store</h2>
-          <p class="text-[11px] text-slate-400 mt-0.5">Free trial. No credit card.</p>
-        </header>
-        <input id="regShop" type="text" placeholder="Shop / Trade Name" autocomplete="organization" class="input-field">
-        <input id="regPhone" type="tel" placeholder="Shop Phone (10 digits, optional)" inputmode="numeric" autocomplete="tel" class="input-field">
-        <input id="regEmail" type="email" placeholder="Email" autocomplete="email" autocapitalize="none" spellcheck="false" class="input-field">
-        <input id="regPass" type="password" placeholder="Password (min 6 characters)" autocomplete="new-password" onkeydown="if(event.key==='Enter'){event.preventDefault();ownerRegister();}" class="input-field">
-        <button id="regBtn" type="button" onclick="ownerRegister()" class="btn-primary">Create Store →</button>
-        <div id="regError" class="err-text"></div>
-        <p class="text-[10px] text-slate-500 text-center leading-relaxed pt-1">By registering you agree to our Terms of Service.</p>
-      </section>
-
-      <!-- CUSTOMER PORTAL -->
-      <section id="panel-customer" class="space-y-3 hidden">
-        <header class="mb-3">
-          <h2 class="text-base font-bold text-white">Find your bill or repair</h2>
-          <p class="text-[11px] text-slate-400 mt-0.5">Enter your mobile number plus IMEI last 6 digits, Invoice No, or Job No.</p>
-        </header>
-        <div>
-          <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1.5 tracking-wider">Shop Code <span class="text-slate-600 font-normal normal-case">(ask your dealer)</span></label>
-          <input id="custShop" type="text" placeholder="e.g. shreemobile" autocapitalize="none" spellcheck="false" class="input-field" style="font-family: ui-monospace, monospace;">
-        </div>
-        <div>
-          <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1.5 tracking-wider">Your Mobile Number</label>
-          <input id="custPhone" type="tel" placeholder="9876543210" inputmode="numeric" maxlength="10" class="input-field" style="font-family: ui-monospace, monospace;">
-        </div>
-        <div>
-          <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1.5 tracking-wider">IMEI (last 6) <span class="text-slate-600 font-normal">or</span> Invoice / Job No</label>
-          <input id="custCode" type="text" placeholder="e.g. 345678 OR SFP-2425-0001 OR JOB-2425-0001" onkeydown="if(event.key==='Enter'){event.preventDefault();customerLookup();}" class="input-field" style="font-family: ui-monospace, monospace; text-transform: uppercase;">
-        </div>
-        <button id="custBtn" type="button" onclick="customerLookup()" class="btn-primary mt-1">Find My Bill →</button>
-        <div id="custError" class="err-text"></div>
-        <div class="border-t border-slate-800 pt-3 mt-3">
-          <p class="text-[10px] text-slate-500 text-center leading-relaxed">💡 The Shop Code appears on your printed invoice or job card.</p>
-        </div>
-      </section>
-
-    </div>
-
-    <footer class="text-center mt-5 text-[10px] text-slate-500 space-y-1">
-      <div>SmartFix ERP © 2026 • Developed by Debapriya Sarkar</div>
-      <div class="flex items-center justify-center gap-2">
+    <!-- ============================================================
+         FOOTER
+         ============================================================ -->
+    <footer class="mt-16 pt-8 border-t border-slate-800/60 text-center space-y-2 fade-up">
+      <div class="flex items-center justify-center gap-2 mb-2">
+        <div class="w-7 h-7 rounded-lg logo-mark flex items-center justify-center text-sm">🔧</div>
+        <span class="text-sm font-black text-white">SMARTFIX<span class="brand-pro">PRO</span></span>
+      </div>
+      <div class="text-[11px] text-slate-500">
+        SmartFix ERP © 2026 • Developed by <span class="text-slate-300 font-semibold">Debapriya Sarkar</span>
+      </div>
+      <div class="flex items-center justify-center gap-3 text-[10.5px] text-slate-500">
+        <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> All systems online</span>
+        <span class="text-slate-700">•</span>
         <span>Powered by Firebase 🔥</span>
-        <span>•</span>
-        <span id="onlineStatus" class="text-emerald-400">● Online</span>
       </div>
     </footer>
 
   </div>
 </main>
 
+
+<!-- ============================================================
+     SCRIPTS
+     ============================================================ -->
 <script>
   function switchAuthTab(name) {
     ['login', 'staff', 'register', 'customer'].forEach(k => {
@@ -171,12 +804,12 @@
       if (!panel || !tab) return;
       if (k === name) {
         panel.classList.remove('hidden');
-        panel.classList.add('fade-in');
-        tab.className = 'py-2.5 rounded-lg text-[11px] font-bold tab-active transition';
+        panel.classList.add('fade-up');
+        tab.className = 'tab-item active';
       } else {
         panel.classList.add('hidden');
-        panel.classList.remove('fade-in');
-        tab.className = 'py-2.5 rounded-lg text-[11px] font-bold text-slate-400 hover:text-white transition';
+        panel.classList.remove('fade-up');
+        tab.className = 'tab-item';
       }
     });
     ['ownerError', 'staffError', 'regError', 'custError'].forEach(id => {
@@ -185,29 +818,47 @@
     });
     setTimeout(() => {
       const firstInput = document.querySelector('#panel-' + name + ' input');
-      if (firstInput) firstInput.focus();
-    }, 100);
+      if (firstInput) firstInput.focus({ preventScroll: true });
+    }, 120);
   }
+
+  function togglePass(inputId, btn) {
+    const inp = document.getElementById(inputId);
+    if (!inp) return;
+    if (inp.type === 'password') {
+      inp.type = 'text';
+      btn.textContent = '🙈';
+    } else {
+      inp.type = 'password';
+      btn.textContent = '👁';
+    }
+  }
+
   function updateNetStatus() {
-    const s = document.getElementById('onlineStatus');
-    if (!s) return;
-    s.innerHTML = navigator.onLine
-      ? '<span class="text-emerald-400">● Online</span>'
-      : '<span class="text-amber-400">● Offline</span>';
+    const badge = document.querySelector('.badge-live');
+    if (!badge) return;
+    if (navigator.onLine) {
+      badge.innerHTML = '<span class="dot"></span> Cloud v4.4 Active';
+    } else {
+      badge.style.background = 'rgba(245,158,11,0.12)';
+      badge.style.borderColor = 'rgba(245,158,11,0.3)';
+      badge.style.color = '#fbbf24';
+      badge.innerHTML = '<span class="dot" style="background:#fbbf24;box-shadow:0 0 8px #fbbf24"></span> Offline Mode';
+    }
   }
   window.addEventListener('online', updateNetStatus);
   window.addEventListener('offline', updateNetStatus);
   updateNetStatus();
+
   window.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
       const el = document.getElementById('ownerEmail');
-      if (el) el.focus();
-    }, 300);
+      if (el && window.innerWidth > 1024) el.focus({ preventScroll: true });
+    }, 400);
   });
 </script>
 
 <script type="module" src="./js/auth.js"></script>
-
 <script type="module" src="./js/pwa-install.js"></script>
 
 <script>
