@@ -1,6 +1,7 @@
 /* ============================================================
-   SMARTFIX ERP — SPA Router (v4.4.0)
+   SMARTFIX ERP — SPA Router (v4.5.0)
    File: js/router.js
+   Dashboard is now F1 (first route)
    ============================================================ */
 
 import { emit, on } from './state.js';
@@ -8,26 +9,27 @@ import { toast } from './common.js';
 
 
 export const ROUTES = {
-  billing:              { id: 'billingTab',          label: 'Sales',       icon: '🧾', file: './modules/billing.html',            shortcut: 'F1',  description: 'POS Sales Invoice' },
-  returns:              { id: 'returnsTab',          label: 'Returns',     icon: '↩️', file: './modules/returns.html',            shortcut: 'F2',  description: 'Credit Notes & Refunds' },
-  repair:               { id: 'repairTab',           label: 'Repair',      icon: '🔧', file: './modules/repair.html',             shortcut: 'F3',  description: 'Mobile Repair Job Cards' },
-  purchase:             { id: 'purchaseTab',         label: 'Purchase',    icon: '🛒', file: './modules/purchase.html',           shortcut: 'F4',  description: 'Supplier Bills & Stock In' },
-  vouchers:             { id: 'vouchersTab',         label: 'Vouchers',    icon: '📒', file: './modules/vouchers.html',           shortcut: 'F5',  description: 'Payment / Receipt / Journal' },
-  accounting:           { id: 'accountingTab',       label: 'P&L',         icon: '📊', file: './modules/accounting.html',         shortcut: 'F6',  description: 'Profit & Loss, GST, Audit' },
-  books:                { id: 'booksTab',            label: 'Books',       icon: '📚', file: './modules/books.html',              shortcut: 'F7',  description: 'Cash Book, Bank Book, Trial Balance' },
-  parties:              { id: 'partiesTab',          label: 'Parties',     icon: '👥', file: './modules/parties.html',            shortcut: 'F8',  description: 'Customers & Suppliers' },
-  inventory:            { id: 'inventoryTab',        label: 'Stock',       icon: '📦', file: './modules/inventory.html',          shortcut: 'F9',  description: 'Inventory Management' },
-  staff:                { id: 'staffTab',            label: 'Staff',       icon: '👨‍💼', file: './modules/staff.html',            shortcut: 'F10', description: 'Staff & Salary' },
-  settings:             { id: 'settingsTab',         label: 'Settings',    icon: '⚙️', file: './modules/settings.html',           shortcut: 'F11', description: 'Store Settings & Backup' },
+  dashboard:            { id: 'dashboardTab',        label: 'Dashboard',   icon: '📊', file: './modules/dashboard.html',          shortcut: 'F1',  description: 'Business Overview & Analytics' },
+  billing:              { id: 'billingTab',          label: 'Sales',       icon: '🧾', file: './modules/billing.html',            shortcut: 'F2',  description: 'POS Sales Invoice' },
+  returns:              { id: 'returnsTab',          label: 'Returns',     icon: '↩️', file: './modules/returns.html',            shortcut: 'F3',  description: 'Credit Notes & Refunds' },
+  repair:               { id: 'repairTab',           label: 'Repair',      icon: '🔧', file: './modules/repair.html',             shortcut: 'F4',  description: 'Mobile Repair Job Cards' },
+  purchase:             { id: 'purchaseTab',         label: 'Purchase',    icon: '🛒', file: './modules/purchase.html',           shortcut: 'F5',  description: 'Supplier Bills & Stock In' },
+  vouchers:             { id: 'vouchersTab',         label: 'Vouchers',    icon: '📒', file: './modules/vouchers.html',           shortcut: 'F6',  description: 'Payment / Receipt / Journal' },
+  accounting:           { id: 'accountingTab',       label: 'P&L',         icon: '📈', file: './modules/accounting.html',         shortcut: 'F7',  description: 'Profit & Loss, GST, Audit' },
+  books:                { id: 'booksTab',            label: 'Books',       icon: '📚', file: './modules/books.html',              shortcut: 'F8',  description: 'Cash Book, Bank Book, Trial Balance' },
+  parties:              { id: 'partiesTab',          label: 'Parties',     icon: '👥', file: './modules/parties.html',            shortcut: 'F9',  description: 'Customers & Suppliers' },
+  inventory:            { id: 'inventoryTab',        label: 'Stock',       icon: '📦', file: './modules/inventory.html',          shortcut: 'F10', description: 'Inventory Management' },
+  staff:                { id: 'staffTab',            label: 'Staff',       icon: '👨‍💼', file: './modules/staff.html',            shortcut: 'F11', description: 'Staff & Salary' },
   attendance:           { id: 'attendanceTab',       label: 'Attendance',  icon: '📸', file: './modules/attendance.html',         shortcut: 'F12', description: 'Selfie Check-In / Check-Out' },
-  'attendance-report':  { id: 'attendanceReportTab', label: 'Att. Report', icon: '📈', file: './modules/attendance-report.html',  shortcut: 'F13', description: 'Team Attendance Summary' },
-  manual:               { id: 'manualTab',           label: 'Manual',      icon: '📖', file: './modules/manual.html',             shortcut: 'F14', description: 'User Manual & Help Center' }
+  'attendance-report':  { id: 'attendanceReportTab', label: 'Att. Report', icon: '👥', file: './modules/attendance-report.html',  shortcut: 'F13', description: 'Team Attendance Summary' },
+  manual:               { id: 'manualTab',           label: 'Manual',      icon: '📖', file: './modules/manual.html',             shortcut: 'F14', description: 'User Manual & Help Center' },
+  settings:             { id: 'settingsTab',         label: 'Settings',    icon: '⚙️', file: './modules/settings.html',           shortcut: 'F15', description: 'Store Settings & Backup' }
 };
 
 export const ROUTE_ORDER = [
-  'billing', 'returns', 'repair', 'purchase', 'vouchers',
-  'accounting', 'books', 'parties', 'inventory', 'staff',
-  'settings', 'attendance', 'attendance-report', 'manual'
+  'dashboard', 'billing', 'returns', 'repair', 'purchase',
+  'vouchers', 'accounting', 'books', 'parties', 'inventory',
+  'staff', 'attendance', 'attendance-report', 'manual', 'settings'
 ];
 
 
@@ -50,7 +52,7 @@ export function initRouter(containerSelector = '#moduleContainer') {
   console.log('%c🧭 Router initialized', 'color:#06b6d4;font-weight:bold');
 
   const initialHash = window.location.hash.replace('#', '').trim();
-  const route = ROUTES[initialHash] ? initialHash : 'billing';
+  const route = ROUTES[initialHash] ? initialHash : 'dashboard';
 
   window.addEventListener('hashchange', onHashChange);
   navigateTo(route, { replace: true });
@@ -171,7 +173,7 @@ function reExecuteScripts(container) {
 function onHashChange() {
   const hash = window.location.hash.replace('#', '').trim();
   if (!hash || !ROUTES[hash]) {
-    if (ROUTER.currentRoute !== 'billing') navigateTo('billing', { replace: true });
+    if (ROUTER.currentRoute !== 'dashboard') navigateTo('dashboard', { replace: true });
     return;
   }
   if (hash !== ROUTER.currentRoute) navigateTo(hash, { skipHistory: true });
@@ -311,4 +313,4 @@ window.addEventListener('popstate', () => {
   }
 });
 
-console.log('%c🧭 Router ready (v4.4.0)', 'color:#06b6d4;font-weight:bold;font-size:11px', `| ${ROUTE_ORDER.length} routes`);
+console.log('%c🧭 Router ready (v4.5.0)', 'color:#06b6d4;font-weight:bold;font-size:11px', `| ${ROUTE_ORDER.length} routes`);
