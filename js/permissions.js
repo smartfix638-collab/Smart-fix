@@ -1,5 +1,5 @@
 /* ============================================================
-   SMARTFIX ERP — Permissions & Role Engine (v4.3.0)
+   SMARTFIX ERP — Permissions & Role Engine (v4.4.0)
    File: js/permissions.js
    ============================================================ */
 
@@ -35,9 +35,8 @@ const PERMISSIONS = {
     'staff.view',
     'accounting.view', 'books.view',
     'attendance.view', 'attendance.mark', 'attendance.report',
-    /* Repair — full operational access */
-    'repair.view', 'repair.create', 'repair.edit', 'repair.print'
-    /* NO repair.delete */
+    'repair.view', 'repair.create', 'repair.edit', 'repair.print',
+    'manual.view'
   ],
 
   PROMOTER: [
@@ -46,16 +45,16 @@ const PERMISSIONS = {
     'parties.view', 'parties.create',
     'inventory.view', 'inventory.sell',
     'attendance.view', 'attendance.mark',
-    /* Repair — view + create only */
-    'repair.view', 'repair.create'
+    'repair.view', 'repair.create',
+    'manual.view'
   ],
 
   TECHNICIAN: [
     'service.view', 'service.create', 'service.update',
     'inventory.view',
     'attendance.view', 'attendance.mark',
-    /* Repair — full access */
-    'repair.view', 'repair.create', 'repair.edit', 'repair.print'
+    'repair.view', 'repair.create', 'repair.edit', 'repair.print',
+    'manual.view'
   ],
 
   CA: [
@@ -63,8 +62,8 @@ const PERMISSIONS = {
     'billing.view', 'returns.view', 'purchase.view', 'vouchers.view',
     'parties.view', 'inventory.view', 'staff.view',
     'export.ca',
-    /* Read-only repair view */
-    'repair.view'
+    'repair.view',
+    'manual.view'
   ]
 };
 
@@ -115,7 +114,8 @@ export function canAccessRoute(routeKey) {
     settings:              'settings.view',
     attendance:            'attendance.view',
     'attendance-report':   'attendance.report',
-    repair:                'repair.view'
+    repair:                'repair.view',
+    manual:                'manual.view'
   };
   const perm = ROUTE_PERMS[routeKey];
   if (!perm) return true;
@@ -140,4 +140,4 @@ window.SF.perms = {
   isOwner, can, guard, canAccessRoute, getAccessibleRoutes
 };
 
-console.log('%c🔐 Permissions engine ready (v4.3.0)', 'color:#f59e0b;font-weight:bold;font-size:11px');
+console.log('%c🔐 Permissions engine ready (v4.4.0)', 'color:#f59e0b;font-weight:bold;font-size:11px');
