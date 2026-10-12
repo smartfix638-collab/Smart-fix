@@ -1,11 +1,11 @@
 <!-- ============================================================
-     SMARTFIX ERP — Settings Module (v4.1.0)
+     SMARTFIX ERP — Settings Module (v4.5.1)
      File: modules/settings.html
+     Fixed: Wipe All Data using native confirm/prompt
      ============================================================ -->
 
 <section id="settingsModule" class="space-y-4">
 
-  <!-- Owner-only guard warning -->
   <div id="settingsAccessDenied" style="display:none" class="bg-rose-950/60 border-2 border-rose-800/60 rounded-2xl p-6 text-center">
     <div style="font-size:44px;margin-bottom:10px">🔒</div>
     <div class="text-lg font-black text-rose-300 mb-1">Access Restricted</div>
@@ -24,31 +24,22 @@
       </div>
     </div>
 
-    <!-- ============ STAFF USER MANAGEMENT (Owner only) ============ -->
+    <!-- STAFF USERS -->
     <div id="staffUsersSection" class="bg-violet-950/30 border-2 border-violet-800/60 rounded-2xl p-4 space-y-3">
       <div class="flex flex-wrap justify-between items-center gap-2 border-b border-violet-800/60 pb-2">
-        <h3 class="text-sm font-bold uppercase tracking-wider text-violet-300 flex items-center gap-2">
-          <span>👥</span><span>Staff User Accounts</span>
-        </h3>
+        <h3 class="text-sm font-bold uppercase tracking-wider text-violet-300 flex items-center gap-2"><span>👥</span><span>Staff User Accounts</span></h3>
         <span class="text-[10px] bg-violet-900/60 text-violet-200 border border-violet-700 px-2 py-1 rounded font-bold">Owner only</span>
       </div>
 
-      <p class="text-[11px] text-slate-400 leading-relaxed">
-        Create login accounts for your staff. Each person gets their own
-        <strong class="text-slate-200">phone number + password</strong>. They can only access the sections assigned to their role.
-      </p>
+      <p class="text-[11px] text-slate-400 leading-relaxed">Create login accounts for your staff. Each person gets their own <strong class="text-slate-200">phone number + password</strong>.</p>
 
-      <!-- Create staff user -->
       <div class="bg-slate-950/70 border border-violet-800/40 rounded-xl p-3 space-y-2">
         <div class="text-[10px] font-bold uppercase text-violet-300 mb-1">➕ Create New Login</div>
-
         <div class="grid grid-cols-2 gap-2">
           <input type="text" id="suName" placeholder="Full Name" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs">
           <input type="tel" id="suPhone" placeholder="10-digit phone" maxlength="10" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs font-mono">
         </div>
-
         <input type="email" id="suEmail" placeholder="Email (for password reset)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs">
-
         <div class="grid grid-cols-2 gap-2">
           <input type="password" id="suPassword" placeholder="Password (min 6)" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs">
           <select id="suRole" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs font-bold">
@@ -58,12 +49,8 @@
             <option value="CA">📊 CA</option>
           </select>
         </div>
-
         <div id="suRoleInfo" class="text-[10px] text-slate-400 bg-slate-900/60 border border-slate-800 rounded p-2 leading-relaxed"></div>
-
-        <button type="button" onclick="SF.staffUsers.create()" class="w-full bg-violet-600 hover:bg-violet-500 text-white font-bold py-2.5 rounded-xl text-xs transition">
-          🔑 Create Login Account
-        </button>
+        <button type="button" onclick="SF.staffUsers.create()" class="w-full bg-violet-600 hover:bg-violet-500 text-white font-bold py-2.5 rounded-xl text-xs transition">🔑 Create Login Account</button>
       </div>
 
       <div class="space-y-2">
@@ -74,61 +61,42 @@
       </div>
     </div>
 
-    <!-- ============ AUTO DAILY BACKUP ============ -->
+    <!-- BACKUP -->
     <div class="bg-sky-950/40 border-2 border-sky-800/60 rounded-2xl p-4 space-y-3">
       <div class="flex flex-wrap justify-between items-center gap-2">
-        <h3 class="text-sm font-bold uppercase tracking-wider text-sky-300 flex items-center gap-2">
-          <span>🛡️</span><span>Auto Daily Backup</span>
-        </h3>
+        <h3 class="text-sm font-bold uppercase tracking-wider text-sky-300 flex items-center gap-2"><span>🛡️</span><span>Auto Daily Backup</span></h3>
         <span id="backupStatusBadge" class="text-[10px] font-bold px-2.5 py-1 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-800/60">Checking...</span>
       </div>
-
       <div class="bg-slate-950/70 border border-sky-800/40 rounded-lg p-3 space-y-2 text-xs">
         <div class="flex justify-between items-center"><span class="text-slate-400 font-semibold">📅 Today's Backup:</span><span id="todayBackupStatus" class="font-bold text-sky-300">Checking...</span></div>
         <div class="flex justify-between items-center"><span class="text-slate-400 font-semibold">📦 Saved Backups:</span><span id="totalBackupsCount" class="font-bold text-sky-300">0 days</span></div>
         <div class="flex justify-between items-center"><span class="text-slate-400 font-semibold">📁 Backup Folder:</span><span id="backupFolderStatus" class="font-bold text-amber-400">Not Set</span></div>
       </div>
-
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
         <button type="button" onclick="SF.settings.chooseBackupFolder()" class="bg-sky-600 hover:bg-sky-500 text-white font-bold py-2.5 rounded-lg text-xs transition">📁 Set Folder</button>
         <button type="button" onclick="SF.settings.runDailyBackupNow()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-lg text-xs transition">⚡ Backup Now</button>
         <button type="button" onclick="SF.settings.openBackupHistory()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2.5 rounded-lg text-xs transition">📂 History</button>
       </div>
-
-      <div class="text-[10px] text-sky-300/80 leading-relaxed bg-slate-950/50 border border-sky-800/40 rounded-lg p-2.5">
-        💡 <strong>Desktop Chrome:</strong> Set a folder once and every day's backup saves automatically.<br>
-        📱 <strong>Mobile:</strong> Use "Backup Now" to save to Downloads.
-      </div>
     </div>
 
-    <!-- ============ STORE PROFILE ============ -->
+    <!-- PROFILE -->
     <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
       <div class="flex items-center justify-between border-b border-slate-800 pb-2">
         <h3 class="text-[11px] font-bold uppercase tracking-wider text-sky-400">🏪 Store Profile</h3>
         <button type="button" id="stgUnlockBtn" onclick="SF.settings.unlockStore()" class="text-[10px] bg-amber-600 hover:bg-amber-500 text-white font-bold px-3 py-1 rounded hidden">🔓 Unlock to Edit</button>
       </div>
-
       <div>
         <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Registered Trade / Shop Name</label>
         <input type="text" id="stgStoreName" placeholder="e.g. Shree Mobile Shop" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-bold text-slate-100">
       </div>
-
       <div class="grid grid-cols-2 gap-2">
-        <div>
-          <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">GSTIN</label>
-          <input type="text" id="stgStoreGST" maxlength="15" placeholder="19AAECR4821F1ZM" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono uppercase text-slate-100">
-        </div>
-        <div>
-          <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Contact Phone</label>
-          <input type="tel" id="stgStorePhone" maxlength="10" placeholder="10-digit" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-100">
-        </div>
+        <div><label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">GSTIN</label><input type="text" id="stgStoreGST" maxlength="15" placeholder="19AAECR4821F1ZM" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono uppercase text-slate-100"></div>
+        <div><label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Contact Phone</label><input type="tel" id="stgStorePhone" maxlength="10" placeholder="10-digit" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-100"></div>
       </div>
-
       <div>
         <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Store Address</label>
         <textarea id="stgStoreAddress" rows="2" placeholder="Full address" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs resize-none text-slate-100"></textarea>
       </div>
-
       <div>
         <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Store Logo</label>
         <div class="flex items-center gap-3">
@@ -141,7 +109,7 @@
       </div>
     </div>
 
-    <!-- ============ BANK DETAILS ============ -->
+    <!-- BANK -->
     <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
       <h3 class="text-[11px] font-bold uppercase tracking-wider text-sky-400 border-b border-slate-800 pb-2">🏦 Bank Details & UPI</h3>
       <div class="grid grid-cols-2 gap-2">
@@ -158,13 +126,13 @@
       </div>
     </div>
 
-    <!-- ============ TERMS ============ -->
+    <!-- TERMS -->
     <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-2">
       <h3 class="text-[11px] font-bold uppercase tracking-wider text-sky-400 border-b border-slate-800 pb-2">📋 Invoice Terms & Conditions</h3>
       <textarea id="stgStoreTerms" rows="4" placeholder="Terms text" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs resize-none text-slate-100 leading-relaxed"></textarea>
     </div>
 
-    <!-- ============ MASTER PIN ============ -->
+    <!-- PIN -->
     <div class="bg-amber-950/30 border border-amber-800/60 rounded-2xl p-4 space-y-3">
       <div class="flex flex-wrap justify-between items-center gap-2 border-b border-amber-800/60 pb-2">
         <h3 class="text-[11px] font-bold uppercase tracking-wider text-amber-300">🔒 Master PIN & Recovery</h3>
@@ -191,7 +159,7 @@
       </div>
     </div>
 
-    <!-- ============ SAVE / BACKUP / RESTORE / WIPE ============ -->
+    <!-- SAVE / BACKUP / RESTORE / WIPE -->
     <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
       <button type="button" id="stgSaveBtn" onclick="SF.settings.saveProfile()" class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-black py-3.5 rounded-xl text-sm shadow-lg shadow-indigo-600/30 transition">💾 Save Settings</button>
 
@@ -202,15 +170,19 @@
       </div>
 
       <div class="pt-3 border-t border-slate-800">
-        <button type="button" onclick="SF.settings.wipeAllData()" class="w-full bg-rose-950/60 hover:bg-rose-900/60 text-rose-300 font-bold py-2.5 rounded-xl text-xs border border-rose-800/60 transition">⚠️ Wipe All Data (Danger)</button>
+        <button type="button" onclick="SF.settings.wipeAllData()" class="w-full bg-rose-950/60 hover:bg-rose-900/60 text-rose-300 font-bold py-3 rounded-xl text-xs border border-rose-800/60 transition">⚠️ Wipe All Data (Danger Zone)</button>
+        <p class="text-[10px] text-rose-400/70 mt-2 text-center leading-relaxed">
+          Clears ALL local data from this browser.<br>
+          ☁️ Cloud data stays safe — login again to restore.
+        </p>
       </div>
     </div>
 
-    <!-- ============ APP INFO ============ -->
+    <!-- APP INFO -->
     <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 text-center">
       <div class="text-[11px] font-bold text-slate-300 mb-1">SmartFix ERP</div>
       <div class="text-[10px] text-slate-500 space-y-0.5">
-        <div>Version <span id="stgAppVersion" class="font-mono text-slate-400">4.1.0</span></div>
+        <div>Version <span id="stgAppVersion" class="font-mono text-slate-400">4.5.1</span></div>
         <div>Store Code: <span data-shop-code class="font-mono text-sky-400 font-bold">—</span></div>
         <div>Signed in as: <span data-owner-email class="font-mono text-slate-400">—</span></div>
         <div class="pt-1.5 text-[9px] text-slate-600">Developed by Debapriya Sarkar • © 2026</div>
@@ -221,7 +193,7 @@
 </section>
 
 
-<!-- ============ BACKUP HISTORY MODAL ============ -->
+<!-- BACKUP HISTORY MODAL -->
 <div id="stgBackupHistoryModal" class="fixed inset-0 z-[9999] hidden" style="background:rgba(0,0,0,0.75); backdrop-filter:blur(6px);">
   <div class="flex items-center justify-center h-full p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-2xl">
@@ -248,9 +220,6 @@
 
   if (!S || !C) { console.error('Settings: SF globals not ready'); return; }
 
-  /* ============================================================
-     ROLE GUARD
-     ============================================================ */
   const isOwner = window.SF?.perms?.isOwner?.() ?? true;
 
   const SET = {
@@ -263,19 +232,19 @@
     MAX_BACKUPS: 30
   };
 
+  /* ============================================================
+     INIT
+     ============================================================ */
   function init_settingsModule() {
-    console.log('%c⚙️ Settings module initialized', 'color:#06b6d4;font-weight:bold');
+    console.log('%c⚙️ Settings module initialized (v4.5.1)', 'color:#06b6d4;font-weight:bold');
 
-    /* Role guard — hide content if not owner */
     if (!isOwner) {
       const denied = document.getElementById('settingsAccessDenied');
       const content = document.getElementById('settingsContent');
       if (denied) denied.style.display = 'block';
       if (content) content.style.display = 'none';
       C.toast('🔒 Only owner can access Settings', 'error', 3000);
-      return {
-        onUnload: () => {}
-      };
+      return { onUnload: () => {} };
     }
 
     loadProfileIntoForm();
@@ -284,19 +253,16 @@
     const emailEl = document.querySelector('#settingsModule [data-owner-email]');
     if (emailEl && S.store?.email) emailEl.textContent = S.store.email;
     const verEl = document.getElementById('stgAppVersion');
-    if (verEl) verEl.textContent = window.SF?.app?.version || '4.1.0';
+    if (verEl) verEl.textContent = window.SF?.app?.version || '4.5.1';
 
     updateBackupUI();
     setTimeout(initBackupSystem, 800);
     checkLockState();
     setTimeout(() => { runAutoDailyBackup(false).catch(() => {}); }, 2500);
 
-    /* Init staff users section */
     setTimeout(() => { try { StaffUsers.init(); } catch (e) { console.warn(e); } }, 400);
 
-    return {
-      onUnload: () => {}
-    };
+    return { onUnload: () => {} };
   }
 
   /* ============================================================
@@ -424,7 +390,7 @@
   function unlockStore() {
     const pin = prompt('🔒 Enter Master PIN to unlock:');
     if (!pin) return;
-    if (pin !== (S.profile?.masterPin || '1234')) { C.toast('Incorrect PIN', 'error'); C.playErrorBeep(); return; }
+    if (pin.trim() !== String(S.profile?.masterPin || '1234').trim()) { C.toast('Incorrect PIN', 'error'); C.playErrorBeep(); return; }
     S.profile.isLocked = false;
     C.safeSave('sfp_store_profile', S.profile);
     checkLockState();
@@ -453,8 +419,13 @@
      BACKUP
      ============================================================ */
   function buildSnapshot() {
+    let repairs = [];
+    try {
+      const raw = localStorage.getItem('sfp_repairs');
+      if (raw) repairs = JSON.parse(raw);
+    } catch (e) {}
     return {
-      version: '4.1.0', appName: 'SmartFix ERP',
+      version: '4.5.1', appName: 'SmartFix ERP',
       exportedAt: new Date().toISOString(),
       backupDate: C.fmtDate(new Date()),
       store: S.store || null,
@@ -467,12 +438,14 @@
       parties: S.parties || [],
       staff: S.staff || [],
       salaryPayments: S.salaryPayments || [],
+      repairs: repairs,
       categories: S.categories || [],
       auditLog: (S.auditLog || []).slice(0, 200)
     };
   }
 
   function getDailyBackups() { try { return JSON.parse(localStorage.getItem(SET.BACKUP_KEY) || '{}'); } catch (e) { return {}; } }
+
   function saveDailyBackups(backups) {
     try { localStorage.setItem(SET.BACKUP_KEY, JSON.stringify(backups)); return true; }
     catch (e) {
@@ -597,14 +570,14 @@
         const snap = backups[date] || {};
         const invCount = (snap.invoices || []).length;
         const stkCount = (snap.inventory || []).length;
-        const partyCount = (snap.parties || []).length;
+        const repCount = (snap.repairs || []).length;
         const sizeKB = (JSON.stringify(snap).length / 1024).toFixed(1);
         const isToday = date === C.fmtDate(new Date());
         return `<div class="border rounded-xl p-3 ${isToday ? 'border-sky-600 bg-sky-950/30' : 'border-slate-800 bg-slate-950/50'}">
           <div class="flex justify-between items-start gap-2 mb-2">
             <div class="min-w-0 flex-1">
               <div class="font-bold text-sm text-white">${isToday ? '📅 Today' : '📅 ' + date}</div>
-              <div class="text-[10px] text-slate-500 mt-0.5">${invCount} inv • ${stkCount} stock • ${partyCount} parties • ${sizeKB} KB</div>
+              <div class="text-[10px] text-slate-500 mt-0.5">${invCount} inv • ${stkCount} stock • ${repCount} repairs • ${sizeKB} KB</div>
             </div>
             <div class="flex gap-1 flex-shrink-0">
               <button type="button" onclick="SF.settings.downloadBackupByDate('${date}')" class="text-[10px] bg-sky-700 hover:bg-sky-600 text-white font-bold px-2.5 py-1.5 rounded">⬇</button>
@@ -640,11 +613,11 @@
     if (!isOwner) { C.toast('🔒 Owner only', 'error'); return; }
     const pin = prompt('🔒 Enter Master PIN:');
     if (!pin) return;
-    if (pin !== (S.profile?.masterPin || '1234')) { C.toast('Incorrect PIN', 'error'); return; }
+    if (pin.trim() !== String(S.profile?.masterPin || '1234').trim()) { C.toast('Incorrect PIN', 'error'); return; }
     const backups = getDailyBackups();
     const snap = backups[date];
     if (!snap) { C.toast('Not found', 'error'); return; }
-    const ok = await C.confirmDialog('Restore Backup?', `From: ${date}\n\n⚠ ALL current data will be REPLACED!`, 'Restore', true);
+    const ok = confirm('Restore Backup?\n\nFrom: ' + date + '\n\n⚠ ALL current local data will be REPLACED!\n\nContinue?');
     if (!ok) return;
     applySnapshot(snap);
     C.toast('✅ Restored. Reloading...', 'success', 3000);
@@ -675,6 +648,9 @@
     C.safeSave('sfp_salary_payments', S.salaryPayments);
     C.safeSave('sfp_categories', S.categories);
     C.safeSave('sfp_audit', S.auditLog);
+    if (snap.repairs) {
+      try { localStorage.setItem('sfp_repairs', JSON.stringify(snap.repairs)); } catch (e) {}
+    }
   }
 
   async function restoreFromJSON(e) {
@@ -683,13 +659,13 @@
     if (!file) return;
     const pin = prompt('🔒 Enter Master PIN:');
     if (!pin) { e.target.value = ''; return; }
-    if (pin !== (S.profile?.masterPin || '1234')) { C.toast('Incorrect PIN', 'error'); e.target.value = ''; return; }
+    if (pin.trim() !== String(S.profile?.masterPin || '1234').trim()) { C.toast('Incorrect PIN', 'error'); e.target.value = ''; return; }
     const reader = new FileReader();
     reader.onload = async (ev) => {
       try {
         const data = JSON.parse(ev.target.result);
         if (!data.profile && !data.invoices) { C.toast('Invalid file', 'error'); e.target.value = ''; return; }
-        const ok = await C.confirmDialog('Restore?', 'All current data will be replaced!', 'Restore', true);
+        const ok = confirm('Restore Backup?\n\nAll current local data will be replaced!\n\nContinue?');
         if (!ok) { e.target.value = ''; return; }
         applySnapshot(data);
         C.toast('Restore complete. Reloading...', 'success', 2500);
@@ -699,22 +675,136 @@
     reader.readAsText(file);
   }
 
+  /* ============================================================
+     ⭐ WIPE ALL DATA — Native confirm/prompt (bulletproof)
+     ============================================================ */
   async function wipeAllData() {
-    if (!isOwner) { C.toast('🔒 Owner only', 'error'); return; }
-    const pin = prompt('🔒 Enter Master PIN to WIPE ALL DATA:');
-    if (!pin) return;
-    if (pin !== (S.profile?.masterPin || '1234')) { C.toast('Incorrect PIN', 'error'); C.playErrorBeep(); return; }
-    const c1 = prompt('Type DELETE ALL to confirm:');
-    if (c1 !== 'DELETE ALL') { C.toast('Cancelled', 'info', 2000); return; }
-    const ok = await C.confirmDialog('⚠️ Final Warning', 'This will delete all local data.\n\nCloud data will NOT be deleted.', 'WIPE NOW', true);
-    if (!ok) return;
-    ['sfp_store_profile','sfp_invoices','sfp_credit_notes','sfp_vouchers','sfp_stock','sfp_purchases','sfp_parties','sfp_staff','sfp_salary_payments','sfp_categories','sfp_audit','sfp_active_cart','sfp_daily_backups','sfp_last_backup','sfp_cloud_queue'].forEach((k) => {
-      try { localStorage.removeItem(k); } catch (e) {}
+    if (!isOwner) {
+      C.toast('🔒 Only owner can wipe data', 'error', 4000);
+      return;
+    }
+
+    /* STEP 1: Big warning — native confirm() */
+    const ok1 = confirm(
+      '⚠️ WIPE ALL LOCAL DATA?\n\n' +
+      'This will permanently delete from THIS BROWSER:\n\n' +
+      '• All invoices & bills\n' +
+      '• All repairs\n' +
+      '• All stock items\n' +
+      '• All parties\n' +
+      '• All staff\n' +
+      '• All vouchers & daybook\n' +
+      '• All attendance records\n\n' +
+      '☁️ Your CLOUD data (Firebase) stays safe.\n' +
+      'Login again to restore from cloud.\n\n' +
+      'Continue?'
+    );
+    if (!ok1) {
+      C.toast('Wipe cancelled', 'info', 2000);
+      return;
+    }
+
+    /* STEP 2: Master PIN */
+    const expectedPin = String(S.profile?.masterPin || '1234').trim();
+    const pin = prompt(
+      '🔒 Enter Master PIN to confirm:\n\n' +
+      '(Default is 1234 unless you changed it)'
+    );
+    if (pin === null) {
+      C.toast('Wipe cancelled', 'info', 2000);
+      return;
+    }
+    if (pin.trim() !== expectedPin) {
+      C.toast('❌ Incorrect PIN. Wipe cancelled.', 'error', 4000);
+      C.playErrorBeep();
+      return;
+    }
+
+    /* STEP 3: Final confirmation */
+    const ok2 = confirm(
+      '⚠️ FINAL CONFIRMATION\n\n' +
+      'Click OK to permanently delete all local data.\n\n' +
+      'Cloud data remains safe.\n\n' +
+      'This action cannot be undone!'
+    );
+    if (!ok2) {
+      C.toast('Wipe cancelled', 'info', 2000);
+      return;
+    }
+
+    /* STEP 4: Execute wipe */
+    C.toast('Wiping local data...', 'info', 2000);
+
+    /* Cancel any running timers */
+    try {
+      if (window.SF?.attendance?._timers) window.SF.attendance._timers = [];
+    } catch (e) {}
+
+    /* All localStorage keys */
+    const keys = [
+      'sfp_store_profile', 'sfp_invoices', 'sfp_credit_notes', 'sfp_vouchers',
+      'sfp_stock', 'sfp_purchases', 'sfp_parties', 'sfp_staff',
+      'sfp_salary_payments', 'sfp_categories', 'sfp_audit', 'sfp_active_cart',
+      'sfp_daily_backups', 'sfp_last_backup', 'sfp_cloud_queue',
+      'sfp_repairs', 'sfp_current_store', 'sfp_manual_lang',
+      'sfp_attendance_last_cleanup'
+    ];
+
+    let cleared = 0;
+    keys.forEach((k) => {
+      try {
+        if (localStorage.getItem(k) !== null) {
+          localStorage.removeItem(k);
+          cleared++;
+        }
+      } catch (e) {}
     });
-    C.toast('All data wiped. Reloading...', 'success', 2500);
-    setTimeout(() => location.reload(), 1500);
+
+    /* Clear sessionStorage */
+    try { sessionStorage.clear(); } catch (e) {}
+
+    /* Try clearing IndexedDB backup handles */
+    try {
+      if (window.indexedDB) {
+        indexedDB.deleteDatabase('SmartFixBackupDB');
+      }
+    } catch (e) {}
+
+    console.log('🗑️ Wipe complete. Cleared ' + cleared + ' localStorage keys.');
+
+    /* Reset in-memory state to prevent UI glitches before reload */
+    try {
+      if (window.SF?.state?.state) {
+        const st = window.SF.state.state;
+        st.invoices = [];
+        st.creditNotes = [];
+        st.vouchers = [];
+        st.inventory = [];
+        st.purchases = [];
+        st.parties = [];
+        st.staff = [];
+        st.salaryPayments = [];
+        st.auditLog = [];
+        st.activeCart = [];
+      }
+    } catch (e) {}
+
+    /* Success message */
+    C.toast('✅ Local data wiped! Redirecting to login...', 'success', 3000);
+
+    /* Redirect to login */
+    setTimeout(() => {
+      try {
+        window.location.href = './index.html';
+      } catch (e) {
+        window.location.reload();
+      }
+    }, 1500);
   }
 
+  /* ============================================================
+     BACKUP UI
+     ============================================================ */
   function updateBackupUI() {
     const backups = getDailyBackups();
     const today = C.fmtDate(new Date());
@@ -749,14 +839,14 @@
   }
 
   /* ============================================================
-     STAFF USERS MANAGEMENT
+     STAFF USERS
      ============================================================ */
   const StaffUsers = (function () {
     const ROLE_INFO = {
-      MANAGER:    '👔 <strong>Manager</strong> — Can create bills, purchases, returns, vouchers. Cannot edit/delete anything. No Settings access.',
+      MANAGER:    '👔 <strong>Manager</strong> — Can create bills, purchases, returns, vouchers. Cannot edit/delete. No Settings access.',
       PROMOTER:   '📢 <strong>Promoter</strong> — Only billing + customer lookup. No purchases, vouchers, or financial data.',
       TECHNICIAN: '🔧 <strong>Technician</strong> — Service module + attendance only.',
-      CA:         '📊 <strong>CA</strong> — Read-only access to accounting, books, and reports. Can export Excel. Cannot create/edit/delete.'
+      CA:         '📊 <strong>CA</strong> — Read-only access to accounting, books, and reports. Can export Excel.'
     };
 
     function updateRoleInfo() {
@@ -768,7 +858,6 @@
 
     async function create() {
       if (!window.SF?.perms?.isOwner?.()) { C.toast('Only owner can create staff', 'error', 4000); return; }
-
       const name     = (document.getElementById('suName')?.value || '').trim();
       const phone    = (document.getElementById('suPhone')?.value || '').trim();
       const email    = (document.getElementById('suEmail')?.value || '').trim().toLowerCase();
@@ -796,7 +885,6 @@
 
         const tmpApp = initializeApp(cfg, 'staff-create-' + Date.now());
         const tmpAuth = getAuth(tmpApp);
-
         const cred = await createUserWithEmailAndPassword(tmpAuth, email, password);
         const newUid = cred.user.uid;
         await updateProfile(cred.user, { displayName: name });
@@ -810,7 +898,6 @@
           createdAt: fst(),
           createdBy: window.SF?.perms?.getUserMeta()?.uid
         });
-
         await fset(fdoc(fdb, 'publicPhoneIndex', phone), {
           email, storeId, role, name, updatedAt: fst()
         });
@@ -820,7 +907,6 @@
 
         C.toast('✅ Account created: ' + name, 'success', 4000);
         C.playBeep();
-
         ['suName','suPhone','suEmail','suPassword'].forEach((id) => {
           const el = document.getElementById(id);
           if (el) el.value = '';
@@ -844,17 +930,13 @@
       if (!listEl) return;
       const storeId = window.SF?.perms?.getUserMeta()?.storeId;
       if (!storeId) { listEl.innerHTML = '<div class="text-center text-slate-500 text-xs py-3">Store not resolved</div>'; return; }
-
       try {
         const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
         const { db: fdb } = await import('./js/firebase-config.js');
         const snap = await getDocs(collection(fdb, 'stores', storeId, 'staffUsers'));
-
         if (snap.empty) { listEl.innerHTML = '<div class="text-center text-slate-500 text-xs py-3">No staff accounts yet.</div>'; return; }
-
         const rows = [];
         snap.forEach((d) => rows.push({ id: d.id, ...d.data() }));
-
         listEl.innerHTML = rows.map((u) => {
           const roleLabel = { MANAGER: '👔 Manager', PROMOTER: '📢 Promoter', TECHNICIAN: '🔧 Technician', CA: '📊 CA' }[u.role] || u.role;
           const disabled = u.disabled === true;
@@ -893,7 +975,7 @@
 
     async function remove(uid, name, phone) {
       if (!window.SF?.perms?.isOwner?.()) { C.toast('Owner only', 'error'); return; }
-      const ok = await C.confirmDialog('Delete Staff Account?', `${name}\n${phone}\n\nThey will not be able to sign in anymore.`, 'Delete', true);
+      const ok = confirm('Delete Staff Account?\n\n' + name + '\n' + phone + '\n\nThey will not be able to sign in anymore.');
       if (!ok) return;
       const storeId = window.SF?.perms?.getUserMeta()?.storeId;
       if (!storeId) return;
