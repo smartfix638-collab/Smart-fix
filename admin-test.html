@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login Test</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { background: #0a0a1a; color: #e2e8f0; font-family: -apple-system, sans-serif; min-height: 100vh; padding: 20px; }
+  .card { max-width: 500px; margin: 0 auto; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 16px; padding: 20px; }
+  .input { width: 100%; background: #0a0a1a; border: 1px solid #334155; border-radius: 10px; padding: 12px; color: #e2e8f0; margin-bottom: 12px; font-family: inherit; }
+  .btn { width: 100%; padding: 14px; border-radius: 10px; background: linear-gradient(135deg, #dc2626, #991b1b); color: white; font-weight: 700; border: none; cursor: pointer; font-size: 14px; }
+  .btn:disabled { opacity: 0.5; }
+  .log { font-family: ui-monospace, monospace; font-size: 11px; background: #0a0a1a; border: 1px solid #1e293b; border-radius: 8px; padding: 12px; max-height: 400px; overflow-y: auto; margin-top: 12px; line-height: 1.6; }
+  .ok { color: #10b981; }
+  .err { color: #ef4444; }
+  .info { color: #38bdf8; }
+  .warn { color: #f59e0b; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1 class="text-xl font-black mb-2 text-white">🔬 Admin Login Test</h1>
+  <p class="text-[11px] text-slate-400 mb-4">Diagnostic tool — shows exactly where login fails</p>
+
+  <input id="email" type="email" class="input" placeholder="debapriyasarakara@gmail.com" value="debapriyasarakara@gmail.com">
+  <input id="pass" type="password" class="input" placeholder="Password">
+  <button id="btn" class="btn" onclick="runTest()">Run Diagnostic</button>
+
+  <div id="log" class="log">
+    <div class="info">Ready. Enter password and click Run Diagnostic.</div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { firebaseConfig } from './js/firebase-config.js';
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const logEl = document.getElementById('log');
+
+function log(msg, cls) {
+  const d = document.createElement('div');
+  d.className = cls || '';
+  d.textContent = msg;
+  logEl.appendChild(d);
+  logEl.scrollTop = logEl.scrollHeight;
+  console.log(msg);
+}
+
+window.runTest = async function () {
+  logEl.innerHTML = '';
+  const email = document.getElementById('email').value.trim();
+  const pass = document.getElementById('pass').value;
+  const btn = document.getElementById('btn');
+
+  log('🔬 Diagnostic started', 'info');
+  log('   Email: ' + email, 'info');
+  log('   Config project: ' + firebaseConfig.projectId, 'info');
+
+  if (!pass) {
+    log('❌ Password is empty', 'err');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Testing...';
+
+  /* --- TEST 1: Firebase Auth --- */
+  log('');
+  log('━━━ TEST 1: Firebase Auth Login ━━━', 'info');
+  let cred = null;
+  try {
+    cred = await signInWithEmailAndPassword(auth, email, pass);
+    log('✅ Auth SUCCESS', 'ok');
+    log('   UID: ' + cred.user.uid, 'ok');
+    log('   Email Verified: ' + cred.user.emailVerified, cred.user.emailVerified ? 'ok' : 'warn');
+    log('   Provider: ' + (cred.user.providerData[0]?.providerId || 'unknown'), 'info');
+  } catch (e) {
+    log('❌ Auth FAILED', 'err');
+    log('   Code: ' + (e.code || 'unknown'), 'err');
+    log('   Message: ' + (e.message || ''), 'err');
+    btn.disabled = false;
+    btn.textContent = 'Run Diagnostic';
+    return;
+  }
+
+  /* --- TEST 2: Read adminConfig (Rules test) --- */
+  log('');
+  log('━━━ TEST 2: Read adminConfig/security ━━━', 'info');
+  try {
+    const snap = await getDoc(doc(db, 'adminConfig', 'security'));
+    if (snap.exists()) {
+      const data = snap.data();
+      log('✅ adminConfig read OK', 'ok');
+      log('   admins: ' + JSON.stringify(data.admins || []), 'ok');
+      log('   pin: ' + (data.pin ? data.pin.substring(0, 2) + '***' : '(missing)'), 'ok');
+
+      /* Verify email is in admins */
+      const emailLower = email.toLowerCase();
+      const admins = Array.isArray(data.admins) ? data.admins.map(a => a.toLowerCase()) : [];
+      if (admins.includes(emailLower)) {
+        log('✅ Email IS in admins array', 'ok');
+      } else {
+        log('❌ Email NOT in admins array!', 'err');
+        log('   Expected: ' + emailLower, 'err');
+        log('   Found: ' + admins.join(', '), 'err');
+      }
+    } else {
+      log('❌ adminConfig/security document NOT FOUND', 'err');
+    }
+  } catch (e) {
+    log('❌ Read FAILED', 'err');
+    log('   Code: ' + (e.code || 'unknown'), 'err');
+    log('   Message: ' + (e.message || ''), 'err');
+    if (e.code === 'permission-denied') {
+      log('   ➜ Firestore Rules are blocking you', 'warn');
+      log('   ➜ Check isSuperAdmin() in Rules', 'warn');
+      log('   ➜ Make sure email_verified check is removed if email not verified', 'warn');
+    }
+  }
+
+  /* --- TEST 3: Read stores collection --- */
+  log('');
+  log('━━━ TEST 3: Read stores collection ━━━', 'info');
+  try {
+    const snap = await getDocs(collection(db, 'stores'));
+    log('✅ Stores read OK', 'ok');
+    log('   Found ' + snap.size + ' stores', 'ok');
+  } catch (e) {
+    log('❌ Stores read FAILED', 'err');
+    log('   Code: ' + (e.code || 'unknown'), 'err');
+    log('   ➜ This means Firestore Rules denied access', 'warn');
+  }
+
+  /* --- Summary --- */
+  log('');
+  log('━━━ SUMMARY ━━━', 'info');
+  if (cred && cred.user.emailVerified === false) {
+    log('⚠️  Email NOT verified — this may cause issues', 'warn');
+    log('   Fix: Firebase Console → Authentication → Users → your email → ⋮ → Mark email as verified', 'warn');
+  }
+
+  log('');
+  log('Diagnostic complete. Screenshot this log and send.', 'info');
+
+  btn.disabled = false;
+  btn.textContent = 'Run Diagnostic Again';
+};
+
+console.log('🔬 Admin test page loaded');
+</script>
+
+</body>
+</html>
