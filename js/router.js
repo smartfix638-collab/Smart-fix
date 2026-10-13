@@ -1,7 +1,7 @@
 /* ============================================================
-   SMARTFIX ERP — SPA Router (v4.5.0)
+   SMARTFIX ERP — SPA Router (v4.6.0)
    File: js/router.js
-   Dashboard is now F1 (first route)
+   Added: Mobile Doctor module (F16)
    ============================================================ */
 
 import { emit, on } from './state.js';
@@ -13,23 +13,25 @@ export const ROUTES = {
   billing:              { id: 'billingTab',          label: 'Sales',       icon: '🧾', file: './modules/billing.html',            shortcut: 'F2',  description: 'POS Sales Invoice' },
   returns:              { id: 'returnsTab',          label: 'Returns',     icon: '↩️', file: './modules/returns.html',            shortcut: 'F3',  description: 'Credit Notes & Refunds' },
   repair:               { id: 'repairTab',           label: 'Repair',      icon: '🔧', file: './modules/repair.html',             shortcut: 'F4',  description: 'Mobile Repair Job Cards' },
-  purchase:             { id: 'purchaseTab',         label: 'Purchase',    icon: '🛒', file: './modules/purchase.html',           shortcut: 'F5',  description: 'Supplier Bills & Stock In' },
-  vouchers:             { id: 'vouchersTab',         label: 'Vouchers',    icon: '📒', file: './modules/vouchers.html',           shortcut: 'F6',  description: 'Payment / Receipt / Journal' },
-  accounting:           { id: 'accountingTab',       label: 'P&L',         icon: '📈', file: './modules/accounting.html',         shortcut: 'F7',  description: 'Profit & Loss, GST, Audit' },
-  books:                { id: 'booksTab',            label: 'Books',       icon: '📚', file: './modules/books.html',              shortcut: 'F8',  description: 'Cash Book, Bank Book, Trial Balance' },
-  parties:              { id: 'partiesTab',          label: 'Parties',     icon: '👥', file: './modules/parties.html',            shortcut: 'F9',  description: 'Customers & Suppliers' },
-  inventory:            { id: 'inventoryTab',        label: 'Stock',       icon: '📦', file: './modules/inventory.html',          shortcut: 'F10', description: 'Inventory Management' },
-  staff:                { id: 'staffTab',            label: 'Staff',       icon: '👨‍💼', file: './modules/staff.html',            shortcut: 'F11', description: 'Staff & Salary' },
-  attendance:           { id: 'attendanceTab',       label: 'Attendance',  icon: '📸', file: './modules/attendance.html',         shortcut: 'F12', description: 'Selfie Check-In / Check-Out' },
-  'attendance-report':  { id: 'attendanceReportTab', label: 'Att. Report', icon: '👥', file: './modules/attendance-report.html',  shortcut: 'F13', description: 'Team Attendance Summary' },
-  manual:               { id: 'manualTab',           label: 'Manual',      icon: '📖', file: './modules/manual.html',             shortcut: 'F14', description: 'User Manual & Help Center' },
-  settings:             { id: 'settingsTab',         label: 'Settings',    icon: '⚙️', file: './modules/settings.html',           shortcut: 'F15', description: 'Store Settings & Backup' }
+  mobileDoctor:         { id: 'mobileDoctorTab',     label: 'Doctor',      icon: '🩺', file: './modules/mobile-doctor.html',      shortcut: 'F5',  description: 'Mobile Diagnostic Tool (Desktop Chrome)' },
+  purchase:             { id: 'purchaseTab',         label: 'Purchase',    icon: '🛒', file: './modules/purchase.html',           shortcut: 'F6',  description: 'Supplier Bills & Stock In' },
+  vouchers:             { id: 'vouchersTab',         label: 'Vouchers',    icon: '📒', file: './modules/vouchers.html',           shortcut: 'F7',  description: 'Payment / Receipt / Journal' },
+  accounting:           { id: 'accountingTab',       label: 'P&L',         icon: '📈', file: './modules/accounting.html',         shortcut: 'F8',  description: 'Profit & Loss, GST, Audit' },
+  books:                { id: 'booksTab',            label: 'Books',       icon: '📚', file: './modules/books.html',              shortcut: 'F9',  description: 'Cash Book, Bank Book, Trial Balance' },
+  parties:              { id: 'partiesTab',          label: 'Parties',     icon: '👥', file: './modules/parties.html',            shortcut: 'F10', description: 'Customers & Suppliers' },
+  inventory:            { id: 'inventoryTab',        label: 'Stock',       icon: '📦', file: './modules/inventory.html',          shortcut: 'F11', description: 'Inventory Management' },
+  staff:                { id: 'staffTab',            label: 'Staff',       icon: '👨‍💼', file: './modules/staff.html',            shortcut: 'F12', description: 'Staff & Salary' },
+  attendance:           { id: 'attendanceTab',       label: 'Attendance',  icon: '📸', file: './modules/attendance.html',         shortcut: 'F13', description: 'Selfie Check-In / Check-Out' },
+  'attendance-report':  { id: 'attendanceReportTab', label: 'Att. Report', icon: '👥', file: './modules/attendance-report.html',  shortcut: 'F14', description: 'Team Attendance Summary' },
+  manual:               { id: 'manualTab',           label: 'Manual',      icon: '📖', file: './modules/manual.html',             shortcut: 'F15', description: 'User Manual & Help Center' },
+  settings:             { id: 'settingsTab',         label: 'Settings',    icon: '⚙️', file: './modules/settings.html',           shortcut: 'F16', description: 'Store Settings & Backup' }
 };
 
 export const ROUTE_ORDER = [
-  'dashboard', 'billing', 'returns', 'repair', 'purchase',
-  'vouchers', 'accounting', 'books', 'parties', 'inventory',
-  'staff', 'attendance', 'attendance-report', 'manual', 'settings'
+  'dashboard', 'billing', 'returns', 'repair', 'mobileDoctor',
+  'purchase', 'vouchers', 'accounting', 'books', 'parties',
+  'inventory', 'staff', 'attendance', 'attendance-report',
+  'manual', 'settings'
 ];
 
 
@@ -79,7 +81,7 @@ export async function navigateTo(routeKey, opts = {}) {
       if (!perms.canAccessRoute(routeKey)) {
         console.warn('🚫 Route blocked by role:', routeKey);
         const allowed = perms.getAccessibleRoutes(ROUTE_ORDER);
-        const fallback = allowed[0] || 'billing';
+        const fallback = allowed[0] || 'dashboard';
         if (fallback !== routeKey) {
           try { perms.guard('route.' + routeKey, 'Access denied to ' + routeKey); } catch (e) {}
           return navigateTo(fallback, { replace: true });
@@ -313,4 +315,4 @@ window.addEventListener('popstate', () => {
   }
 });
 
-console.log('%c🧭 Router ready (v4.5.0)', 'color:#06b6d4;font-weight:bold;font-size:11px', `| ${ROUTE_ORDER.length} routes`);
+console.log('%c🧭 Router ready (v4.6.0)', 'color:#06b6d4;font-weight:bold;font-size:11px', `| ${ROUTE_ORDER.length} routes`);
