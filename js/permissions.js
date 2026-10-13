@@ -1,6 +1,7 @@
 /* ============================================================
-   SMARTFIX ERP — Permissions & Role Engine (v4.5.0)
+   SMARTFIX ERP — Permissions & Role Engine (v4.6.0)
    File: js/permissions.js
+   Added: mobileDoctor.use permission
    ============================================================ */
 
 import { toast } from './common.js';
@@ -37,6 +38,7 @@ const PERMISSIONS = {
     'accounting.view', 'books.view',
     'attendance.view', 'attendance.mark', 'attendance.report',
     'repair.view', 'repair.create', 'repair.edit', 'repair.print',
+    'mobileDoctor.use',
     'manual.view'
   ],
 
@@ -55,6 +57,7 @@ const PERMISSIONS = {
     'inventory.view',
     'attendance.view', 'attendance.mark',
     'repair.view', 'repair.create', 'repair.edit', 'repair.print',
+    'mobileDoctor.use',
     'manual.view'
   ],
 
@@ -118,6 +121,7 @@ export function canAccessRoute(routeKey) {
     attendance:            'attendance.view',
     'attendance-report':   'attendance.report',
     repair:                'repair.view',
+    mobileDoctor:          'mobileDoctor.use',
     manual:                'manual.view'
   };
   const perm = ROUTE_PERMS[routeKey];
@@ -143,4 +147,4 @@ window.SF.perms = {
   isOwner, can, guard, canAccessRoute, getAccessibleRoutes
 };
 
-console.log('%c🔐 Permissions engine ready (v4.5.0)', 'color:#f59e0b;font-weight:bold;font-size:11px');
+console.log('%c🔐 Permissions engine ready (v4.6.0)', 'color:#f59e0b;font-weight:bold;font-size:11px');
