@@ -1,7 +1,7 @@
 /* ============================================================
-   SMARTFIX ERP — SPA Router (v4.6.0)
+   SMARTFIX ERP — SPA Router (v4.7.0)
    File: js/router.js
-   Added: Mobile Doctor module (F16)
+   Added: GST Returns module
    ============================================================ */
 
 import { emit, on } from './state.js';
@@ -13,24 +13,25 @@ export const ROUTES = {
   billing:              { id: 'billingTab',          label: 'Sales',       icon: '🧾', file: './modules/billing.html',            shortcut: 'F2',  description: 'POS Sales Invoice' },
   returns:              { id: 'returnsTab',          label: 'Returns',     icon: '↩️', file: './modules/returns.html',            shortcut: 'F3',  description: 'Credit Notes & Refunds' },
   repair:               { id: 'repairTab',           label: 'Repair',      icon: '🔧', file: './modules/repair.html',             shortcut: 'F4',  description: 'Mobile Repair Job Cards' },
-  mobileDoctor:         { id: 'mobileDoctorTab',     label: 'Doctor',      icon: '🩺', file: './modules/mobile-doctor.html',      shortcut: 'F5',  description: 'Mobile Diagnostic Tool (Desktop Chrome)' },
+  mobileDoctor:         { id: 'mobileDoctorTab',     label: 'Doctor',      icon: '🩺', file: './modules/mobile-doctor.html',      shortcut: 'F5',  description: 'Mobile Diagnostic Tool' },
   purchase:             { id: 'purchaseTab',         label: 'Purchase',    icon: '🛒', file: './modules/purchase.html',           shortcut: 'F6',  description: 'Supplier Bills & Stock In' },
   vouchers:             { id: 'vouchersTab',         label: 'Vouchers',    icon: '📒', file: './modules/vouchers.html',           shortcut: 'F7',  description: 'Payment / Receipt / Journal' },
   accounting:           { id: 'accountingTab',       label: 'P&L',         icon: '📈', file: './modules/accounting.html',         shortcut: 'F8',  description: 'Profit & Loss, GST, Audit' },
-  books:                { id: 'booksTab',            label: 'Books',       icon: '📚', file: './modules/books.html',              shortcut: 'F9',  description: 'Cash Book, Bank Book, Trial Balance' },
-  parties:              { id: 'partiesTab',          label: 'Parties',     icon: '👥', file: './modules/parties.html',            shortcut: 'F10', description: 'Customers & Suppliers' },
-  inventory:            { id: 'inventoryTab',        label: 'Stock',       icon: '📦', file: './modules/inventory.html',          shortcut: 'F11', description: 'Inventory Management' },
-  staff:                { id: 'staffTab',            label: 'Staff',       icon: '👨‍💼', file: './modules/staff.html',            shortcut: 'F12', description: 'Staff & Salary' },
-  attendance:           { id: 'attendanceTab',       label: 'Attendance',  icon: '📸', file: './modules/attendance.html',         shortcut: 'F13', description: 'Selfie Check-In / Check-Out' },
-  'attendance-report':  { id: 'attendanceReportTab', label: 'Att. Report', icon: '👥', file: './modules/attendance-report.html',  shortcut: 'F14', description: 'Team Attendance Summary' },
-  manual:               { id: 'manualTab',           label: 'Manual',      icon: '📖', file: './modules/manual.html',             shortcut: 'F15', description: 'User Manual & Help Center' },
-  settings:             { id: 'settingsTab',         label: 'Settings',    icon: '⚙️', file: './modules/settings.html',           shortcut: 'F16', description: 'Store Settings & Backup' }
+  gstReturns:           { id: 'gstReturnsTab',       label: 'GST',         icon: '📋', file: './modules/gst-returns.html',        shortcut: 'F9',  description: 'GSTR-1, GSTR-3B, HSN Summary' },
+  books:                { id: 'booksTab',            label: 'Books',       icon: '📚', file: './modules/books.html',              shortcut: 'F10', description: 'Cash Book, Bank Book, Trial Balance' },
+  parties:              { id: 'partiesTab',          label: 'Parties',     icon: '👥', file: './modules/parties.html',            shortcut: 'F11', description: 'Customers & Suppliers' },
+  inventory:            { id: 'inventoryTab',        label: 'Stock',       icon: '📦', file: './modules/inventory.html',          shortcut: 'F12', description: 'Inventory Management' },
+  staff:                { id: 'staffTab',            label: 'Staff',       icon: '👨‍💼', file: './modules/staff.html',            shortcut: 'F13', description: 'Staff & Salary' },
+  attendance:           { id: 'attendanceTab',       label: 'Attendance',  icon: '📸', file: './modules/attendance.html',         shortcut: 'F14', description: 'Selfie Check-In / Check-Out' },
+  'attendance-report':  { id: 'attendanceReportTab', label: 'Att. Report', icon: '👥', file: './modules/attendance-report.html',  shortcut: 'F15', description: 'Team Attendance Summary' },
+  manual:               { id: 'manualTab',           label: 'Manual',      icon: '📖', file: './modules/manual.html',             shortcut: 'F16', description: 'User Manual & Help Center' },
+  settings:             { id: 'settingsTab',         label: 'Settings',    icon: '⚙️', file: './modules/settings.html',           shortcut: 'F17', description: 'Store Settings & Backup' }
 };
 
 export const ROUTE_ORDER = [
   'dashboard', 'billing', 'returns', 'repair', 'mobileDoctor',
-  'purchase', 'vouchers', 'accounting', 'books', 'parties',
-  'inventory', 'staff', 'attendance', 'attendance-report',
+  'purchase', 'vouchers', 'accounting', 'gstReturns', 'books',
+  'parties', 'inventory', 'staff', 'attendance', 'attendance-report',
   'manual', 'settings'
 ];
 
@@ -63,7 +64,6 @@ export function initRouter(containerSelector = '#moduleContainer') {
 
 
 export async function navigateTo(routeKey, opts = {}) {
-  /* Attendance gate */
   if (window.SF?.attendanceGate && routeKey !== 'attendance') {
     console.warn('🚫 Blocked by attendance gate:', routeKey);
     toast('📸 Check in first to unlock all features', 'error', 3000);
@@ -74,7 +74,6 @@ export async function navigateTo(routeKey, opts = {}) {
     return;
   }
 
-  /* Permission guard */
   try {
     const perms = window.SF?.perms;
     if (perms && typeof perms.canAccessRoute === 'function') {
@@ -315,4 +314,4 @@ window.addEventListener('popstate', () => {
   }
 });
 
-console.log('%c🧭 Router ready (v4.6.0)', 'color:#06b6d4;font-weight:bold;font-size:11px', `| ${ROUTE_ORDER.length} routes`);
+console.log('%c🧭 Router ready (v4.7.0)', 'color:#06b6d4;font-weight:bold;font-size:11px', `| ${ROUTE_ORDER.length} routes`);
