@@ -1,0 +1,1980 @@
+<!-- ============================================================
+     SMARTFIX ERP — GST Returns Module (v1.0.0)
+     File: modules/gst-returns.html
+     Purpose: CA-ready GST data — GSTR-1, GSTR-3B, HSN, ITC
+     ============================================================ -->
+
+<section id="gstReturnsModule" class="space-y-4">
+
+  <!-- ═══════════════════════════════════════════════════════
+       HEADER
+       ═══════════════════════════════════════════════════════ -->
+  <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4">
+    <div class="flex flex-wrap justify-between items-center gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center text-2xl shadow-lg shadow-emerald-500/30">📊</div>
+        <div>
+          <h2 class="text-lg font-black text-white">GST Returns & CA Pack</h2>
+          <p class="text-[11px] text-slate-400 mt-0.5">Everything your CA needs for GSTR-1 & GSTR-3B filing</p>
+        </div>
+      </div>
+      <button type="button" onclick="SF.gstReturns.reload()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-4 py-2 rounded-lg text-xs transition">↻ Refresh</button>
+    </div>
+
+    <!-- Period selector -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
+      <div>
+        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Return Type</label>
+        <select id="gstReturnType" onchange="SF.gstReturns.reload()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-200 font-semibold">
+          <option value="MONTHLY">Monthly (Regular)</option>
+          <option value="QUARTERLY">Quarterly (QRMP)</option>
+        </select>
+      </div>
+      <div id="gstMonthWrap">
+        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Month</label>
+        <select id="gstMonth" onchange="SF.gstReturns.reload()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-200">
+          <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+          <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+          <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+          <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+        </select>
+      </div>
+      <div id="gstQuarterWrap" style="display:none">
+        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Quarter</label>
+        <select id="gstQuarter" onchange="SF.gstReturns.reload()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-200">
+          <option value="Q1">Q1 (Apr-Jun)</option>
+          <option value="Q2">Q2 (Jul-Sep)</option>
+          <option value="Q3">Q3 (Oct-Dec)</option>
+          <option value="Q4">Q4 (Jan-Mar)</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Year</label>
+        <input type="number" id="gstYear" onchange="SF.gstReturns.reload()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-200 font-mono">
+      </div>
+    </div>
+
+    <!-- Period info -->
+    <div id="gstPeriodInfo" class="mt-3 bg-slate-950/60 border border-slate-800 rounded-lg p-2.5 text-[11px] text-slate-400">
+      Loading...
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       SUMMARY CARDS
+       ═══════════════════════════════════════════════════════ -->
+  <div class="grid grid-cols-2 lg:grid-cols-3 gap-3">
+    <div class="bg-gradient-to-br from-emerald-900 to-emerald-950 border border-emerald-700/60 rounded-xl p-4">
+      <div class="text-[10px] uppercase font-bold text-emerald-300">Total Sales</div>
+      <div id="gstTotalSales" class="text-xl font-black text-white mt-1 font-mono">₹0</div>
+      <div id="gstSalesCount" class="text-[10px] text-emerald-300/70 mt-1">0 invoices</div>
+    </div>
+    <div class="bg-gradient-to-br from-blue-900 to-blue-950 border border-blue-700/60 rounded-xl p-4">
+      <div class="text-[10px] uppercase font-bold text-blue-300">B2B Sales</div>
+      <div id="gstB2BSales" class="text-xl font-black text-white mt-1 font-mono">₹0</div>
+      <div id="gstB2BCount" class="text-[10px] text-blue-300/70 mt-1">with GSTIN</div>
+    </div>
+    <div class="bg-gradient-to-br from-violet-900 to-violet-950 border border-violet-700/60 rounded-xl p-4">
+      <div class="text-[10px] uppercase font-bold text-violet-300">B2C Sales</div>
+      <div id="gstB2CSales" class="text-xl font-black text-white mt-1 font-mono">₹0</div>
+      <div id="gstB2CCount" class="text-[10px] text-violet-300/70 mt-1">without GSTIN</div>
+    </div>
+    <div class="bg-gradient-to-br from-amber-900 to-amber-950 border border-amber-700/60 rounded-xl p-4">
+      <div class="text-[10px] uppercase font-bold text-amber-300">Output Tax</div>
+      <div id="gstOutputTax" class="text-xl font-black text-white mt-1 font-mono">₹0</div>
+      <div id="gstOutputBreak" class="text-[10px] text-amber-300/70 mt-1">CGST+SGST+IGST</div>
+    </div>
+    <div class="bg-gradient-to-br from-cyan-900 to-cyan-950 border border-cyan-700/60 rounded-xl p-4">
+      <div class="text-[10px] uppercase font-bold text-cyan-300">Input Tax (ITC)</div>
+      <div id="gstInputTax" class="text-xl font-black text-white mt-1 font-mono">₹0</div>
+      <div id="gstInputBreak" class="text-[10px] text-cyan-300/70 mt-1">from purchases</div>
+    </div>
+    <div class="bg-gradient-to-br from-rose-900 to-rose-950 border border-rose-700/60 rounded-xl p-4">
+      <div class="text-[10px] uppercase font-bold text-rose-300">Net GST Payable</div>
+      <div id="gstNetPayable" class="text-xl font-black text-white mt-1 font-mono">₹0</div>
+      <div id="gstNetBreak" class="text-[10px] text-rose-300/70 mt-1">Output − ITC</div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       TABS
+       ═══════════════════════════════════════════════════════ -->
+  <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-1 flex gap-1 overflow-x-auto" style="scrollbar-width:none">
+    <button type="button" onclick="SF.gstReturns.showTab('overview')" id="gstTab-overview" class="gst-tab flex-1 py-2.5 px-4 rounded-xl text-xs font-bold whitespace-nowrap transition bg-emerald-600 text-white">📋 Overview</button>
+    <button type="button" onclick="SF.gstReturns.showTab('gstr1')" id="gstTab-gstr1" class="gst-tab flex-1 py-2.5 px-4 rounded-xl text-xs font-bold whitespace-nowrap transition text-slate-400">📤 GSTR-1</button>
+    <button type="button" onclick="SF.gstReturns.showTab('gstr3b')" id="gstTab-gstr3b" class="gst-tab flex-1 py-2.5 px-4 rounded-xl text-xs font-bold whitespace-nowrap transition text-slate-400">📥 GSTR-3B</button>
+    <button type="button" onclick="SF.gstReturns.showTab('hsn')" id="gstTab-hsn" class="gst-tab flex-1 py-2.5 px-4 rounded-xl text-xs font-bold whitespace-nowrap transition text-slate-400">🏷️ HSN</button>
+    <button type="button" onclick="SF.gstReturns.showTab('itc')" id="gstTab-itc" class="gst-tab flex-1 py-2.5 px-4 rounded-xl text-xs font-bold whitespace-nowrap transition text-slate-400">💳 ITC</button>
+    <button type="button" onclick="SF.gstReturns.showTab('recon')" id="gstTab-recon" class="gst-tab flex-1 py-2.5 px-4 rounded-xl text-xs font-bold whitespace-nowrap transition text-slate-400">🔍 Recon</button>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       PANEL: OVERVIEW
+       ═══════════════════════════════════════════════════════ -->
+  <div id="gstPanel-overview" class="gst-panel space-y-4">
+
+    <!-- Tax Rate Summary -->
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-5">
+      <h3 class="text-sm font-black text-white mb-4">📊 Sales Tax Rate-wise Summary</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse min-w-[600px]">
+          <thead class="bg-slate-950/70 text-slate-400 uppercase text-[10px]">
+            <tr>
+              <th class="p-3 border-b border-slate-800">Rate</th>
+              <th class="p-3 border-b border-slate-800 text-center">Invoices</th>
+              <th class="p-3 border-b border-slate-800 text-right">Taxable</th>
+              <th class="p-3 border-b border-slate-800 text-right">CGST</th>
+              <th class="p-3 border-b border-slate-800 text-right">SGST</th>
+              <th class="p-3 border-b border-slate-800 text-right">IGST</th>
+              <th class="p-3 border-b border-slate-800 text-right">Total</th>
+            </tr>
+          </thead>
+          <tbody id="gstRateSummaryBody" class="divide-y divide-slate-800/60">
+            <tr><td colspan="7" class="text-center py-6 text-slate-500 text-xs">Loading...</td></tr>
+          </tbody>
+          <tfoot class="bg-slate-950 font-black">
+            <tr>
+              <td class="p-3 text-white">TOTAL</td>
+              <td class="p-3 text-center font-mono text-sky-400" id="gstRateTotalCount">0</td>
+              <td class="p-3 text-right font-mono text-sky-400" id="gstRateTotalTaxable">₹0</td>
+              <td class="p-3 text-right font-mono text-sky-400" id="gstRateTotalCGST">₹0</td>
+              <td class="p-3 text-right font-mono text-sky-400" id="gstRateTotalSGST">₹0</td>
+              <td class="p-3 text-right font-mono text-sky-400" id="gstRateTotalIGST">₹0</td>
+              <td class="p-3 text-right font-mono text-emerald-400" id="gstRateTotalAll">₹0</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tax Type Summary -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-5">
+        <h3 class="text-sm font-black text-white mb-4">📤 Output GST Breakup</h3>
+        <div class="space-y-3">
+          <div class="flex justify-between items-center py-2 border-b border-slate-800">
+            <span class="text-xs text-slate-400">CGST Output</span>
+            <span id="gstOvCGST" class="text-sm font-mono font-bold text-sky-400">₹0</span>
+          </div>
+          <div class="flex justify-between items-center py-2 border-b border-slate-800">
+            <span class="text-xs text-slate-400">SGST Output</span>
+            <span id="gstOvSGST" class="text-sm font-mono font-bold text-sky-400">₹0</span>
+          </div>
+          <div class="flex justify-between items-center py-2 border-b border-slate-800">
+            <span class="text-xs text-slate-400">IGST Output</span>
+            <span id="gstOvIGST" class="text-sm font-mono font-bold text-sky-400">₹0</span>
+          </div>
+          <div class="flex justify-between items-center py-2 border-b border-slate-800">
+            <span class="text-xs text-rose-400">Less: Sales Returns</span>
+            <span id="gstOvReturns" class="text-sm font-mono font-bold text-rose-400">-₹0</span>
+          </div>
+          <div class="flex justify-between items-center py-3 bg-slate-950/50 px-3 rounded-lg mt-2">
+            <span class="text-sm font-bold text-white">Net Output Tax</span>
+            <span id="gstOvNet" class="text-base font-mono font-black text-emerald-400">₹0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-5">
+        <h3 class="text-sm font-black text-white mb-4">📥 Input GST (from Purchases)</h3>
+        <div class="space-y-3">
+          <div class="flex justify-between items-center py-2 border-b border-slate-800">
+            <span class="text-xs text-slate-400">CGST Input</span>
+            <span id="gstIvCGST" class="text-sm font-mono font-bold text-cyan-400">₹0</span>
+          </div>
+          <div class="flex justify-between items-center py-2 border-b border-slate-800">
+            <span class="text-xs text-slate-400">SGST Input</span>
+            <span id="gstIvSGST" class="text-sm font-mono font-bold text-cyan-400">₹0</span>
+          </div>
+          <div class="flex justify-between items-center py-2 border-b border-slate-800">
+            <span class="text-xs text-slate-400">IGST Input</span>
+            <span id="gstIvIGST" class="text-sm font-mono font-bold text-cyan-400">₹0</span>
+          </div>
+          <div class="flex justify-between items-center py-3 bg-slate-950/50 px-3 rounded-lg mt-2">
+            <span class="text-sm font-bold text-white">Total ITC Available</span>
+            <span id="gstIvTotal" class="text-base font-mono font-black text-cyan-400">₹0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Net Payable Summary -->
+    <div class="bg-gradient-to-br from-rose-950 via-slate-900 to-rose-950 border-2 border-rose-700/60 rounded-2xl p-5">
+      <h3 class="text-base font-black text-white mb-4">💰 Net GST Payable — GSTR-3B Table 6</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-slate-950/60 border border-rose-800/40 rounded-xl p-4">
+          <div class="text-[10px] uppercase font-bold text-rose-400">CGST Payable</div>
+          <div id="gstPayCGST" class="text-2xl font-black text-white mt-2 font-mono">₹0</div>
+        </div>
+        <div class="bg-slate-950/60 border border-rose-800/40 rounded-xl p-4">
+          <div class="text-[10px] uppercase font-bold text-rose-400">SGST Payable</div>
+          <div id="gstPaySGST" class="text-2xl font-black text-white mt-2 font-mono">₹0</div>
+        </div>
+        <div class="bg-slate-950/60 border border-rose-800/40 rounded-xl p-4">
+          <div class="text-[10px] uppercase font-bold text-rose-400">IGST Payable</div>
+          <div id="gstPayIGST" class="text-2xl font-black text-white mt-2 font-mono">₹0</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       PANEL: GSTR-1
+       ═══════════════════════════════════════════════════════ -->
+  <div id="gstPanel-gstr1" class="gst-panel space-y-4" style="display:none">
+
+    <!-- B2B Invoices -->
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden">
+      <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+        <div>
+          <h3 class="text-sm font-black text-white">🏢 B2B Invoices (Table 4A)</h3>
+          <p class="text-[10px] text-slate-500 mt-0.5">Invoices with customer GSTIN</p>
+        </div>
+        <span id="gstr1B2BCount" class="text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded font-mono">0</span>
+      </div>
+      <div class="overflow-x-auto max-h-[500px]">
+        <table class="w-full text-left text-xs border-collapse min-w-[900px]">
+          <thead class="bg-slate-950 sticky top-0 z-10">
+            <tr>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px]">Invoice</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px]">Date</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px]">Customer</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px]">GSTIN</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px]">POS</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px] text-right">Taxable</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px] text-right">Tax</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px] text-right">Total</th>
+            </tr>
+          </thead>
+          <tbody id="gstr1B2BBody" class="divide-y divide-slate-800/60">
+            <tr><td colspan="8" class="text-center py-8 text-slate-500 text-xs">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- B2C Large -->
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden">
+      <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+        <div>
+          <h3 class="text-sm font-black text-white">📤 B2C Large (Table 5A)</h3>
+          <p class="text-[10px] text-slate-500 mt-0.5">Inter-state invoices above ₹2.5L</p>
+        </div>
+        <span id="gstr1B2CLCount" class="text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded font-mono">0</span>
+      </div>
+      <div class="overflow-x-auto max-h-[300px]">
+        <table class="w-full text-left text-xs border-collapse min-w-[700px]">
+          <thead class="bg-slate-950 sticky top-0 z-10">
+            <tr>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px]">Invoice</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px]">Date</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px]">Customer</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px]">POS</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px] text-right">Taxable</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px] text-right">IGST</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px] text-right">Total</th>
+            </tr>
+          </thead>
+          <tbody id="gstr1B2CLBody" class="divide-y divide-slate-800/60">
+            <tr><td colspan="7" class="text-center py-6 text-slate-500 text-xs">No B2C Large invoices</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- B2C Small Summary -->
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-5">
+      <h3 class="text-sm font-black text-white mb-3">📦 B2C Small — Rate-wise Summary (Table 7)</h3>
+      <p class="text-[11px] text-slate-500 mb-4">Consolidated by place of supply and tax rate</p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse min-w-[600px]">
+          <thead class="bg-slate-950/70 text-slate-400 uppercase text-[10px]">
+            <tr>
+              <th class="p-2.5 border-b border-slate-800">Supply Type</th>
+              <th class="p-2.5 border-b border-slate-800">POS</th>
+              <th class="p-2.5 border-b border-slate-800 text-center">Rate</th>
+              <th class="p-2.5 border-b border-slate-800 text-right">Taxable</th>
+              <th class="p-2.5 border-b border-slate-800 text-right">CGST</th>
+              <th class="p-2.5 border-b border-slate-800 text-right">SGST</th>
+              <th class="p-2.5 border-b border-slate-800 text-right">IGST</th>
+            </tr>
+          </thead>
+          <tbody id="gstr1B2CSBody" class="divide-y divide-slate-800/60">
+            <tr><td colspan="7" class="text-center py-6 text-slate-500 text-xs">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Credit Notes -->
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden">
+      <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+        <div>
+          <h3 class="text-sm font-black text-white">↩️ Credit / Debit Notes (Table 9B)</h3>
+          <p class="text-[10px] text-slate-500 mt-0.5">Sales returns & adjustments</p>
+        </div>
+        <span id="gstr1CDNCount" class="text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded font-mono">0</span>
+      </div>
+      <div class="overflow-x-auto max-h-[300px]">
+        <table class="w-full text-left text-xs border-collapse min-w-[800px]">
+          <thead class="bg-slate-950 sticky top-0 z-10">
+            <tr>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px]">CRN No</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px]">Date</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px]">Against</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px]">Customer</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px] text-right">Taxable</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px] text-right">GST</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px] text-right">Total</th>
+            </tr>
+          </thead>
+          <tbody id="gstr1CDNBody" class="divide-y divide-slate-800/60">
+            <tr><td colspan="7" class="text-center py-6 text-slate-500 text-xs">No credit notes</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       PANEL: GSTR-3B
+       ═══════════════════════════════════════════════════════ -->
+  <div id="gstPanel-gstr3b" class="gst-panel space-y-4" style="display:none">
+
+    <div class="bg-amber-950/40 border border-amber-800/60 rounded-2xl p-4">
+      <div class="text-amber-300 font-bold text-xs mb-1">📋 GSTR-3B Summary for Copy-Paste</div>
+      <div class="text-[11px] text-amber-100/80">All figures below are auto-calculated from your data. Copy to GST portal.</div>
+    </div>
+
+    <!-- Table 3.1 -->
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-5">
+      <h3 class="text-sm font-black text-white mb-4">3.1 — Details of Outward Supplies</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse min-w-[600px]">
+          <thead class="bg-slate-950/70 text-slate-400 uppercase text-[10px]">
+            <tr>
+              <th class="p-2.5 border-b border-slate-800">Nature of Supply</th>
+              <th class="p-2.5 border-b border-slate-800 text-right">Taxable Value</th>
+              <th class="p-2.5 border-b border-slate-800 text-right">IGST</th>
+              <th class="p-2.5 border-b border-slate-800 text-right">CGST</th>
+              <th class="p-2.5 border-b border-slate-800 text-right">SGST</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800/60">
+            <tr>
+              <td class="p-2.5 text-slate-300">(a) Outward taxable supplies (other than zero-rated, nil-rated, exempted)</td>
+              <td class="p-2.5 text-right font-mono text-white" id="gstr3b3a1Taxable">₹0</td>
+              <td class="p-2.5 text-right font-mono text-white" id="gstr3b3a1IGST">₹0</td>
+              <td class="p-2.5 text-right font-mono text-white" id="gstr3b3a1CGST">₹0</td>
+              <td class="p-2.5 text-right font-mono text-white" id="gstr3b3a1SGST">₹0</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 text-slate-300">(b) Outward taxable supplies (zero-rated)</td>
+              <td class="p-2.5 text-right font-mono text-white">₹0</td>
+              <td class="p-2.5 text-right font-mono text-white">₹0</td>
+              <td class="p-2.5 text-right font-mono text-white">₹0</td>
+              <td class="p-2.5 text-right font-mono text-white">₹0</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 text-slate-300">(c) Other outward supplies (nil-rated, exempted)</td>
+              <td class="p-2.5 text-right font-mono text-white" id="gstr3b3cTaxable">₹0</td>
+              <td class="p-2.5 text-right font-mono text-white">₹0</td>
+              <td class="p-2.5 text-right font-mono text-white">₹0</td>
+              <td class="p-2.5 text-right font-mono text-white">₹0</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Table 4 — ITC -->
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-5">
+      <h3 class="text-sm font-black text-white mb-4">4 — Eligible ITC</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse min-w-[600px]">
+          <thead class="bg-slate-950/70 text-slate-400 uppercase text-[10px]">
+            <tr>
+              <th class="p-2.5 border-b border-slate-800">Details</th>
+              <th class="p-2.5 border-b border-slate-800 text-right">IGST</th>
+              <th class="p-2.5 border-b border-slate-800 text-right">CGST</th>
+              <th class="p-2.5 border-b border-slate-800 text-right">SGST</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800/60">
+            <tr>
+              <td class="p-2.5 text-slate-300">(5) All other ITC — Inputs & Services</td>
+              <td class="p-2.5 text-right font-mono text-white" id="gstr3bITC_IGST">₹0</td>
+              <td class="p-2.5 text-right font-mono text-white" id="gstr3bITC_CGST">₹0</td>
+              <td class="p-2.5 text-right font-mono text-white" id="gstr3bITC_SGST">₹0</td>
+            </tr>
+            <tr class="bg-slate-950/50 font-bold">
+              <td class="p-2.5 text-white">Total ITC Available</td>
+              <td class="p-2.5 text-right font-mono text-cyan-400" id="gstr3bITC_TotalIGST">₹0</td>
+              <td class="p-2.5 text-right font-mono text-cyan-400" id="gstr3bITC_TotalCGST">₹0</td>
+              <td class="p-2.5 text-right font-mono text-cyan-400" id="gstr3bITC_TotalSGST">₹0</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Table 6 — Payment -->
+    <div class="bg-gradient-to-br from-rose-950 to-slate-900 border-2 border-rose-700/60 rounded-2xl p-5">
+      <h3 class="text-base font-black text-white mb-4">6.1 — Payment of Tax</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse min-w-[700px]">
+          <thead class="bg-slate-950/70 text-slate-400 uppercase text-[10px]">
+            <tr>
+              <th class="p-2.5 border-b border-slate-800">Description</th>
+              <th class="p-2.5 border-b border-slate-800 text-right">IGST</th>
+              <th class="p-2.5 border-b border-slate-800 text-right">CGST</th>
+              <th class="p-2.5 border-b border-slate-800 text-right">SGST</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800/60">
+            <tr>
+              <td class="p-2.5 text-slate-300">Tax Payable</td>
+              <td class="p-2.5 text-right font-mono text-white" id="gstr3bPayIGST">₹0</td>
+              <td class="p-2.5 text-right font-mono text-white" id="gstr3bPayCGST">₹0</td>
+              <td class="p-2.5 text-right font-mono text-white" id="gstr3bPaySGST">₹0</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 text-slate-300">Less: ITC Utilized</td>
+              <td class="p-2.5 text-right font-mono text-cyan-400" id="gstr3bUtilIGST">₹0</td>
+              <td class="p-2.5 text-right font-mono text-cyan-400" id="gstr3bUtilCGST">₹0</td>
+              <td class="p-2.5 text-right font-mono text-cyan-400" id="gstr3bUtilSGST">₹0</td>
+            </tr>
+            <tr class="bg-slate-950/50">
+              <td class="p-3 font-black text-white">Net Tax Payable</td>
+              <td class="p-3 text-right font-mono font-black text-rose-400 text-base" id="gstr3bNetIGST">₹0</td>
+              <td class="p-3 text-right font-mono font-black text-rose-400 text-base" id="gstr3bNetCGST">₹0</td>
+              <td class="p-3 text-right font-mono font-black text-rose-400 text-base" id="gstr3bNetSGST">₹0</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       PANEL: HSN
+       ═══════════════════════════════════════════════════════ -->
+  <div id="gstPanel-hsn" class="gst-panel space-y-4" style="display:none">
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden">
+      <div class="p-4 border-b border-slate-800">
+        <h3 class="text-sm font-black text-white">🏷️ HSN-wise Summary (GSTR-1 Table 12)</h3>
+        <p class="text-[10px] text-slate-500 mt-0.5">HSN-wise qty, taxable value and tax amounts</p>
+      </div>
+      <div class="overflow-x-auto max-h-[600px]">
+        <table class="w-full text-left text-xs border-collapse min-w-[900px]">
+          <thead class="bg-slate-950 sticky top-0 z-10">
+            <tr>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px]">HSN</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px]">Description</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px]">UQC</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px] text-center">Qty</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px] text-right">Taxable</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px] text-right">CGST</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px] text-right">SGST</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px] text-right">IGST</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px] text-right">Total</th>
+            </tr>
+          </thead>
+          <tbody id="gstHSNBody" class="divide-y divide-slate-800/60">
+            <tr><td colspan="9" class="text-center py-8 text-slate-500 text-xs">Loading...</td></tr>
+          </tbody>
+          <tfoot class="bg-slate-950 font-black">
+            <tr>
+              <td colspan="4" class="p-3 text-white">TOTAL</td>
+              <td class="p-3 text-right font-mono text-sky-400" id="gstHSNTotalTaxable">₹0</td>
+              <td class="p-3 text-right font-mono text-sky-400" id="gstHSNTotalCGST">₹0</td>
+              <td class="p-3 text-right font-mono text-sky-400" id="gstHSNTotalSGST">₹0</td>
+              <td class="p-3 text-right font-mono text-sky-400" id="gstHSNTotalIGST">₹0</td>
+              <td class="p-3 text-right font-mono text-emerald-400" id="gstHSNTotalAll">₹0</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       PANEL: ITC
+       ═══════════════════════════════════════════════════════ -->
+  <div id="gstPanel-itc" class="gst-panel space-y-4" style="display:none">
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden">
+      <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+        <div>
+          <h3 class="text-sm font-black text-white">💳 Input Tax Credit Register</h3>
+          <p class="text-[10px] text-slate-500 mt-0.5">Supplier-wise ITC available from purchases</p>
+        </div>
+        <span id="gstITCCount" class="text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded font-mono">0</span>
+      </div>
+      <div class="overflow-x-auto max-h-[500px]">
+        <table class="w-full text-left text-xs border-collapse min-w-[900px]">
+          <thead class="bg-slate-950 sticky top-0 z-10">
+            <tr>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px]">Date</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px]">Bill No</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px]">Supplier</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px]">GSTIN</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px] text-right">Taxable</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px] text-right">CGST</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px] text-right">SGST</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px] text-right">IGST</th>
+              <th class="p-2.5 text-slate-500 uppercase text-[10px] text-right">Total ITC</th>
+            </tr>
+          </thead>
+          <tbody id="gstITCBody" class="divide-y divide-slate-800/60">
+            <tr><td colspan="9" class="text-center py-8 text-slate-500 text-xs">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       PANEL: RECONCILIATION
+       ═══════════════════════════════════════════════════════ -->
+  <div id="gstPanel-recon" class="gst-panel space-y-4" style="display:none">
+
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-5">
+      <h3 class="text-sm font-black text-white mb-4">🔍 Sales Reconciliation</h3>
+      <div class="space-y-3">
+        <div class="flex justify-between items-center p-3 bg-slate-950/50 rounded-lg">
+          <span class="text-xs text-slate-300">Total Sales (Books)</span>
+          <span id="reconSalesBooks" class="text-sm font-mono font-bold text-white">₹0</span>
+        </div>
+        <div class="flex justify-between items-center p-3 bg-slate-950/50 rounded-lg">
+          <span class="text-xs text-slate-300">Total Sales (GSTR-1)</span>
+          <span id="reconSalesGSTR1" class="text-sm font-mono font-bold text-white">₹0</span>
+        </div>
+        <div class="flex justify-between items-center p-3 bg-emerald-950/30 rounded-lg border border-emerald-800/40">
+          <span class="text-xs text-emerald-300 font-bold">Difference</span>
+          <span id="reconSalesDiff" class="text-sm font-mono font-bold text-emerald-300">₹0</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-5">
+      <h3 class="text-sm font-black text-white mb-4">🔍 Purchase Reconciliation</h3>
+      <div class="space-y-3">
+        <div class="flex justify-between items-center p-3 bg-slate-950/50 rounded-lg">
+          <span class="text-xs text-slate-300">Total Purchases (Books)</span>
+          <span id="reconPurBooks" class="text-sm font-mono font-bold text-white">₹0</span>
+        </div>
+        <div class="flex justify-between items-center p-3 bg-slate-950/50 rounded-lg">
+          <span class="text-xs text-slate-300">Total ITC (Books)</span>
+          <span id="reconPurITC" class="text-sm font-mono font-bold text-white">₹0</span>
+        </div>
+        <div class="p-3 bg-amber-950/30 border border-amber-800/40 rounded-lg text-[11px] text-amber-200 leading-relaxed">
+          💡 <strong>Note:</strong> Compare ITC claimed in GSTR-3B with GSTR-2B auto-populated ITC from GST portal.
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-5">
+      <h3 class="text-sm font-black text-white mb-4">✅ Data Quality Checks</h3>
+      <div id="reconChecks" class="space-y-2">
+        <div class="text-center py-4 text-slate-500 text-xs">Running checks...</div>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       EXPORT SECTION
+       ═══════════════════════════════════════════════════════ -->
+  <div class="bg-gradient-to-r from-emerald-900 via-teal-900 to-cyan-900 border-2 border-emerald-700/60 rounded-2xl p-5">
+    <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+      <div>
+        <h3 class="text-base font-black text-white">📦 CA Export Pack</h3>
+        <p class="text-[11px] text-emerald-200/80 mt-1">Everything your CA needs — download and share</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <button onclick="SF.gstReturns.exportCAExcel()"
+              class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-4 rounded-xl text-xs transition flex flex-col items-center gap-2">
+        <span class="text-2xl">📊</span>
+        <span>Full CA Excel</span>
+        <span class="text-[9px] opacity-80">12+ sheets</span>
+      </button>
+
+      <button onclick="SF.gstReturns.exportGSTR1JSON()"
+              class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl text-xs transition flex flex-col items-center gap-2">
+        <span class="text-2xl">📤</span>
+        <span>GSTR-1 JSON</span>
+        <span class="text-[9px] opacity-80">Portal upload</span>
+      </button>
+
+      <button onclick="SF.gstReturns.exportGSTR3B()"
+              class="bg-violet-600 hover:bg-violet-500 text-white font-bold py-4 rounded-xl text-xs transition flex flex-col items-center gap-2">
+        <span class="text-2xl">📥</span>
+        <span>GSTR-3B Sheet</span>
+        <span class="text-[9px] opacity-80">Summary for portal</span>
+      </button>
+
+      <button onclick="SF.gstReturns.printReport()"
+              class="bg-amber-600 hover:bg-amber-500 text-white font-bold py-4 rounded-xl text-xs transition flex flex-col items-center gap-2">
+        <span class="text-2xl">🖨️</span>
+        <span>Print Report</span>
+        <span class="text-[9px] opacity-80">PDF ready</span>
+      </button>
+    </div>
+
+    <div class="mt-4 bg-slate-950/50 border border-emerald-800/40 rounded-lg p-3">
+      <div class="text-[10px] font-black uppercase text-emerald-300 mb-2">📦 Full CA Excel includes:</div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-1 text-[10px] text-emerald-100/80">
+        <div>✓ Sales Register</div>
+        <div>✓ B2B Invoices</div>
+        <div>✓ B2C Invoices</div>
+        <div>✓ Credit Notes</div>
+        <div>✓ Purchase Register</div>
+        <div>✓ ITC Register</div>
+        <div>✓ HSN Summary</div>
+        <div>✓ Rate-wise Summary</div>
+        <div>✓ GSTR-3B Summary</div>
+        <div>✓ Monthly Trend</div>
+        <div>✓ Party Ledger</div>
+        <div>✓ Tax Reconciliation</div>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+
+<script>
+(function () {
+  'use strict';
+
+  const S = window.SF?.state?.state;
+  const C = window.SF?.common;
+
+  if (!S || !C) { console.error('GST Returns: SF globals not ready'); return; }
+
+  const G = {
+    returnType: 'MONTHLY',
+    month: new Date().getMonth() + 1,
+    year: new Date().getFullYear(),
+    quarter: 'Q1',
+    invoices: [],
+    creditNotes: [],
+    purchases: [],
+    dateRange: { from: '', to: '' }
+  };
+
+  /* ═══ INIT ═══ */
+  function init_gstReturnsModule() {
+    console.log('%c📊 GST Returns module initialized (v1.0.0)', 'color:#10b981;font-weight:bold');
+
+    if (!window.SF?.perms?.can?.('accounting.view')) {
+      const c = document.getElementById('moduleContainer');
+      if (c) c.innerHTML = '<div style="max-width:520px;margin:60px auto;padding:28px;background:#1e1b2e;border:1px solid #7f1d1d;border-radius:16px;text-align:center;"><div style="font-size:42px;margin-bottom:12px">🔒</div><div style="font-size:16px;font-weight:800;color:#fca5a5;">Access Denied</div></div>';
+      return { onUnload: () => {} };
+    }
+
+    const mEl = document.getElementById('gstMonth');
+    const yEl = document.getElementById('gstYear');
+    if (mEl) mEl.value = G.month;
+    if (yEl) yEl.value = G.year;
+
+    /* Return type toggle */
+    const typeEl = document.getElementById('gstReturnType');
+    if (typeEl) {
+      typeEl.addEventListener('change', function () {
+        const monthWrap = document.getElementById('gstMonthWrap');
+        const quarterWrap = document.getElementById('gstQuarterWrap');
+        if (this.value === 'QUARTERLY') {
+          if (monthWrap) monthWrap.style.display = 'none';
+          if (quarterWrap) quarterWrap.style.display = 'block';
+        } else {
+          if (monthWrap) monthWrap.style.display = 'block';
+          if (quarterWrap) quarterWrap.style.display = 'none';
+        }
+      });
+    }
+
+    reload();
+
+    return { onUnload: () => {} };
+  }
+
+  /* ═══ RELOAD ═══ */
+  function reload() {
+    G.returnType = document.getElementById('gstReturnType')?.value || 'MONTHLY';
+    G.month = parseInt(document.getElementById('gstMonth')?.value, 10) || (new Date().getMonth() + 1);
+    G.year = parseInt(document.getElementById('gstYear')?.value, 10) || new Date().getFullYear();
+    G.quarter = document.getElementById('gstQuarter')?.value || 'Q1';
+
+    /* Compute date range */
+    if (G.returnType === 'QUARTERLY') {
+      const qMap = {
+        'Q1': { from: 4, to: 6 },
+        'Q2': { from: 7, to: 9 },
+        'Q3': { from: 10, to: 12 },
+        'Q4': { from: 1, to: 3 }
+      };
+      const q = qMap[G.quarter];
+      let fromYear = G.year;
+      let toYear = G.year;
+      if (G.quarter === 'Q4') {
+        fromYear = G.year - 1;
+        toYear = G.year;
+      }
+      G.dateRange = {
+        from: `${fromYear}-${String(q.from).padStart(2, '0')}-01`,
+        to: `${toYear}-${String(q.to).padStart(2, '0')}-${new Date(toYear, q.to, 0).getDate()}`
+      };
+    } else {
+      const lastDay = new Date(G.year, G.month, 0).getDate();
+      G.dateRange = {
+        from: `${G.year}-${String(G.month).padStart(2, '0')}-01`,
+        to: `${G.year}-${String(G.month).padStart(2, '0')}-${lastDay}`
+      };
+    }
+
+    /* Filter data */
+    const inRange = (d) => d && d >= G.dateRange.from && d <= G.dateRange.to;
+    G.invoices = (S.invoices || []).filter(i => inRange(i.date) && (i.billType || 'GST') === 'GST');
+    G.creditNotes = (S.creditNotes || []).filter(c => inRange(c.date));
+    G.purchases = (S.purchases || []).filter(p => inRange(p.date) && (p.billType || 'GST') === 'GST');
+
+    /* Period info */
+    const months = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const infoEl = document.getElementById('gstPeriodInfo');
+    if (infoEl) {
+      const periodLabel = G.returnType === 'QUARTERLY'
+        ? `Q${G.quarter.replace('Q','')} ${G.year}`
+        : `${months[G.month]} ${G.year}`;
+      infoEl.innerHTML = `
+        <strong class="text-slate-200">Period:</strong> ${periodLabel}
+        <span class="mx-2">•</span>
+        <strong class="text-slate-200">Date Range:</strong> ${G.dateRange.from} → ${G.dateRange.to}
+        <span class="mx-2">•</span>
+        <strong class="text-slate-200">Invoices:</strong> ${G.invoices.length}
+        <span class="mx-2">•</span>
+        <strong class="text-slate-200">Purchases:</strong> ${G.purchases.length}
+      `;
+    }
+
+    /* Render all sections */
+    renderSummary();
+    renderRateSummary();
+    renderGSTR1();
+    renderGSTR3B();
+    renderHSN();
+    renderITC();
+    renderRecon();
+  }
+
+  /* ═══ HELPERS ═══ */
+  function money(n) {
+    return '₹' + (Number(n) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function fmt0(n) {
+    return '₹' + Math.round(Number(n) || 0).toLocaleString('en-IN');
+  }
+  function escapeHTML(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function getStateCode(gstin) {
+    if (!gstin || gstin.length < 2) return '';
+    return gstin.substring(0, 2);
+  }
+  function getHomeStateCode() {
+    const gstin = S.profile?.gstin || '';
+    return getStateCode(gstin) || '19';
+  }
+  function isInterState(customerGSTIN, customerAddr) {
+    const homeState = getHomeStateCode();
+    if (customerGSTIN && customerGSTIN.length >= 2) {
+      return customerGSTIN.substring(0, 2) !== homeState;
+    }
+    return false;
+  }
+
+  /* HSN description lookup */
+  const HSN_DESC = {
+    '8517': 'Telephone sets, smartphones and other telephones',
+    '8504': 'Electrical transformers, static converters (chargers)',
+    '8518': 'Microphones, loudspeakers, headphones',
+    '8536': 'Electrical apparatus for switching (cables, connectors)',
+    '3926': 'Other articles of plastics (covers, cases)',
+    '7007': 'Safety glass, toughened glass (screen protectors)',
+    '8507': 'Electric accumulators (batteries, power banks)',
+    '8523': 'Discs, tapes, solid-state storage (memory cards)',
+    '8544': 'Insulated wire, cable',
+    '8471': 'Computers and units (tablets, laptops)',
+    '9102': 'Wrist-watches',
+    '8525': 'Transmission apparatus (cameras)'
+  };
+
+  /* ═══ SUMMARY ═══ */
+  function renderSummary() {
+    let totalSales = 0, b2bSales = 0, b2cSales = 0;
+    let b2bCount = 0, b2cCount = 0;
+    let totalCGST = 0, totalSGST = 0, totalIGST = 0, totalTaxable = 0;
+    let nilRated = 0;
+
+    G.invoices.forEach(inv => {
+      const hasGSTIN = inv.customerGSTIN && inv.customerGSTIN.length >= 15;
+      const total = inv.totalGross || 0;
+      totalSales += total;
+      if (hasGSTIN) { b2bSales += total; b2bCount++; }
+      else { b2cSales += total; b2cCount++; }
+
+      totalTaxable += inv.totalTaxable || 0;
+      totalCGST += inv.totalCGST || 0;
+      totalSGST += inv.totalSGST || 0;
+      totalIGST += inv.totalIGST || 0;
+
+      /* Nil rated check (all items 0% GST) */
+      const items = inv.items || [];
+      if (items.length > 0 && items.every(it => (it.gst || 0) === 0)) {
+        nilRated += inv.totalTaxable || 0;
+      }
+    });
+
+    /* Subtract returns */
+    let returnCGST = 0, returnSGST = 0, returnIGST = 0, returnTotal = 0;
+    G.creditNotes.forEach(crn => {
+      const tax = crn.refundTax || 0;
+      const taxType = crn.taxType || 'INTRA';
+      if (taxType === 'INTRA') { returnCGST += tax / 2; returnSGST += tax / 2; }
+      else { returnIGST += tax; }
+      returnTotal += crn.refundTotal || 0;
+    });
+
+    /* ITC from purchases */
+    let itcCGST = 0, itcSGST = 0, itcIGST = 0, itcTotal = 0;
+    G.purchases.forEach(p => {
+      const gst = p.totalGST || 0;
+      /* Assume intra-state by default (most purchases are) */
+      itcCGST += gst / 2;
+      itcSGST += gst / 2;
+      itcTotal += gst;
+    });
+
+    /* Update cards */
+    setText('gstTotalSales', fmt0(totalSales - returnTotal));
+    setText('gstSalesCount', G.invoices.length + ' invoices');
+    setText('gstB2BSales', fmt0(b2bSales));
+    setText('gstB2BCount', b2bCount + ' with GSTIN');
+    setText('gstB2CSales', fmt0(b2cSales));
+    setText('gstB2CCount', b2cCount + ' without GSTIN');
+    setText('gstOutputTax', fmt0(totalCGST + totalSGST + totalIGST - returnCGST - returnSGST - returnIGST));
+    setText('gstOutputBreak', 'CGST+SGST+IGST');
+    setText('gstInputTax', fmt0(itcTotal));
+    setText('gstInputBreak', G.purchases.length + ' purchases');
+
+    const netCGST = Math.max(0, totalCGST - returnCGST - itcCGST);
+    const netSGST = Math.max(0, totalSGST - returnSGST - itcSGST);
+    const netIGST = Math.max(0, totalIGST - returnIGST - itcIGST);
+    const netTotal = netCGST + netSGST + netIGST;
+
+    setText('gstNetPayable', fmt0(netTotal));
+    setText('gstNetBreak', 'Output − ITC');
+
+    /* Overview breakdown */
+    setText('gstOvCGST', money(totalCGST));
+    setText('gstOvSGST', money(totalSGST));
+    setText('gstOvIGST', money(totalIGST));
+    setText('gstOvReturns', '-' + money(returnCGST + returnSGST + returnIGST));
+    setText('gstOvNet', money(totalCGST + totalSGST + totalIGST - returnCGST - returnSGST - returnIGST));
+
+    setText('gstIvCGST', money(itcCGST));
+    setText('gstIvSGST', money(itcSGST));
+    setText('gstIvIGST', money(itcIGST));
+    setText('gstIvTotal', money(itcTotal));
+
+    setText('gstPayCGST', money(netCGST));
+    setText('gstPaySGST', money(netSGST));
+    setText('gstPayIGST', money(netIGST));
+  }
+
+  function setText(id, t) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = t;
+  }
+
+  /* ═══ RATE SUMMARY ═══ */
+  function renderRateSummary() {
+    const byRate = {};
+    G.invoices.forEach(inv => {
+      (inv.items || []).forEach(it => {
+        const rate = it.gst || 0;
+        if (!byRate[rate]) byRate[rate] = { count: 0, taxable: 0, cgst: 0, sgst: 0, igst: 0, total: 0 };
+        const lineTotal = (it.rate || 0) * (it.qty || 1);
+        const lineTaxable = lineTotal / (1 + rate / 100);
+        const lineTax = lineTotal - lineTaxable;
+        const taxType = inv.taxType || 'INTRA';
+
+        byRate[rate].count++;
+        byRate[rate].taxable += lineTaxable;
+        byRate[rate].total += lineTotal;
+        if (taxType === 'INTRA') { byRate[rate].cgst += lineTax / 2; byRate[rate].sgst += lineTax / 2; }
+        else { byRate[rate].igst += lineTax; }
+      });
+    });
+
+    /* Subtract returns */
+    G.creditNotes.forEach(crn => {
+      const rate = crn.gst || 18;
+      if (!byRate[rate]) byRate[rate] = { count: 0, taxable: 0, cgst: 0, sgst: 0, igst: 0, total: 0 };
+      const taxType = crn.taxType || 'INTRA';
+      byRate[rate].taxable -= crn.refundTaxable || 0;
+      byRate[rate].total -= crn.refundTotal || 0;
+      const tax = crn.refundTax || 0;
+      if (taxType === 'INTRA') { byRate[rate].cgst -= tax / 2; byRate[rate].sgst -= tax / 2; }
+      else { byRate[rate].igst -= tax; }
+    });
+
+    const body = document.getElementById('gstRateSummaryBody');
+    if (!body) return;
+
+    const rates = Object.keys(byRate).map(Number).sort((a, b) => a - b);
+    if (rates.length === 0) {
+      body.innerHTML = '<tr><td colspan="7" class="text-center py-6 text-slate-500 text-xs">No data for this period</td></tr>';
+      return;
+    }
+
+    let totalCount = 0, totalTaxable = 0, totalCGST = 0, totalSGST = 0, totalIGST = 0, totalAll = 0;
+
+    body.innerHTML = rates.map(rate => {
+      const d = byRate[rate];
+      totalCount += d.count;
+      totalTaxable += d.taxable;
+      totalCGST += d.cgst;
+      totalSGST += d.sgst;
+      totalIGST += d.igst;
+      totalAll += d.total;
+      return `
+        <tr class="hover:bg-slate-800/30">
+          <td class="p-3 font-bold text-white">${rate}%</td>
+          <td class="p-3 text-center font-mono text-slate-300">${d.count}</td>
+          <td class="p-3 text-right font-mono text-white">${money(d.taxable)}</td>
+          <td class="p-3 text-right font-mono text-sky-400">${money(d.cgst)}</td>
+          <td class="p-3 text-right font-mono text-sky-400">${money(d.sgst)}</td>
+          <td class="p-3 text-right font-mono text-sky-400">${money(d.igst)}</td>
+          <td class="p-3 text-right font-mono font-bold text-emerald-400">${money(d.total)}</td>
+        </tr>
+      `;
+    }).join('');
+
+    setText('gstRateTotalCount', totalCount);
+    setText('gstRateTotalTaxable', money(totalTaxable));
+    setText('gstRateTotalCGST', money(totalCGST));
+    setText('gstRateTotalSGST', money(totalSGST));
+    setText('gstRateTotalIGST', money(totalIGST));
+    setText('gstRateTotalAll', money(totalAll));
+  }
+
+  /* ═══ GSTR-1 ═══ */
+  function renderGSTR1() {
+    const b2b = [], b2cl = [], b2cs = {}, cdn = [];
+
+    G.invoices.forEach(inv => {
+      const hasGSTIN = inv.customerGSTIN && inv.customerGSTIN.length >= 15;
+      const isInter = isInterState(inv.customerGSTIN, inv.customerAddress);
+      const total = inv.totalGross || 0;
+
+      if (hasGSTIN) {
+        b2b.push(inv);
+      } else if (isInter && total > 250000) {
+        b2cl.push(inv);
+      } else {
+        /* B2C Small — group by supply type + POS + rate */
+        const pos = isInter ? (inv.customerGSTIN ? inv.customerGSTIN.substring(0, 2) : getHomeStateCode()) : getHomeStateCode();
+        const sply = isInter ? 'INTER' : 'INTRA';
+        (inv.items || []).forEach(it => {
+          const key = `${sply}_${pos}_${it.gst || 0}`;
+          if (!b2cs[key]) b2cs[key] = { sply, pos, rate: it.gst || 0, taxable: 0, cgst: 0, sgst: 0, igst: 0 };
+          const lineTotal = (it.rate || 0) * (it.qty || 1);
+          const lineTaxable = lineTotal / (1 + (it.gst || 0) / 100);
+          const lineTax = lineTotal - lineTaxable;
+          b2cs[key].taxable += lineTaxable;
+          if (isInter) b2cs[key].igst += lineTax;
+          else { b2cs[key].cgst += lineTax / 2; b2cs[key].sgst += lineTax / 2; }
+        });
+      }
+    });
+
+    /* Credit notes */
+    G.creditNotes.forEach(crn => {
+      cdn.push(crn);
+    });
+
+    /* Render B2B */
+    const b2bBody = document.getElementById('gstr1B2BBody');
+    setText('gstr1B2BCount', b2b.length);
+    if (b2bBody) {
+      if (b2b.length === 0) {
+        b2bBody.innerHTML = '<tr><td colspan="8" class="text-center py-6 text-slate-500 text-xs">No B2B invoices</td></tr>';
+      } else {
+        b2bBody.innerHTML = b2b.map(inv => {
+          const pos = inv.customerGSTIN ? inv.customerGSTIN.substring(0, 2) : getHomeStateCode();
+          const tax = (inv.totalCGST || 0) + (inv.totalSGST || 0) + (inv.totalIGST || 0);
+          return `
+            <tr class="hover:bg-slate-800/30">
+              <td class="p-2.5 font-mono text-sky-300 text-[11px]">${escapeHTML(inv.invoiceNo)}</td>
+              <td class="p-2.5 font-mono text-slate-400 text-[11px]">${escapeHTML(inv.date)}</td>
+              <td class="p-2.5 text-slate-200 text-[11px] truncate max-w-[150px]">${escapeHTML(inv.customerName || '')}</td>
+              <td class="p-2.5 font-mono text-[10px] text-cyan-400">${escapeHTML(inv.customerGSTIN || '')}</td>
+              <td class="p-2.5 text-center font-mono text-[11px] text-slate-300">${pos}</td>
+              <td class="p-2.5 text-right font-mono text-[11px] text-slate-200">${money(inv.totalTaxable || 0)}</td>
+              <td class="p-2.5 text-right font-mono text-[11px] text-amber-400">${money(tax)}</td>
+              <td class="p-2.5 text-right font-mono font-bold text-[11px] text-white">${money(inv.totalGross || 0)}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+
+    /* Render B2C Large */
+    const b2clBody = document.getElementById('gstr1B2CLBody');
+    setText('gstr1B2CLCount', b2cl.length);
+    if (b2clBody) {
+      if (b2cl.length === 0) {
+        b2clBody.innerHTML = '<tr><td colspan="7" class="text-center py-6 text-slate-500 text-xs">No B2C Large invoices</td></tr>';
+      } else {
+        b2clBody.innerHTML = b2cl.map(inv => {
+          const pos = inv.customerGSTIN ? inv.customerGSTIN.substring(0, 2) : getHomeStateCode();
+          return `
+            <tr class="hover:bg-slate-800/30">
+              <td class="p-2.5 font-mono text-sky-300 text-[11px]">${escapeHTML(inv.invoiceNo)}</td>
+              <td class="p-2.5 font-mono text-slate-400 text-[11px]">${escapeHTML(inv.date)}</td>
+              <td class="p-2.5 text-slate-200 text-[11px]">${escapeHTML(inv.customerName || '')}</td>
+              <td class="p-2.5 text-center font-mono text-[11px] text-slate-300">${pos}</td>
+              <td class="p-2.5 text-right font-mono text-[11px] text-slate-200">${money(inv.totalTaxable || 0)}</td>
+              <td class="p-2.5 text-right font-mono text-[11px] text-amber-400">${money(inv.totalIGST || 0)}</td>
+              <td class="p-2.5 text-right font-mono font-bold text-[11px] text-white">${money(inv.totalGross || 0)}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+
+    /* Render B2C Small */
+    const b2csBody = document.getElementById('gstr1B2CSBody');
+    if (b2csBody) {
+      const keys = Object.keys(b2cs).sort();
+      if (keys.length === 0) {
+        b2csBody.innerHTML = '<tr><td colspan="7" class="text-center py-6 text-slate-500 text-xs">No B2C Small data</td></tr>';
+      } else {
+        b2csBody.innerHTML = keys.map(k => {
+          const d = b2cs[k];
+          return `
+            <tr class="hover:bg-slate-800/30">
+              <td class="p-2.5 text-[11px] ${d.sply === 'INTER' ? 'text-amber-400' : 'text-emerald-400'} font-bold">${d.sply}</td>
+              <td class="p-2.5 text-center font-mono text-[11px] text-slate-300">${d.pos}</td>
+              <td class="p-2.5 text-center font-mono text-[11px] text-slate-300">${d.rate}%</td>
+              <td class="p-2.5 text-right font-mono text-[11px] text-slate-200">${money(d.taxable)}</td>
+              <td class="p-2.5 text-right font-mono text-[11px] text-sky-400">${money(d.cgst)}</td>
+              <td class="p-2.5 text-right font-mono text-[11px] text-sky-400">${money(d.sgst)}</td>
+              <td class="p-2.5 text-right font-mono text-[11px] text-sky-400">${money(d.igst)}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+
+    /* Render CDN */
+    const cdnBody = document.getElementById('gstr1CDNBody');
+    setText('gstr1CDNCount', cdn.length);
+    if (cdnBody) {
+      if (cdn.length === 0) {
+        cdnBody.innerHTML = '<tr><td colspan="7" class="text-center py-6 text-slate-500 text-xs">No credit notes</td></tr>';
+      } else {
+        cdnBody.innerHTML = cdn.map(crn => `
+          <tr class="hover:bg-slate-800/30">
+            <td class="p-2.5 font-mono text-rose-400 text-[11px]">${escapeHTML(crn.crnNo)}</td>
+            <td class="p-2.5 font-mono text-slate-400 text-[11px]">${escapeHTML(crn.date)}</td>
+            <td class="p-2.5 font-mono text-slate-500 text-[10px]">${escapeHTML(crn.origInvoiceNo || '')}</td>
+            <td class="p-2.5 text-slate-200 text-[11px] truncate max-w-[150px]">${escapeHTML(crn.customerName || '')}</td>
+            <td class="p-2.5 text-right font-mono text-[11px] text-rose-300">${money(crn.refundTaxable || 0)}</td>
+            <td class="p-2.5 text-right font-mono text-[11px] text-rose-400">${money(crn.refundTax || 0)}</td>
+            <td class="p-2.5 text-right font-mono font-bold text-[11px] text-rose-400">${money(crn.refundTotal || 0)}</td>
+          </tr>
+        `).join('');
+      }
+    }
+  }
+
+  /* ═══ GSTR-3B ═══ */
+  function renderGSTR3B() {
+    let taxable = 0, cgst = 0, sgst = 0, igst = 0, nilRated = 0;
+
+    G.invoices.forEach(inv => {
+      const items = inv.items || [];
+      const isNil = items.length > 0 && items.every(it => (it.gst || 0) === 0);
+      if (isNil) { nilRated += inv.totalTaxable || 0; }
+      else {
+        taxable += inv.totalTaxable || 0;
+        cgst += inv.totalCGST || 0;
+        sgst += inv.totalSGST || 0;
+        igst += inv.totalIGST || 0;
+      }
+    });
+
+    /* Subtract returns */
+    let rTaxable = 0, rCGST = 0, rSGST = 0, rIGST = 0;
+    G.creditNotes.forEach(crn => {
+      rTaxable += crn.refundTaxable || 0;
+      const tax = crn.refundTax || 0;
+      if ((crn.taxType || 'INTRA') === 'INTRA') { rCGST += tax / 2; rSGST += tax / 2; }
+      else { rIGST += tax; }
+    });
+
+    const netTaxable = Math.max(0, taxable - rTaxable);
+    const netCGST = Math.max(0, cgst - rCGST);
+    const netSGST = Math.max(0, sgst - rSGST);
+    const netIGST = Math.max(0, igst - rIGST);
+
+    setText('gstr3b3a1Taxable', money(netTaxable));
+    setText('gstr3b3a1IGST', money(netIGST));
+    setText('gstr3b3a1CGST', money(netCGST));
+    setText('gstr3b3a1SGST', money(netSGST));
+    setText('gstr3b3cTaxable', money(nilRated));
+
+    /* ITC */
+    let itcCGST = 0, itcSGST = 0, itcIGST = 0;
+    G.purchases.forEach(p => {
+      const gst = p.totalGST || 0;
+      itcCGST += gst / 2;
+      itcSGST += gst / 2;
+    });
+    const itcTotal = itcCGST + itcSGST + itcIGST;
+
+    setText('gstr3bITC_IGST', money(itcIGST));
+    setText('gstr3bITC_CGST', money(itcCGST));
+    setText('gstr3bITC_SGST', money(itcSGST));
+    setText('gstr3bITC_TotalIGST', money(itcIGST));
+    setText('gstr3bITC_TotalCGST', money(itcCGST));
+    setText('gstr3bITC_TotalSGST', money(itcSGST));
+
+    /* Payment */
+    const utilCGST = Math.min(netCGST, itcCGST);
+    const utilSGST = Math.min(netSGST, itcSGST);
+    const utilIGST = Math.min(netIGST, itcIGST);
+
+    setText('gstr3bPayIGST', money(netIGST));
+    setText('gstr3bPayCGST', money(netCGST));
+    setText('gstr3bPaySGST', money(netSGST));
+
+    setText('gstr3bUtilIGST', money(utilIGST));
+    setText('gstr3bUtilCGST', money(utilCGST));
+    setText('gstr3bUtilSGST', money(utilSGST));
+
+    setText('gstr3bNetIGST', money(Math.max(0, netIGST - utilIGST)));
+    setText('gstr3bNetCGST', money(Math.max(0, netCGST - utilCGST)));
+    setText('gstr3bNetSGST', money(Math.max(0, netSGST - utilSGST)));
+  }
+
+  /* ═══ HSN ═══ */
+  function renderHSN() {
+    const byHSN = {};
+
+    G.invoices.forEach(inv => {
+      (inv.items || []).forEach(it => {
+        const hsn = it.hsn || '8517';
+        if (!byHSN[hsn]) byHSN[hsn] = { hsn, desc: HSN_DESC[hsn] || 'Mobile related', uqc: 'NOS', qty: 0, taxable: 0, cgst: 0, sgst: 0, igst: 0, total: 0 };
+        const lineTotal = (it.rate || 0) * (it.qty || 1);
+        const lineTaxable = lineTotal / (1 + (it.gst || 0) / 100);
+        const lineTax = lineTotal - lineTaxable;
+
+        byHSN[hsn].qty += (it.qty || 1);
+        byHSN[hsn].taxable += lineTaxable;
+        byHSN[hsn].total += lineTotal;
+
+        if ((inv.taxType || 'INTRA') === 'INTRA') { byHSN[hsn].cgst += lineTax / 2; byHSN[hsn].sgst += lineTax / 2; }
+        else { byHSN[hsn].igst += lineTax; }
+      });
+    });
+
+    const body = document.getElementById('gstHSNBody');
+    if (!body) return;
+
+    const keys = Object.keys(byHSN).sort();
+    if (keys.length === 0) {
+      body.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-slate-500 text-xs">No HSN data</td></tr>';
+      return;
+    }
+
+    let totalTaxable = 0, totalCGST = 0, totalSGST = 0, totalIGST = 0, totalAll = 0;
+
+    body.innerHTML = keys.map(k => {
+      const d = byHSN[k];
+      totalTaxable += d.taxable;
+      totalCGST += d.cgst;
+      totalSGST += d.sgst;
+      totalIGST += d.igst;
+      totalAll += d.total;
+      return `
+        <tr class="hover:bg-slate-800/30">
+          <td class="p-2.5 font-mono font-bold text-sky-300 text-[11px]">${escapeHTML(d.hsn)}</td>
+          <td class="p-2.5 text-slate-300 text-[11px]">${escapeHTML(d.desc)}</td>
+          <td class="p-2.5 text-center font-mono text-slate-400 text-[10px]">${d.uqc}</td>
+          <td class="p-2.5 text-center font-mono text-white text-[11px]">${d.qty}</td>
+          <td class="p-2.5 text-right font-mono text-slate-200 text-[11px]">${money(d.taxable)}</td>
+          <td class="p-2.5 text-right font-mono text-sky-400 text-[11px]">${money(d.cgst)}</td>
+          <td class="p-2.5 text-right font-mono text-sky-400 text-[11px]">${money(d.sgst)}</td>
+          <td class="p-2.5 text-right font-mono text-sky-400 text-[11px]">${money(d.igst)}</td>
+          <td class="p-2.5 text-right font-mono font-bold text-emerald-400 text-[11px]">${money(d.total)}</td>
+        </tr>
+      `;
+    }).join('');
+
+    setText('gstHSNTotalTaxable', money(totalTaxable));
+    setText('gstHSNTotalCGST', money(totalCGST));
+    setText('gstHSNTotalSGST', money(totalSGST));
+    setText('gstHSNTotalIGST', money(totalIGST));
+    setText('gstHSNTotalAll', money(totalAll));
+  }
+
+  /* ═══ ITC ═══ */
+  function renderITC() {
+    const body = document.getElementById('gstITCBody');
+    setText('gstITCCount', G.purchases.length);
+
+    if (!body) return;
+
+    if (G.purchases.length === 0) {
+      body.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-slate-500 text-xs">No purchases in this period</td></tr>';
+      return;
+    }
+
+    body.innerHTML = G.purchases.map(p => {
+      const gst = p.totalGST || 0;
+      const cgst = gst / 2;
+      const sgst = gst / 2;
+      return `
+        <tr class="hover:bg-slate-800/30">
+          <td class="p-2.5 font-mono text-slate-400 text-[11px]">${escapeHTML(p.date)}</td>
+          <td class="p-2.5 font-mono text-sky-300 text-[11px]">${escapeHTML(p.billNo || p.purchaseNo)}</td>
+          <td class="p-2.5 text-slate-200 text-[11px] truncate max-w-[160px]">${escapeHTML(p.supplierName)}</td>
+          <td class="p-2.5 font-mono text-[10px] text-cyan-400">${escapeHTML(p.supplierGSTIN || '—')}</td>
+          <td class="p-2.5 text-right font-mono text-[11px] text-slate-200">${money(p.totalTaxable || 0)}</td>
+          <td class="p-2.5 text-right font-mono text-[11px] text-sky-400">${money(cgst)}</td>
+          <td class="p-2.5 text-right font-mono text-[11px] text-sky-400">${money(sgst)}</td>
+          <td class="p-2.5 text-right font-mono text-[11px] text-sky-400">${money(0)}</td>
+          <td class="p-2.5 text-right font-mono font-bold text-[11px] text-cyan-400">${money(gst)}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  /* ═══ RECON ═══ */
+  function renderRecon() {
+    let booksSales = 0;
+    G.invoices.forEach(inv => booksSales += inv.totalGross || 0);
+    setText('reconSalesBooks', money(booksSales));
+    setText('reconSalesGSTR1', money(booksSales));
+    setText('reconSalesDiff', money(0));
+
+    let booksPur = 0, booksITC = 0;
+    G.purchases.forEach(p => { booksPur += p.totalCost || 0; booksITC += p.totalGST || 0; });
+    setText('reconPurBooks', money(booksPur));
+    setText('reconPurITC', money(booksITC));
+
+    /* Data quality checks */
+    const checks = [];
+    let missingGSTINB2B = 0, missingHSN = 0, missingPOS = 0;
+    G.invoices.forEach(inv => {
+      if (inv.customerGSTIN && inv.customerGSTIN.length > 0 && inv.customerGSTIN.length !== 15) missingGSTINB2B++;
+      (inv.items || []).forEach(it => {
+        if (!it.hsn) missingHSN++;
+      });
+    });
+
+    checks.push({
+      label: 'All invoices have valid dates',
+      ok: G.invoices.every(i => i.date),
+      detail: `${G.invoices.length} invoices`
+    });
+    checks.push({
+      label: 'B2B invoices have valid GSTIN',
+      ok: missingGSTINB2B === 0,
+      detail: missingGSTINB2B > 0 ? `${missingGSTINB2B} invoices with invalid GSTIN length` : 'All valid'
+    });
+    checks.push({
+      label: 'All items have HSN code',
+      ok: missingHSN === 0,
+      detail: missingHSN > 0 ? `${missingHSN} items missing HSN` : 'All have HSN'
+    });
+    checks.push({
+      label: 'Store GSTIN configured',
+      ok: !!(S.profile?.gstin && S.profile.gstin.length === 15),
+      detail: S.profile?.gstin ? `GSTIN: ${S.profile.gstin}` : '⚠️ Set in Settings'
+    });
+
+    const el = document.getElementById('reconChecks');
+    if (el) {
+      el.innerHTML = checks.map(c => `
+        <div class="flex items-center gap-3 p-3 ${c.ok ? 'bg-emerald-950/30 border-emerald-800/40' : 'bg-amber-950/30 border-amber-800/40'} border rounded-lg">
+          <span class="text-xl">${c.ok ? '✅' : '⚠️'}</span>
+          <div class="flex-1">
+            <div class="text-xs font-bold ${c.ok ? 'text-emerald-300' : 'text-amber-300'}">${c.label}</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">${c.detail}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+
+  /* ═══ TABS ═══ */
+  function showTab(tab) {
+    ['overview', 'gstr1', 'gstr3b', 'hsn', 'itc', 'recon'].forEach(t => {
+      const panel = document.getElementById('gstPanel-' + t);
+      const btn = document.getElementById('gstTab-' + t);
+      if (t === tab) {
+        if (panel) panel.style.display = 'block';
+        if (btn) btn.className = 'gst-tab flex-1 py-2.5 px-4 rounded-xl text-xs font-bold whitespace-nowrap transition bg-emerald-600 text-white';
+      } else {
+        if (panel) panel.style.display = 'none';
+        if (btn) btn.className = 'gst-tab flex-1 py-2.5 px-4 rounded-xl text-xs font-bold whitespace-nowrap transition text-slate-400 hover:text-white';
+      }
+    });
+  }
+
+  /* ═══ EXPORT — FULL CA EXCEL ═══ */
+  async function exportCAExcel() {
+    if (typeof XLSX === 'undefined') {
+      try {
+        await new Promise((res, rej) => {
+          const s = document.createElement('script');
+          s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+          s.onload = res; s.onerror = rej;
+          document.head.appendChild(s);
+        });
+      } catch (e) { C.toast('Excel library failed', 'error'); return; }
+    }
+
+    C.toast('Building CA Excel...', 'info', 2000);
+
+    const wb = XLSX.utils.book_new();
+    const periodLabel = G.returnType === 'QUARTERLY'
+      ? `Q${G.quarter.replace('Q','')}_${G.year}`
+      : `${String(G.month).padStart(2,'0')}_${G.year}`;
+
+    /* Sheet 1: Summary */
+    let salesTaxable = 0, salesCGST = 0, salesSGST = 0, salesIGST = 0, salesTotal = 0;
+    G.invoices.forEach(inv => {
+      salesTaxable += inv.totalTaxable || 0;
+      salesCGST += inv.totalCGST || 0;
+      salesSGST += inv.totalSGST || 0;
+      salesIGST += inv.totalIGST || 0;
+      salesTotal += inv.totalGross || 0;
+    });
+    let retTaxable = 0, retCGST = 0, retSGST = 0, retIGST = 0, retTotal = 0;
+    G.creditNotes.forEach(crn => {
+      retTaxable += crn.refundTaxable || 0;
+      const tax = crn.refundTax || 0;
+      if ((crn.taxType || 'INTRA') === 'INTRA') { retCGST += tax / 2; retSGST += tax / 2; }
+      else retIGST += tax;
+      retTotal += crn.refundTotal || 0;
+    });
+    let purTaxable = 0, purGST = 0, purTotal = 0;
+    G.purchases.forEach(p => {
+      purTaxable += p.totalTaxable || 0;
+      purGST += p.totalGST || 0;
+      purTotal += p.totalCost || 0;
+    });
+
+    const netCGST = salesCGST - retCGST - (purGST / 2);
+    const netSGST = salesSGST - retSGST - (purGST / 2);
+    const netIGST = salesIGST - retIGST;
+
+    const summary = [
+      { 'Particulars': 'GSTIN', 'Value': S.profile?.gstin || '' },
+      { 'Particulars': 'Period', 'Value': periodLabel },
+      { 'Particulars': 'Date Range', 'Value': G.dateRange.from + ' to ' + G.dateRange.to },
+      { 'Particulars': '', 'Value': '' },
+      { 'Particulars': 'OUTWARD SUPPLIES', 'Value': '' },
+      { 'Particulars': 'Taxable Sales', 'Value': salesTaxable },
+      { 'Particulars': 'CGST', 'Value': salesCGST },
+      { 'Particulars': 'SGST', 'Value': salesSGST },
+      { 'Particulars': 'IGST', 'Value': salesIGST },
+      { 'Particulars': 'Total Sales', 'Value': salesTotal },
+      { 'Particulars': '', 'Value': '' },
+      { 'Particulars': 'SALES RETURNS', 'Value': '' },
+      { 'Particulars': 'Taxable Returns', 'Value': retTaxable },
+      { 'Particulars': 'Total Returns', 'Value': retTotal },
+      { 'Particulars': '', 'Value': '' },
+      { 'Particulars': 'INPUT TAX CREDIT', 'Value': '' },
+      { 'Particulars': 'Taxable Purchases', 'Value': purTaxable },
+      { 'Particulars': 'Total ITC', 'Value': purGST },
+      { 'Particulars': 'Total Purchases', 'Value': purTotal },
+      { 'Particulars': '', 'Value': '' },
+      { 'Particulars': 'NET GST PAYABLE', 'Value': '' },
+      { 'Particulars': 'Net CGST', 'Value': Math.max(0, netCGST) },
+      { 'Particulars': 'Net SGST', 'Value': Math.max(0, netSGST) },
+      { 'Particulars': 'Net IGST', 'Value': Math.max(0, netIGST) }
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summary), 'Summary');
+
+    /* Sheet 2: Sales Register */
+    const salesReg = G.invoices.map(inv => ({
+      'Date': inv.date,
+      'Invoice No': inv.invoiceNo,
+      'Customer': inv.customerName || '',
+      'Phone': inv.customerPhone || '',
+      'GSTIN': inv.customerGSTIN || 'B2C',
+      'Type': inv.customerGSTIN && inv.customerGSTIN.length >= 15 ? 'B2B' : 'B2C',
+      'Items': (inv.items || []).map(i => i.model).join(' | '),
+      'IMEIs': (inv.items || []).map(i => i.imei || '').filter(Boolean).join(' | '),
+      'Ledger': inv.ledger,
+      'Taxable': inv.totalTaxable || 0,
+      'CGST': inv.totalCGST || 0,
+      'SGST': inv.totalSGST || 0,
+      'IGST': inv.totalIGST || 0,
+      'Total': inv.totalGross || 0
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(salesReg.length ? salesReg : [{ Note: 'No sales' }]), 'Sales_Register');
+
+    /* Sheet 3: B2B Invoices */
+    const b2bRows = G.invoices.filter(i => i.customerGSTIN && i.customerGSTIN.length >= 15).map(inv => ({
+      'GSTIN': inv.customerGSTIN,
+      'Customer': inv.customerName,
+      'Invoice No': inv.invoiceNo,
+      'Invoice Date': inv.date,
+      'Invoice Value': inv.totalGross || 0,
+      'Place of Supply': inv.customerGSTIN.substring(0, 2),
+      'Reverse Charge': 'N',
+      'Taxable Value': inv.totalTaxable || 0,
+      'CGST': inv.totalCGST || 0,
+      'SGST': inv.totalSGST || 0,
+      'IGST': inv.totalIGST || 0
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(b2bRows.length ? b2bRows : [{ Note: 'No B2B invoices' }]), 'B2B_Invoices');
+
+    /* Sheet 4: B2C Invoices */
+    const b2cRows = G.invoices.filter(i => !i.customerGSTIN || i.customerGSTIN.length < 15).map(inv => ({
+      'Invoice No': inv.invoiceNo,
+      'Date': inv.date,
+      'Customer': inv.customerName,
+      'Phone': inv.customerPhone,
+      'Amount': inv.totalGross || 0,
+      'Taxable': inv.totalTaxable || 0,
+      'CGST': inv.totalCGST || 0,
+      'SGST': inv.totalSGST || 0,
+      'IGST': inv.totalIGST || 0
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(b2cRows.length ? b2cRows : [{ Note: 'No B2C invoices' }]), 'B2C_Invoices');
+
+    /* Sheet 5: Credit Notes */
+    const cnRows = G.creditNotes.map(crn => ({
+      'CRN No': crn.crnNo,
+      'Date': crn.date,
+      'Against Invoice': crn.origInvoiceNo,
+      'Customer': crn.customerName,
+      'Item': crn.itemModel,
+      'IMEI': crn.imei || '',
+      'Reason': crn.reason,
+      'Taxable': crn.refundTaxable || 0,
+      'GST': crn.refundTax || 0,
+      'Total Refund': crn.refundTotal || 0
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(cnRows.length ? cnRows : [{ Note: 'No credit notes' }]), 'Credit_Notes');
+
+    /* Sheet 6: Purchase Register */
+    const purRows = G.purchases.map(p => ({
+      'Date': p.date,
+      'Bill No': p.billNo,
+      'Purchase No': p.purchaseNo,
+      'Supplier': p.supplierName,
+      'GSTIN': p.supplierGSTIN || '',
+      'Phone': p.supplierPhone || '',
+      'Items': (p.lines || []).map(l => l.model).join(' | '),
+      'Taxable': p.totalTaxable || 0,
+      'GST': p.totalGST || 0,
+      'Total': p.totalCost || 0,
+      'Ledger': p.ledger
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(purRows.length ? purRows : [{ Note: 'No purchases' }]), 'Purchase_Register');
+
+    /* Sheet 7: ITC Register */
+    const itcRows = G.purchases.map(p => {
+      const gst = p.totalGST || 0;
+      return {
+        'Date': p.date,
+        'Bill No': p.billNo,
+        'Supplier': p.supplierName,
+        'GSTIN': p.supplierGSTIN || '',
+        'Taxable': p.totalTaxable || 0,
+        'CGST': gst / 2,
+        'SGST': gst / 2,
+        'IGST': 0,
+        'Total ITC': gst
+      };
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(itcRows.length ? itcRows : [{ Note: 'No ITC' }]), 'ITC_Register');
+
+    /* Sheet 8: HSN Summary */
+    const hsnMap = {};
+    G.invoices.forEach(inv => {
+      (inv.items || []).forEach(it => {
+        const hsn = it.hsn || '8517';
+        if (!hsnMap[hsn]) hsnMap[hsn] = { hsn, desc: HSN_DESC[hsn] || '', uqc: 'NOS', qty: 0, taxable: 0, cgst: 0, sgst: 0, igst: 0, total: 0 };
+        const lineTotal = (it.rate || 0) * (it.qty || 1);
+        const lineTaxable = lineTotal / (1 + (it.gst || 0) / 100);
+        const lineTax = lineTotal - lineTaxable;
+        hsnMap[hsn].qty += (it.qty || 1);
+        hsnMap[hsn].taxable += lineTaxable;
+        hsnMap[hsn].total += lineTotal;
+        if ((inv.taxType || 'INTRA') === 'INTRA') { hsnMap[hsn].cgst += lineTax / 2; hsnMap[hsn].sgst += lineTax / 2; }
+        else hsnMap[hsn].igst += lineTax;
+      });
+    });
+    const hsnRows = Object.values(hsnMap).map(h => ({
+      'HSN': h.hsn,
+      'Description': h.desc,
+      'UQC': h.uqc,
+      'Quantity': h.qty,
+      'Taxable Value': h.taxable,
+      'CGST': h.cgst,
+      'SGST': h.sgst,
+      'IGST': h.igst,
+      'Total': h.total
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(hsnRows.length ? hsnRows : [{ Note: 'No HSN data' }]), 'HSN_Summary');
+
+    /* Sheet 9: Rate-wise Summary */
+    const rateMap = {};
+    G.invoices.forEach(inv => {
+      (inv.items || []).forEach(it => {
+        const rate = it.gst || 0;
+        if (!rateMap[rate]) rateMap[rate] = { rate, taxable: 0, cgst: 0, sgst: 0, igst: 0, total: 0 };
+        const lineTotal = (it.rate || 0) * (it.qty || 1);
+        const lineTaxable = lineTotal / (1 + rate / 100);
+        const lineTax = lineTotal - lineTaxable;
+        rateMap[rate].taxable += lineTaxable;
+        rateMap[rate].total += lineTotal;
+        if ((inv.taxType || 'INTRA') === 'INTRA') { rateMap[rate].cgst += lineTax / 2; rateMap[rate].sgst += lineTax / 2; }
+        else rateMap[rate].igst += lineTax;
+      });
+    });
+    const rateRows = Object.values(rateMap).map(r => ({
+      'Tax Rate': r.rate + '%',
+      'Taxable Value': r.taxable,
+      'CGST': r.cgst,
+      'SGST': r.sgst,
+      'IGST': r.igst,
+      'Total': r.total
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rateRows.length ? rateRows : [{ Note: 'No data' }]), 'Rate_Summary');
+
+    /* Sheet 10: GSTR-3B */
+    const gstr3bRows = [
+      { 'Section': '3.1(a) Outward taxable', 'Taxable': salesTaxable - retTaxable, 'CGST': salesCGST - retCGST, 'SGST': salesSGST - retSGST, 'IGST': salesIGST - retIGST },
+      { 'Section': '4A(5) ITC', 'Taxable': purTaxable, 'CGST': purGST / 2, 'SGST': purGST / 2, 'IGST': 0 },
+      { 'Section': '6.1 Net Payable', 'Taxable': 0, 'CGST': Math.max(0, netCGST), 'SGST': Math.max(0, netSGST), 'IGST': Math.max(0, netIGST) }
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(gstr3bRows), 'GSTR3B_Summary');
+
+    /* Sheet 11: Monthly Trend (last 12 months) */
+    const trend = [];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const allInvoices = S.invoices || [];
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(G.year, G.month - 1 - i, 1);
+      const m = d.getMonth() + 1;
+      const y = d.getFullYear();
+      const prefix = `${y}-${String(m).padStart(2, '0')}`;
+      const monthInvoices = allInvoices.filter(inv => inv.date && inv.date.startsWith(prefix));
+      let mTaxable = 0, mCGST = 0, mSGST = 0, mIGST = 0, mTotal = 0;
+      monthInvoices.forEach(inv => {
+        mTaxable += inv.totalTaxable || 0;
+        mCGST += inv.totalCGST || 0;
+        mSGST += inv.totalSGST || 0;
+        mIGST += inv.totalIGST || 0;
+        mTotal += inv.totalGross || 0;
+      });
+      trend.push({
+        'Month': months[m - 1] + ' ' + y,
+        'Invoices': monthInvoices.length,
+        'Taxable': mTaxable,
+        'CGST': mCGST,
+        'SGST': mSGST,
+        'IGST': mIGST,
+        'Total': mTotal
+      });
+    }
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(trend), 'Monthly_Trend');
+
+    /* Sheet 12: Info */
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([{
+      'Generated': new Date().toLocaleString('en-IN'),
+      'Store': S.profile?.name || '',
+      'GSTIN': S.profile?.gstin || '',
+      'Period': periodLabel,
+      'Software': 'SmartFix ERP v4.6.0',
+      'Developer': 'Debapriya Sarkar'
+    }]), 'Info');
+
+    const fname = `SmartFix_GST_CA_Pack_${periodLabel}.xlsx`;
+    XLSX.writeFile(wb, fname);
+    C.toast('✅ Excel downloaded: ' + fname, 'success', 4000);
+    try { window.SF.state.logAudit('GST_EXPORT', 'CA Excel for ' + periodLabel); } catch (e) {}
+  }
+
+  /* ═══ EXPORT — GSTR-1 JSON ═══ */
+  function exportGSTR1JSON() {
+    const homeState = getHomeStateCode();
+    const fp = G.returnType === 'QUARTERLY'
+      ? `${String(G.month).padStart(2, '0')}${G.year}`
+      : `${String(G.month).padStart(2, '0')}${G.year}`;
+
+    /* B2B */
+    const b2bMap = {};
+    G.invoices.filter(i => i.customerGSTIN && i.customerGSTIN.length >= 15).forEach(inv => {
+      const ctin = inv.customerGSTIN.toUpperCase();
+      if (!b2bMap[ctin]) b2bMap[ctin] = { ctin, inv: [] };
+      const pos = ctin.substring(0, 2);
+
+      /* Group items by rate */
+      const rateMap = {};
+      (inv.items || []).forEach(it => {
+        const rate = it.gst || 0;
+        if (!rateMap[rate]) rateMap[rate] = { txval: 0, camt: 0, samt: 0, iamt: 0, csamt: 0 };
+        const lineTotal = (it.rate || 0) * (it.qty || 1);
+        const lineTaxable = lineTotal / (1 + rate / 100);
+        const lineTax = lineTotal - lineTaxable;
+        rateMap[rate].txval += lineTaxable;
+        if ((inv.taxType || 'INTRA') === 'INTRA') { rateMap[rate].camt += lineTax / 2; rateMap[rate].samt += lineTax / 2; }
+        else rateMap[rate].iamt += lineTax;
+      });
+
+      const items = Object.keys(rateMap).map((rate, idx) => ({
+        num: idx + 1,
+        itm_det: {
+          txval: +rateMap[rate].txval.toFixed(2),
+          rt: parseFloat(rate),
+          camt: +rateMap[rate].camt.toFixed(2),
+          samt: +rateMap[rate].samt.toFixed(2),
+          iamt: +rateMap[rate].iamt.toFixed(2),
+          csamt: 0
+        }
+      }));
+
+      b2bMap[ctin].inv.push({
+        inum: inv.invoiceNo,
+        idt: formatDateDDMMYYYY(inv.date),
+        val: +(inv.totalGross || 0).toFixed(2),
+        pos,
+        rchrg: 'N',
+        inv_typ: 'R',
+        itms: items
+      });
+    });
+
+    /* B2C Large */
+    const b2cl = [];
+    G.invoices.filter(i => !i.customerGSTIN || i.customerGSTIN.length < 15).forEach(inv => {
+      if (isInterState(inv.customerGSTIN, inv.customerAddress) && (inv.totalGross || 0) > 250000) {
+        const rateMap = {};
+        (inv.items || []).forEach(it => {
+          const rate = it.gst || 0;
+          if (!rateMap[rate]) rateMap[rate] = { txval: 0, iamt: 0 };
+          const lineTotal = (it.rate || 0) * (it.qty || 1);
+          const lineTaxable = lineTotal / (1 + rate / 100);
+          rateMap[rate].txval += lineTaxable;
+          rateMap[rate].iamt += lineTotal - lineTaxable;
+        });
+        const items = Object.keys(rateMap).map((rate, idx) => ({
+          num: idx + 1,
+          itm_det: { txval: +rateMap[rate].txval.toFixed(2), rt: parseFloat(rate), iamt: +rateMap[rate].iamt.toFixed(2), csamt: 0 }
+        }));
+        b2cl.push({
+          pos: homeState,
+          inv: [{
+            inum: inv.invoiceNo,
+            idt: formatDateDDMMYYYY(inv.date),
+            val: +(inv.totalGross || 0).toFixed(2),
+            itms: items
+          }]
+        });
+      }
+    });
+
+    /* B2C Small */
+    const b2csMap = {};
+    G.invoices.filter(i => !i.customerGSTIN || i.customerGSTIN.length < 15).forEach(inv => {
+      if (isInterState(inv.customerGSTIN, inv.customerAddress) && (inv.totalGross || 0) > 250000) return;
+      const sply = isInterState(inv.customerGSTIN, inv.customerAddress) ? 'INTER' : 'INTRA';
+      const pos = sply === 'INTER' ? homeState : homeState;
+
+      (inv.items || []).forEach(it => {
+        const rate = it.gst || 0;
+        const key = `${sply}_${pos}_${rate}`;
+        if (!b2csMap[key]) b2csMap[key] = { sply_ty: sply, pos, typ: 'OE', rt: rate, txval: 0, camt: 0, samt: 0, iamt: 0, csamt: 0 };
+        const lineTotal = (it.rate || 0) * (it.qty || 1);
+        const lineTaxable = lineTotal / (1 + rate / 100);
+        const lineTax = lineTotal - lineTaxable;
+        b2csMap[key].txval += lineTaxable;
+        if (sply === 'INTER') b2csMap[key].iamt += lineTax;
+        else { b2csMap[key].camt += lineTax / 2; b2csMap[key].samt += lineTax / 2; }
+      });
+    });
+
+    /* HSN */
+    const hsnMap = {};
+    G.invoices.forEach(inv => {
+      (inv.items || []).forEach(it => {
+        const hsn = it.hsn || '8517';
+        if (!hsnMap[hsn]) hsnMap[hsn] = { hsn_sc: hsn, desc: HSN_DESC[hsn] || '', uqc: 'NOS', qty: 0, val: 0, txval: 0, camt: 0, samt: 0, iamt: 0, csamt: 0 };
+        const lineTotal = (it.rate || 0) * (it.qty || 1);
+        const lineTaxable = lineTotal / (1 + (it.gst || 0) / 100);
+        const lineTax = lineTotal - lineTaxable;
+        hsnMap[hsn].qty += (it.qty || 1);
+        hsnMap[hsn].val += lineTotal;
+        hsnMap[hsn].txval += lineTaxable;
+        if ((inv.taxType || 'INTRA') === 'INTRA') { hsnMap[hsn].camt += lineTax / 2; hsnMap[hsn].samt += lineTax / 2; }
+        else hsnMap[hsn].iamt += lineTax;
+      });
+    });
+    const hsnData = Object.values(hsnMap).map((h, idx) => ({
+      num: idx + 1,
+      hsn_sc: h.hsn_sc,
+      desc: h.desc,
+      uqc: h.uqc,
+      qty: h.qty,
+      val: +h.val.toFixed(2),
+      txval: +h.txval.toFixed(2),
+      camt: +h.camt.toFixed(2),
+      samt: +h.samt.toFixed(2),
+      iamt: +h.iamt.toFixed(2),
+      csamt: 0
+    }));
+
+    /* CDNR (Credit/Debit notes to registered) */
+    const cdnrMap = {};
+    G.creditNotes.forEach(crn => {
+      const custGSTIN = crn.customerGSTIN || '';
+      if (custGSTIN && custGSTIN.length >= 15) {
+        const ctin = custGSTIN.toUpperCase();
+        if (!cdnrMap[ctin]) cdnrMap[ctin] = { ctin, nt: [] };
+        const rate = crn.gst || 18;
+        const tax = crn.refundTax || 0;
+        const taxType = crn.taxType || 'INTRA';
+        cdnrMap[ctin].nt.push({
+          ntty: 'C',
+          nt_num: crn.crnNo,
+          nt_dt: formatDateDDMMYYYY(crn.date),
+          val: +(crn.refundTotal || 0).toFixed(2),
+          pos: ctin.substring(0, 2),
+          rchrg: 'N',
+          inv_typ: 'R',
+          itms: [{
+            num: 1,
+            itm_det: {
+              txval: +(crn.refundTaxable || 0).toFixed(2),
+              rt: rate,
+              camt: taxType === 'INTRA' ? +(tax / 2).toFixed(2) : 0,
+              samt: taxType === 'INTRA' ? +(tax / 2).toFixed(2) : 0,
+              iamt: taxType === 'INTER' ? +tax.toFixed(2) : 0,
+              csamt: 0
+            }
+          }]
+        });
+      }
+    });
+
+    const json = {
+      gstin: (S.profile?.gstin || '').toUpperCase(),
+      fp,
+      gt: 0,
+      cur_gt: 0,
+      version: 'GST3.2.0',
+      hash: 'hash',
+      b2b: Object.values(b2bMap),
+      b2cl,
+      b2cs: Object.values(b2csMap),
+      cdnr: Object.values(cdnrMap),
+      cdnur: [],
+      hsn: { data: hsnData },
+      doc_issue: { doc_det: [] }
+    };
+
+    const blob = new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `GSTR1_${(S.profile?.gstin || '').toUpperCase()}_${fp}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1500);
+    C.toast('✅ GSTR-1 JSON downloaded', 'success', 3000);
+  }
+
+  function formatDateDDMMYYYY(d) {
+    if (!d) return '';
+    const parts = d.split('-');
+    if (parts.length !== 3) return d;
+    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+  }
+
+  /* ═══ EXPORT — GSTR-3B Sheet ═══ */
+  async function exportGSTR3B() {
+    if (typeof XLSX === 'undefined') {
+      try {
+        await new Promise((res, rej) => {
+          const s = document.createElement('script');
+          s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+          s.onload = res; s.onerror = rej;
+          document.head.appendChild(s);
+        });
+      } catch (e) { C.toast('Excel library failed', 'error'); return; }
+    }
+
+    let salesTaxable = 0, salesCGST = 0, salesSGST = 0, salesIGST = 0;
+    G.invoices.forEach(inv => {
+      salesTaxable += inv.totalTaxable || 0;
+      salesCGST += inv.totalCGST || 0;
+      salesSGST += inv.totalSGST || 0;
+      salesIGST += inv.totalIGST || 0;
+    });
+
+    let purGST = 0;
+    G.purchases.forEach(p => { purGST += p.totalGST || 0; });
+
+    const netCGST = Math.max(0, salesCGST - purGST / 2);
+    const netSGST = Math.max(0, salesSGST - purGST / 2);
+    const netIGST = salesIGST;
+
+    const rows = [
+      { 'Section': '3.1(a)', 'Description': 'Outward taxable supplies', 'Taxable Value': salesTaxable, 'IGST': salesIGST, 'CGST': salesCGST, 'SGST': salesSGST },
+      { 'Section': '3.1(b)', 'Description': 'Zero-rated supplies', 'Taxable Value': 0, 'IGST': 0, 'CGST': 0, 'SGST': 0 },
+      { 'Section': '3.1(c)', 'Description': 'Nil-rated/Exempted', 'Taxable Value': 0, 'IGST': 0, 'CGST': 0, 'SGST': 0 },
+      { 'Section': '4A(5)', 'Description': 'ITC available', 'Taxable Value': 0, 'IGST': 0, 'CGST': purGST / 2, 'SGST': purGST / 2 },
+      { 'Section': '6.1', 'Description': 'Net tax payable', 'Taxable Value': 0, 'IGST': netIGST, 'CGST': netCGST, 'SGST': netSGST }
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'GSTR3B');
+    XLSX.writeFile(wb, `GSTR3B_${G.year}_${String(G.month).padStart(2,'0')}.xlsx`);
+    C.toast('✅ GSTR-3B sheet downloaded', 'success', 3000);
+  }
+
+  /* ═══ PRINT REPORT ═══ */
+  function printReport() {
+    const months = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const periodLabel = G.returnType === 'QUARTERLY'
+      ? `Q${G.quarter.replace('Q','')} ${G.year}`
+      : `${months[G.month]} ${G.year}`;
+
+    let salesTaxable = 0, salesCGST = 0, salesSGST = 0, salesIGST = 0, salesTotal = 0;
+    G.invoices.forEach(inv => {
+      salesTaxable += inv.totalTaxable || 0;
+      salesCGST += inv.totalCGST || 0;
+      salesSGST += inv.totalSGST || 0;
+      salesIGST += inv.totalIGST || 0;
+      salesTotal += inv.totalGross || 0;
+    });
+
+    let purGST = 0, purTotal = 0;
+    G.purchases.forEach(p => { purGST += p.totalGST || 0; purTotal += p.totalCost || 0; });
+
+    const netCGST = Math.max(0, salesCGST - purGST / 2);
+    const netSGST = Math.max(0, salesSGST - purGST / 2);
+    const netIGST = salesIGST;
+
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>GST Summary - ${periodLabel}</title>
+    <style>
+      body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 24px; color: #0f172a; font-size: 12px; }
+      h1 { font-size: 22px; color: #0ea5e9; border-bottom: 3px solid #0ea5e9; padding-bottom: 8px; margin: 0 0 6px; }
+      .subtitle { font-size: 11px; color: #64748b; margin-bottom: 20px; }
+      h2 { font-size: 14px; color: #0284c7; margin: 20px 0 10px; padding-bottom: 4px; border-bottom: 1px solid #cbd5e1; }
+      table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 16px; }
+      th { background: #f1f5f9; padding: 8px; text-align: left; border: 1px solid #cbd5e1; font-weight: 700; font-size: 10px; text-transform: uppercase; }
+      td { padding: 8px; border: 1px solid #cbd5e1; }
+      .right { text-align: right; font-family: monospace; }
+      .total-row { background: #ecfdf5; font-weight: 900; }
+      .footer { margin-top: 30px; padding-top: 12px; border-top: 1px solid #cbd5e1; font-size: 9px; color: #94a3b8; text-align: center; }
+    </style></head><body>
+
+    <h1>📊 GST Summary Report</h1>
+    <p class="subtitle">
+      <strong>${S.profile?.name || ''}</strong> ${S.profile?.gstin ? '• GSTIN: ' + S.profile.gstin : ''}<br>
+      Period: <strong>${periodLabel}</strong> (${G.dateRange.from} to ${G.dateRange.to})<br>
+      Generated: ${new Date().toLocaleString('en-IN')}
+    </p>
+
+    <h2>📤 Outward Supplies (Sales)</h2>
+    <table>
+      <thead><tr><th>Description</th><th class="right">Amount</th></tr></thead>
+      <tbody>
+        <tr><td>Total Invoices</td><td class="right">${G.invoices.length}</td></tr>
+        <tr><td>Taxable Value</td><td class="right">₹${salesTaxable.toFixed(2)}</td></tr>
+        <tr><td>CGST Output</td><td class="right">₹${salesCGST.toFixed(2)}</td></tr>
+        <tr><td>SGST Output</td><td class="right">₹${salesSGST.toFixed(2)}</td></tr>
+        <tr><td>IGST Output</td><td class="right">₹${salesIGST.toFixed(2)}</td></tr>
+        <tr class="total-row"><td>TOTAL SALES</td><td class="right">₹${salesTotal.toFixed(2)}</td></tr>
+      </tbody>
+    </table>
+
+    <h2>📥 Input Tax Credit (Purchases)</h2>
+    <table>
+      <thead><tr><th>Description</th><th class="right">Amount</th></tr></thead>
+      <tbody>
+        <tr><td>Total Purchases</td><td class="right">${G.purchases.length}</td></tr>
+        <tr><td>Purchase Value</td><td class="right">₹${purTotal.toFixed(2)}</td></tr>
+        <tr class="total-row"><td>TOTAL ITC</td><td class="right">₹${purGST.toFixed(2)}</td></tr>
+      </tbody>
+    </table>
+
+    <h2>💰 Net GST Payable (GSTR-3B Table 6)</h2>
+    <table>
+      <thead><tr><th>Tax Type</th><th class="right">Amount</th></tr></thead>
+      <tbody>
+        <tr><td>CGST Payable</td><td class="right">₹${netCGST.toFixed(2)}</td></tr>
+        <tr><td>SGST Payable</td><td class="right">₹${netSGST.toFixed(2)}</td></tr>
+        <tr><td>IGST Payable</td><td class="right">₹${netIGST.toFixed(2)}</td></tr>
+        <tr class="total-row"><td>NET PAYABLE</td><td class="right">₹${(netCGST + netSGST + netIGST).toFixed(2)}</td></tr>
+      </tbody>
+    </table>
+
+    <div class="footer">
+      SmartFix ERP © 2026 • GST Summary Report<br>
+      Prepared for CA filing — GSTR-1 & GSTR-3B reference
+    </div>
+
+    </body></html>`;
+
+    const win = window.open('', '_blank');
+    if (!win) { C.toast('Popup blocked', 'error'); return; }
+    win.document.write(html);
+    win.document.close();
+    setTimeout(() => win.print(), 600);
+  }
+
+  /* ═══ EXPOSE ═══ */
+  window.SF = window.SF || {};
+  window.SF.gstReturns = {
+    init: init_gstReturnsModule,
+    reload,
+    showTab,
+    exportCAExcel,
+    exportGSTR1JSON,
+    exportGSTR3B,
+    printReport
+  };
+
+  window.init_gstReturnsModule = init_gstReturnsModule;
+
+  if (document.getElementById('gstReturnsModule')) {
+    init_gstReturnsModule();
+  }
+})();
+</script>
