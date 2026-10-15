@@ -1,7 +1,7 @@
 /* ============================================================
-   SMARTFIX ERP — Permissions & Role Engine (v4.6.0)
+   SMARTFIX ERP — Permissions & Role Engine (v4.7.0)
    File: js/permissions.js
-   Added: mobileDoctor.use permission
+   Added: gstReturns.view permission
    ============================================================ */
 
 import { toast } from './common.js';
@@ -36,6 +36,7 @@ const PERMISSIONS = {
     'inventory.view', 'inventory.create', 'inventory.sell', 'inventory.price.edit',
     'staff.view',
     'accounting.view', 'books.view',
+    'gstReturns.view',
     'attendance.view', 'attendance.mark', 'attendance.report',
     'repair.view', 'repair.create', 'repair.edit', 'repair.print',
     'mobileDoctor.use',
@@ -64,6 +65,7 @@ const PERMISSIONS = {
   CA: [
     'dashboard.view',
     'accounting.view', 'books.view',
+    'gstReturns.view',
     'billing.view', 'returns.view', 'purchase.view', 'vouchers.view',
     'parties.view', 'inventory.view', 'staff.view',
     'export.ca',
@@ -113,6 +115,7 @@ export function canAccessRoute(routeKey) {
     purchase:              'purchase.view',
     vouchers:              'vouchers.view',
     accounting:            'accounting.view',
+    gstReturns:            'gstReturns.view',
     books:                 'books.view',
     parties:               'parties.view',
     inventory:             'inventory.view',
@@ -147,4 +150,4 @@ window.SF.perms = {
   isOwner, can, guard, canAccessRoute, getAccessibleRoutes
 };
 
-console.log('%c🔐 Permissions engine ready (v4.6.0)', 'color:#f59e0b;font-weight:bold;font-size:11px');
+console.log('%c🔐 Permissions engine ready (v4.7.0)', 'color:#f59e0b;font-weight:bold;font-size:11px');
