@@ -1,7 +1,7 @@
 <!-- ============================================================
-     SMARTFIX ERP — Mobile Repair / Job Card Module (v4.5.2)
+     SMARTFIX ERP — Mobile Repair / Job Card Module (v4.5.3)
      File: modules/repair.html
-     Fixed: Multi-size Printing (Thermal 58/80/90 & A4) + Delete Bug
+     Fixed: Dark Thermal Printing + Solid Lines + QR Code Fix
      ============================================================ -->
 
 <section id="repairModule" class="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -218,7 +218,7 @@
       </div>
       <div id="repModalBody" class="p-4 overflow-y-auto flex-1 space-y-3"></div>
       
-      <!-- ⭐ আপডেট করা ফুটার: প্রিন্ট সাইজ সিলেক্টর যুক্ত করা হয়েছে -->
+      <!-- ⭐ প্রিন্ট সাইজ সিলেক্টর -->
       <div class="p-3 border-t border-slate-800 bg-slate-950/70 flex flex-wrap gap-2 flex-shrink-0 items-center">
         <select id="repPrintSize" onchange="localStorage.setItem('sfp_repair_print_size', this.value)" class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-2.5 text-[11px] text-slate-200">
           <option value="58mm">58mm</option>
@@ -434,7 +434,7 @@
 
   /* ============ INIT ============ */
   async function init_repairModule() {
-    console.log('%c🔧 Repair module initialized (v4.5.2)', 'color:#8b5cf6;font-weight:bold');
+    console.log('%c🔧 Repair module initialized (v4.5.3)', 'color:#8b5cf6;font-weight:bold');
 
     if (!window.SF?.perms?.can?.('repair.view')) {
       const c = document.getElementById('moduleContainer');
@@ -834,7 +834,6 @@
       ` : ''}
     `;
 
-    // ⭐ প্রিন্ট সাইজ ড্রপডাউনে সেভ করা ভ্যালু লোড করা
     const ps = document.getElementById('repPrintSize');
     if (ps) ps.value = localStorage.getItem('sfp_repair_print_size') || '58mm';
 
@@ -917,9 +916,7 @@
   }
 
 
-  /* ============================================================
-     ⭐ DELETE JOB — FIXED (also deletes linked voucher)
-     ============================================================ */
+  /* ============ DELETE JOB ============ */
   async function deleteJob() {
     if (!requirePerm('repair.delete', 'Only owner can delete')) return;
     const job = RM.currentJob;
@@ -932,10 +929,8 @@
     const ok = await C.confirmDialog('Delete Job?', job.jobNo + '\n' + job.customerName, 'Delete', true);
     if (!ok) return;
 
-    /* ⭐ Find linked vouchers BEFORE deletion */
     const linkedVouchers = (S.vouchers || []).filter((v) => v._sourceRepairId === job.id);
 
-    /* ⭐ Remove from local state */
     if (linkedVouchers.length > 0) {
       S.vouchers = (S.vouchers || []).filter((v) => v._sourceRepairId !== job.id);
       C.safeSave('sfp_vouchers', S.vouchers);
@@ -943,10 +938,8 @@
     RM.jobs = RM.jobs.filter((r) => r.id !== job.id);
     saveLocal(RM.jobs);
 
-    /* ⭐ Delete job from cloud (AWAITED FIXED) */
     await deleteFromCloud(job.id);
 
-    /* ⭐ Delete linked vouchers from cloud (AWAITED & OUTSIDE LOOP FIXED) */
     if (linkedVouchers.length > 0) {
       try {
         const fb = await getFirestore();
@@ -966,12 +959,11 @@
     closeModal();
     renderList();
 
-    /* Refresh dashboard if open */
     try { window.SF.dashboard?.reload?.(); } catch (e) {}
   }
 
 
-  /* ============ PRINT SLIP (Multi-Size Support) ============ */
+  /* ============ PRINT SLIP (Optimized for Thermal) ============ */
   function printSlip() {
     const job = RM.currentJob;
     if (!job) return;
@@ -981,55 +973,52 @@
     const balance = (job.finalCost || job.estimatedCost || 0) - (job.advancePaid || 0);
     const datePretty = C.fmtDatePretty(new Date(job.date + 'T12:00:00'));
 
-    // ⭐ সাইজ ডিটেক্ট করা
     const printSize = localStorage.getItem('sfp_repair_print_size') || '58mm';
     const isA4 = printSize === 'A4';
-    const is58 = printSize === '58mm';
     
-    // ⭐ সাইজ অনুযায়ী ভ্যারিয়েবল
-    const paperWidth = isA4 ? '148mm' : printSize; // A4 এর জন্য A5 এরিয়া নিচ্ছি যাতে সুন্দর দেখায়
-    const fontBase = isA4 ? '13px' : '11px';
+    const paperWidth = isA4 ? '148mm' : printSize;
+    const fontBase = isA4 ? '13px' : '12px'; // ফন্ট সাইজ কিছুটা বাড়ানো হলো
     const padding = isA4 ? '10mm' : '2mm';
     const qrSize = isA4 ? 120 : 80;
 
     const baseUrl = window.location.origin + window.location.pathname.replace(/\/app\.html.*$/, '/').replace(/\/index\.html.*$/, '/');
-    const portalQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(baseUrl + 'index.html#customer')}`;
+    // QR কোড স্পষ্ট কালো এবং সাদা রঙে আসার জন্য প্যারামিটার যুক্ত করা হলো
+    const portalQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(baseUrl + 'index.html#customer')}&color=000000&bgcolor=ffffff`;
 
-    // ⭐ Table ব্যবহার করা হয়েছে যাতে থার্মালে লেখা না কাটে
     const html = `
       <div class="receipt">
         <div class="center bold big">${C.escapeHTML(prof.name || 'Store')}</div>
         ${prof.address ? `<div class="center small">${C.escapeHTML(prof.address)}</div>` : ''}
         ${prof.phone   ? `<div class="center small">☎ ${C.escapeHTML(prof.phone)}</div>` : ''}
         <div class="center small">Shop Code: <b>${C.escapeHTML(shopCode)}</b></div>
-        <hr class="dashed">
+        <hr class="solid">
         
         <div class="center bold big mt4">JOB CARD</div>
         <div class="center bold">${C.escapeHTML(job.jobNo)}</div>
         <div class="center small">${datePretty}</div>
-        <hr class="dashed">
+        <hr class="solid">
         
-        <div class="center bold">${st.icon} ${st.label.toUpperCase()}</div>
-        <hr class="dashed">
+        <div class="center bold big">${st.icon} ${st.label.toUpperCase()}</div>
+        <hr class="solid">
 
         <table class="tbl">
-          <tr><td>Customer</td><td class="bold">${C.escapeHTML(job.customerName)}</td></tr>
-          <tr><td>Phone</td><td class="mono">${C.escapeHTML(job.customerPhone)}</td></tr>
-          ${job.customerAddress ? `<tr><td>Address</td><td class="small">${C.escapeHTML(job.customerAddress)}</td></tr>` : ''}
+          <tr><td>Customer</td><td class="bold right">${C.escapeHTML(job.customerName)}</td></tr>
+          <tr><td>Phone</td><td class="mono right">${C.escapeHTML(job.customerPhone)}</td></tr>
+          ${job.customerAddress ? `<tr><td>Address</td><td class="small right">${C.escapeHTML(job.customerAddress)}</td></tr>` : ''}
         </table>
-        <hr class="dashed">
+        <hr class="solid">
 
         <table class="tbl">
-          <tr><td>Device</td><td class="bold">${C.escapeHTML((job.deviceBrand || '') + ' ' + (job.deviceModel || ''))}</td></tr>
-          ${job.deviceIMEI ? `<tr><td>IMEI</td><td class="mono small">${C.escapeHTML(job.deviceIMEI)}</td></tr>` : ''}
-          ${job.deviceColor ? `<tr><td>Color</td><td>${C.escapeHTML(job.deviceColor)}</td></tr>` : ''}
+          <tr><td>Device</td><td class="bold right">${C.escapeHTML((job.deviceBrand || '') + ' ' + (job.deviceModel || ''))}</td></tr>
+          ${job.deviceIMEI ? `<tr><td>IMEI</td><td class="mono small right">${C.escapeHTML(job.deviceIMEI)}</td></tr>` : ''}
+          ${job.deviceColor ? `<tr><td>Color</td><td class="right">${C.escapeHTML(job.deviceColor)}</td></tr>` : ''}
         </table>
-        <hr class="dashed">
+        <hr class="solid">
 
-        <div class="bold small">Issue:</div>
+        <div class="bold">Issue:</div>
         <div class="small mt2">${C.escapeHTML(job.issueDescription || '')}</div>
         ${(job.accessories || []).length ? `<div class="small mt4"><b>Acc:</b> ${job.accessories.map(a => C.escapeHTML(a)).join(', ')}</div>` : ''}
-        <hr class="dashed">
+        <hr class="solid">
 
         <table class="tbl">
           <tr><td>Estimate</td><td class="right mono">₹${(job.estimatedCost || 0).toFixed(2)}</td></tr>
@@ -1039,21 +1028,21 @@
         </table>
         <hr class="solid">
 
-        ${job.warrantyDays > 0 ? `<div class="center small mt4"><b>Warranty: ${job.warrantyDays} days</b></div><hr class="dashed">` : ''}
+        ${job.warrantyDays > 0 ? `<div class="center bold mt4">Warranty: ${job.warrantyDays} days</div><hr class="solid">` : ''}
 
         <div class="center mt4">
           <img src="${portalQrUrl}" class="qr" alt="QR">
-          <div class="small mt2"><b>Track Status Online</b></div>
-          <div class="tiny">Shop: <b>${C.escapeHTML(shopCode)}</b> | Job: <b>${C.escapeHTML(job.jobNo)}</b></div>
+          <div class="bold mt2">Track Status Online</div>
+          <div class="small">Shop: <b>${C.escapeHTML(shopCode)}</b> | Job: <b>${C.escapeHTML(job.jobNo)}</b></div>
         </div>
-        <hr class="dashed">
+        <hr class="solid">
 
-        <div class="tiny mt2">1. Bring this receipt when collecting.</div>
-        <div class="tiny">2. Warranty covers repaired part only.</div>
+        <div class="small mt2">1. Bring this receipt when collecting.</div>
+        <div class="small">2. Warranty covers repaired part only.</div>
         <div class="center mt8">
           <div class="sig-line">Customer Sign</div>
         </div>
-        <div class="center tiny mt4">Powered by SmartFix ERP</div>
+        <div class="center small mt4">Powered by SmartFix ERP</div>
       </div>
     `;
 
@@ -1062,33 +1051,42 @@
         size: ${isA4 ? 'A5 portrait' : printSize + ' auto'}; 
         margin: 0; 
       }
-      * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      * { 
+        box-sizing: border-box; 
+        -webkit-print-color-adjust: exact !important; 
+        print-color-adjust: exact !important; 
+      }
       html, body {
         margin: 0; padding: 0; background: #fff; color: #000;
-        font-family: 'Courier New', Consolas, monospace;
-        font-size: ${fontBase}; line-height: 1.35;
+        /* থার্মাল প্রিন্টারে লেখা গাঢ় আসার জন্য Arial এবং Bold */
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: ${fontBase}; 
+        font-weight: 600;
+        line-height: 1.4;
         width: ${paperWidth}; max-width: 100vw;
       }
       .receipt { width: 100%; padding: ${padding}; margin: 0 auto; }
       .center { text-align: center; }
-      .bold   { font-weight: 700; }
-      .big    { font-size: 1.2em; }
-      .small  { font-size: 0.9em; }
-      .tiny   { font-size: 0.8em; }
-      .mono   { font-family: 'Courier New', monospace; }
-      .mt2 { margin-top: 2px; } .mt4 { margin-top: 4px; } .mt8 { margin-top: 8px; }
+      .bold   { font-weight: 900; }
+      .big    { font-size: 1.15em; }
+      .small  { font-size: 0.85em; }
+      .mono   { font-family: 'Courier New', monospace; font-weight: 900; }
+      .mt2 { margin-top: 2px; } .mt4 { margin-top: 6px; } .mt8 { margin-top: 10px; }
       
       .tbl { width: 100%; border-collapse: collapse; }
-      .tbl td { padding: 1px 0; vertical-align: top; word-break: break-word; }
-      .tbl td:first-child { width: 35%; color: #333; }
+      .tbl td { padding: 2px 0; vertical-align: top; word-break: break-word; }
+      .tbl td:first-child { width: 35%; font-weight: bold; }
       .tbl td.right { text-align: right; }
       
-      hr { border: none; border-top: 1px dashed #000; margin: 4px 0; }
-      hr.solid { border-top: 1px solid #000; }
-      .qr { width: ${qrSize}px; height: ${qrSize}px; }
+      /* ড্যাশ লাইনের বদলে সলিড লাইন, যাতে প্রিন্টারে ফুটে ওঠে */
+      hr { border: none; border-top: 1px solid #000; margin: 4px 0; }
+      
+      /* QR কোড স্পষ্ট করার জন্য ফিল্টার */
+      .qr { width: ${qrSize}px; height: ${qrSize}px; filter: grayscale(100%) contrast(300%); }
+      
       .sig-line {
         border-top: 1px solid #000; display: inline-block;
-        padding-top: 2px; min-width: 80px; font-size: 0.85em;
+        padding-top: 2px; min-width: 100px; font-size: 0.9em;
       }
     `;
 
@@ -1110,11 +1108,11 @@
 
     const img = doc.querySelector('img.qr');
     if (img && !img.complete) {
-      img.onload  = () => setTimeout(doPrint, 200);
-      img.onerror = () => setTimeout(doPrint, 200); 
-      setTimeout(doPrint, 3000); 
+      img.onload  = () => setTimeout(doPrint, 300); // QR লোড হতে সময় দিন
+      img.onerror = () => setTimeout(doPrint, 300); 
+      setTimeout(doPrint, 4000); // ৪ সেকেন্ড পরেও লোড না হলে প্রিন্ট হবে
     } else {
-      setTimeout(doPrint, 300);
+      setTimeout(doPrint, 500);
     }
 
     const cleanup = () => { try { document.body.removeChild(iframe); } catch (e) {} };
