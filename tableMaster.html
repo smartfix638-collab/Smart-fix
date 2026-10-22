@@ -291,7 +291,7 @@ label { display: block; font-size: 11.5px; font-weight: 700; color: var(--text-m
     <span id="txt-cafe-name">TableMaster Pro</span>
   </div>
   <div class="top-actions">
-    <div class="sync-badge online" id="sync-status">☁️ Online</div>
+    <div class="sync-badge syncing" id="sync-status">🔄 Connecting...</div>
     <button class="lang-toggle-btn" onclick="toggleLanguage()" id="btn-lang-toggle">
       🌐 <span>English</span>
     </button>
@@ -321,26 +321,20 @@ label { display: block; font-size: 11.5px; font-weight: 700; color: var(--text-m
 
 <div id="print-area"></div>
 
-<!-- FIREBASE CLOUD REALTIME MODULE -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-import { getFirestore, doc, onSnapshot, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyCbIno4DtuJ_EBtXXGu_JuBQ9I2KoMvkWY",
-  authDomain: "smartfix-a6733-b231d.firebaseapp.com",
-  projectId: "smartfix-a6733-b231d",
-  storageBucket: "smartfix-a6733-b231d.firebasestorage.app",
-  messagingSenderId: "548062625107",
-  appId: "1:548062625107:web:c457685f0f9d53dbd435a6"
+<script>
+/* ==========================================================================
+   GLOBAL APP STATE & CORE INITIALIZATION
+   ========================================================================== */
+window.todayStr = function() {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-const todayStr = () => new Date().toISOString().split('T')[0];
-
-let RESTAURANT_DATA = {
+// Default fallback data (Immediate render ensures no blank screen)
+window.RESTAURANT_DATA = {
   name: 'TableMaster Bistro',
   phone: '+91 98765 43210',
   address: 'Kolkata, West Bengal, India',
@@ -366,38 +360,190 @@ let RESTAURANT_DATA = {
   staff: []
 };
 
-const docRef = doc(db, "tablemaster", "main_restaurant_store");
-
-// Real-time Cloud Listener
-onSnapshot(docRef, (docSnap) => {
-  if (docSnap.exists()) {
-    RESTAURANT_DATA = docSnap.data();
-  } else {
-    setDoc(docRef, RESTAURANT_DATA);
+// Load cached local copy if available
+try {
+  const localCopy = localStorage.getItem('tmpro_local_cache');
+  if (localCopy) {
+    window.RESTAURANT_DATA = Object.assign(window.RESTAURANT_DATA, JSON.parse(localCopy));
   }
-  document.getElementById('sync-status').innerHTML = '☁️ Live';
-  window.renderCurrentView();
-}, (err) => {
-  console.error("Firebase sync error:", err);
-  document.getElementById('sync-status').innerHTML = '⚠️ Offline';
-});
+} catch (e) { console.error(e); }
 
-window.cloudSave = async function() {
-  document.getElementById('sync-status').innerHTML = '⏳ Syncing...';
-  try {
-    await setDoc(docRef, RESTAURANT_DATA);
-    document.getElementById('sync-status').innerHTML = '☁️ Live';
-  } catch(e) {
-    console.error(e);
-    document.getElementById('sync-status').innerHTML = '⚠️ Error';
+window.getData = function() {
+  return window.RESTAURANT_DATA;
+};
+
+/* --- MULTI-LANGUAGE SYSTEM --- */
+const I18N = {
+  en: {
+    navHome: "Home",
+    navPOS: "Order",
+    navKitchen: "Kitchen",
+    navBills: "Bills",
+    navExpenses: "Expenses",
+    navReports: "Reports",
+    navMenu: "Menu",
+    todaySales: "Today's Total Sales",
+    totalOrders: "Total Orders",
+    activeKOT: "Active Kitchen KOT",
+    newOrder: "New Order (POS)",
+    newOrderSub: "Take customer order",
+    kitchenLive: "Kitchen Live",
+    kitchenLiveSub: "orders preparing",
+    billsAndPrint: "Bills & Print",
+    billsAndPrintSub: "UPI QR payment",
+    reportsAndProfit: "Profit & Reports",
+    reportsAndProfitSub: "Sales vs Expenses",
+    dailyExpenses: "Expenses Log",
+    dailyExpensesSub: "Kitchen market & supplies",
+    floorMap: "Floor Table Map",
+    addTable: "+ Add Table",
+    seater: "Seater",
+    searchPlaceholder: "🔍 Search dishes or category...",
+    selectDishWarning: "Please select a table first!",
+    selectedItems: "items selected",
+    confirmOrderKOT: "Confirm Order (Send KOT) →",
+    orderConfirmation: "Order Confirmation & Quantities",
+    table: "Table",
+    subtotal: "Subtotal",
+    tax: "Tax / GST",
+    serviceCharge: "Service Charge",
+    grandTotal: "Total Due",
+    sendToKitchen: "Send Order to Kitchen",
+    liveKitchenDisplay: "Live Kitchen Monitor",
+    runningOrders: "running orders",
+    noKOT: "No active orders in kitchen!",
+    readyToServe: "Ready to Serve ✓",
+    billingHistory: "Billing & Payment History",
+    noBills: "No bills generated yet",
+    printUPIReceipt: "Receipt / UPI QR",
+    digitalMenuCard: "Digital Menu Card",
+    addNewDish: "+ Add New Item",
+    dishName: "Dish Name",
+    category: "Category",
+    price: "Price (₹)",
+    save: "Save",
+    delete: "Delete",
+    confirmDelete: "Are you sure you want to delete this?",
+    expenseTitle: "Add Expense",
+    expenseDesc: "Expense Description",
+    amount: "Amount",
+    restaurantSettings: "Restaurant Settings",
+    restaurantName: "Restaurant Name",
+    phone: "Phone Number",
+    address: "Address",
+    upiId: "UPI ID (For Scan & Pay)",
+    googleReviewUrl: "Google Review URL",
+    gstRate: "GST Rate (%) [0 to Hide]",
+    serviceRate: "Service Charge (%) [0 to Hide]",
+    uploadLogo: "Upload Restaurant Logo",
+    printThermalReceipt: "Print Bill (Thermal Receipt)",
+    scanToPay: "Scan to Pay via UPI",
+    reviewPrompt: "Leave us a review on Google",
+    thankYou: "Thank you for dining with us! Visit again.",
+    netProfit: "Net Profit",
+    netLoss: "Net Loss",
+    sales: "Sales",
+    expenses: "Expenses",
+    filterToday: "Today",
+    filterWeek: "This Week",
+    filterMonth: "This Month",
+    filterCustom: "Custom Date",
+    filterAll: "All Time",
+    topSelling: "Top Selling Items",
+    dailyBreakdown: "Daily Breakdown",
+    exportCSV: "📥 Export CSV",
+    date: "Date",
+    profit: "Profit",
+    staffMgmt: "Staff Management",
+    role: "Role",
+    masterPinPrompt: "Enter 4-Digit Master PIN:"
+  },
+  bn: {
+    navHome: "হোম",
+    navPOS: "অর্ডার",
+    navKitchen: "কিচেন",
+    navBills: "বিলিং",
+    navExpenses: "খরচের খাতা",
+    navReports: "রিপোর্ট",
+    navMenu: "মেনু",
+    todaySales: "আজকের মোট বিক্রি (Today's Sales)",
+    totalOrders: "মোট অর্ডার",
+    activeKOT: "চলতি কিচেন KOT",
+    newOrder: "নতুন অর্ডার (POS)",
+    newOrderSub: "কাস্টমার অর্ডার এন্ট্রি",
+    kitchenLive: "কিচেন লাইভ",
+    kitchenLiveSub: "টি অর্ডার তৈরি হচ্ছে",
+    billsAndPrint: "বিল ও প্রিন্ট",
+    billsAndPrintSub: "QR দিয়ে UPI পেমেন্ট",
+    reportsAndProfit: "লাভ-ক্ষতি ও রিপোর্ট",
+    reportsAndProfitSub: "বিক্রি ও খরচের হিসাব",
+    dailyExpenses: "খরচের খাতা",
+    dailyExpensesSub: "বাজার ও ভেন্ডর হিসাব",
+    floorMap: "ইন্টারেক্টিভ টেবিল ম্যাপ (Floor Map)",
+    addTable: "+ টেবিল যোগ",
+    seater: "সিটার",
+    searchPlaceholder: "🔍 খাবার বা মেনু সার্চ করুন...",
+    selectDishWarning: "দয়া করে আগে টেবিল নির্বাচন করুন!",
+    selectedItems: "টি আইটেম সিলেক্টেড",
+    confirmOrderKOT: "অর্ডার নিশ্চিত করুন (KOT) →",
+    orderConfirmation: "অর্ডার ও পরিমাণের তালিকা",
+    table: "টেবিল",
+    subtotal: "সাবটোটাল",
+    tax: "ট্যাক্স / GST",
+    serviceCharge: "সার্ভিস চার্জ",
+    grandTotal: "সর্বমোট দেয় টাকা",
+    sendToKitchen: "রান্নাঘরে অর্ডার পাঠান (Send KOT)",
+    liveKitchenDisplay: "লাইভ কিচেন মনিটর (KOT)",
+    runningOrders: "রানিং অর্ডার",
+    noKOT: "কিচেনে কোনো পেন্ডিং অর্ডার নেই!",
+    readyToServe: "খাবার প্রস্তুত (Ready to Serve) ✓",
+    billingHistory: "বিলিং ও পেমেন্ট রসিদ",
+    noBills: "এখনো কোনো বিল তৈরি হয়নি",
+    printUPIReceipt: "রসিদ / UPI QR",
+    digitalMenuCard: "ডিজিটাল মেনু কার্ড",
+    addNewDish: "+ নতুন খাবার যোগ",
+    dishName: "খাবারের নাম",
+    category: "ক্যাটাগরি",
+    price: "মূল্য (টাকা)",
+    save: "সংরক্ষণ করুন",
+    delete: "মুছুন",
+    confirmDelete: "আপনি কি এটি মুছে ফেলতে চান?",
+    expenseTitle: "খরচ এন্ট্রি",
+    expenseDesc: "খরচের বিবরণ",
+    amount: "টাকা",
+    restaurantSettings: "রেস্তোরাঁ সেটিংস",
+    restaurantName: "রেস্তোরাঁর নাম",
+    phone: "মোবাইল নম্বর",
+    address: "ঠিকানা",
+    upiId: "UPI ID (যেটিতে টাকা জমা হবে)",
+    googleReviewUrl: "গুগল রিভিউ লিঙ্ক (Google Review URL)",
+    gstRate: "GST রেট (%) [লুকানোর জন্য 0 দিন]",
+    serviceRate: "সার্ভিস চার্জ (%) [লুকানোর জন্য 0 দিন]",
+    uploadLogo: "রেস্তোরাঁর লোগো আপলোড",
+    printThermalReceipt: "বিল প্রিন্ট করুন (Print Thermal)",
+    scanToPay: "Scan to Pay (GPay / PhonePe / Paytm)",
+    reviewPrompt: "গুগলে আপনার মূল্যবান রিভিউ দিন",
+    thankYou: "আমাদের এখানে আসার জন্য ধন্যবাদ! আবার আসবেন।",
+    netProfit: "নিট লাভ (Net Profit)",
+    netLoss: "নিট ক্ষতি (Net Loss)",
+    sales: "মোট বিক্রি",
+    expenses: "মোট খরচ",
+    filterToday: "আজকে",
+    filterWeek: "এই সপ্তাহ",
+    filterMonth: "এই মাস",
+    filterCustom: "কাস্টম তারিখ",
+    filterAll: "সব সময়",
+    topSelling: "সবচেয়ে বেশি বিক্রি হওয়া খাবার",
+    dailyBreakdown: "দৈনিক লাভ-ক্ষতির তালিকা",
+    exportCSV: "📥 CSV ডাউনলোড",
+    date: "তারিখ",
+    profit: "লাভ",
+    staffMgmt: "স্টাফ ম্যানেজমেন্ট",
+    role: "দায়িত্ব / রোল",
+    masterPinPrompt: "৪-ডিজিট মাস্টার পিন (Master PIN) দিন:"
   }
 };
 
-window.getData = () => RESTAURANT_DATA;
-window.todayStr = todayStr;
-</script>
-
-<script>
 let currentLang = localStorage.getItem('tmpro_lang') || 'en';
 function t(k) { return (I18N[currentLang] && I18N[currentLang][k]) ? I18N[currentLang][k] : k; }
 
@@ -452,6 +598,7 @@ let cartState = { tableId: '', items: [] };
 
 function setupNavigation() {
   const bottomBar = document.getElementById('app-bottom-bar');
+  if (!bottomBar) return;
   bottomBar.innerHTML = ALL_NAV_ITEMS.map(it => `
     <button class="bar-item ${activeTab === it.id ? 'active' : ''}" onclick="navigate('${it.id}')" id="nav-${it.id}">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">${it.icon}</svg>
@@ -473,10 +620,10 @@ function onSearchKeyInput(query) {
 
   const data = window.getData();
   const q = query.toLowerCase().trim();
-  let dishes = posCategoryFilter === 'All' ? data.menu : data.menu.filter(m => m.category === posCategoryFilter);
+  let dishes = posCategoryFilter === 'All' ? (data.menu || []) : (data.menu || []).filter(m => m.category === posCategoryFilter);
 
   if (q) {
-    dishes = dishes.filter(d => d.name.toLowerCase().includes(q) || d.category.toLowerCase().includes(q));
+    dishes = dishes.filter(d => (d.name && d.name.toLowerCase().includes(q)) || (d.category && d.category.toLowerCase().includes(q)));
   }
 
   if (dishes.length === 0) {
@@ -496,7 +643,9 @@ window.renderCurrentView = function() {
   if (!window.getData) return;
   const data = window.getData();
   const container = document.getElementById('main-view');
-  document.getElementById('txt-cafe-name').innerText = data.name;
+  if (!container) return;
+
+  document.getElementById('txt-cafe-name').innerText = data.name || 'TableMaster Pro';
 
   const logoBox = document.getElementById('header-logo-container');
   if (data.logo) {
@@ -563,7 +712,7 @@ window.renderCurrentView = function() {
             <div class="table-card ${tData.status}" onclick="handleTableSelect('${tData.id}')">
               <span class="table-dot"></span>
               <div style="font-size:16px;font-weight:800;">${tData.name}</div>
-              <div style="font-size:11.5px;color:var(--text-muted);">${tData.seats}${t('seater')}</div>
+              <div style="font-size:11.5px;color:var(--text-muted);">${tData.seats} ${t('seater')}</div>
             </div>
           `).join('')}
         </div>
@@ -574,10 +723,10 @@ window.renderCurrentView = function() {
 
   else if (activeTab === 'pos') {
     const cats = ['All', ...new Set((data.menu || []).map(m => m.category))];
-    let dishes = posCategoryFilter === 'All' ? data.menu : data.menu.filter(m => m.category === posCategoryFilter);
+    let dishes = posCategoryFilter === 'All' ? (data.menu || []) : (data.menu || []).filter(m => m.category === posCategoryFilter);
     if (posSearchQuery.trim()) {
       const q = posSearchQuery.toLowerCase();
-      dishes = dishes.filter(d => d.name.toLowerCase().includes(q) || d.category.toLowerCase().includes(q));
+      dishes = dishes.filter(d => (d.name && d.name.toLowerCase().includes(q)) || (d.category && d.category.toLowerCase().includes(q)));
     }
     const cartItemCount = cartState.items.reduce((s, i) => s + i.qty, 0);
     const cartSubtotal = cartState.items.reduce((s, i) => s + (i.price * i.qty), 0);
@@ -590,7 +739,7 @@ window.renderCurrentView = function() {
           <option value="">-- ${t('table')} --</option>
           ${(data.tables || []).map(tData => `
             <option value="${tData.id}" ${cartState.tableId === tData.id ? 'selected':''}>
-              ${tData.name} (${tData.seats} ${t('seater')}) -${tData.status.toUpperCase()}
+              ${tData.name} (${tData.seats} ${t('seater')}) - ${tData.status.toUpperCase()}
             </option>
           `).join('')}
         </select>
@@ -622,7 +771,7 @@ window.renderCurrentView = function() {
       ${cartItemCount > 0 ? `
         <div class="floating-cart">
           <div>
-            <div style="font-size:11px;opacity:0.85;">${cartItemCount}${t('selectedItems')}</div>
+            <div style="font-size:11px;opacity:0.85;">${cartItemCount} ${t('selectedItems')}</div>
             <div style="font-size:18px;font-weight:800;">₹ ${cartSubtotal.toFixed(2)}</div>
           </div>
           <button class="btn-place" onclick="openCartReviewSheet()">${t('confirmOrderKOT')}</button>
@@ -676,7 +825,7 @@ window.renderCurrentView = function() {
               <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid var(--border);border-radius:12px;${isSettled ? 'background:#f8fafc;' : 'background:#fff;'}">
                 <div>
                   <div style="font-weight:700;">
-                    #${o.billNo} —${tbl ? tbl.name : 'Takeaway'}
+                    #${o.billNo} — ${tbl ? tbl.name : 'Takeaway'}
                     <span class="badge ${isSettled ? 'cat-raw' : 'cat-sal'}" style="margin-left:6px;font-size:9.5px;">${isSettled ? 'PAID & CLOSED' : 'ACTIVE / UNPAID'}</span>
                   </div>
                   <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">${o.items.length} items · <b>₹ ${o.total.toFixed(2)}</b></div>
@@ -700,7 +849,7 @@ window.renderCurrentView = function() {
     if (expenseCategoryFilter !== 'All') {
       filteredExp = filteredExp.filter(e => e.category === expenseCategoryFilter);
     }
-    const today = window.todayStr ? window.todayStr() : '';
+    const today = window.todayStr();
     const todayExpenses = (data.expenses || []).filter(e => e.date === today).reduce((sum, e) => sum + e.amount, 0);
 
     const getBadgeClass = (c) => {
@@ -762,7 +911,7 @@ window.renderCurrentView = function() {
   }
 
   else if (activeTab === 'reports') {
-    const today = window.todayStr ? window.todayStr() : '';
+    const today = window.todayStr();
     if (!reportCustomStart) { reportCustomStart = today; reportCustomEnd = today; }
 
     let filteredOrders = (data.orders || []).filter(o => o.status === 'completed');
@@ -935,6 +1084,16 @@ window.renderCurrentView = function() {
   }
 };
 
+/* --- DATA PERSISTENCE & ACTIONS --- */
+function saveCurrentData() {
+  try {
+    localStorage.setItem('tmpro_local_cache', JSON.stringify(window.getData()));
+  } catch(e) {}
+  if (typeof window.cloudSave === 'function') {
+    window.cloudSave();
+  }
+}
+
 function handleTableSelect(tblId) {
   cartState.tableId = tblId;
   navigate('pos');
@@ -942,7 +1101,7 @@ function handleTableSelect(tblId) {
 
 function addItemToCart(dishId) {
   const data = window.getData();
-  const dish = data.menu.find(d => d.id === dishId);
+  const dish = (data.menu || []).find(d => d.id === dishId);
   if (!dish) return;
   const item = cartState.items.find(i => i.dishId === dishId);
   if (item) item.qty += 1;
@@ -978,8 +1137,8 @@ function openCartReviewSheet() {
   const service = serviceRate > 0 ? (subtotal * (serviceRate / 100)) : 0;
   const grandTotal = subtotal + gst + service;
 
-  const tbl = data.tables.find(tData => tData.id === cartState.tableId);
-  const existingOrder = data.orders.find(o => o.tableId === cartState.tableId && o.status !== 'completed');
+  const tbl = (data.tables || []).find(tData => tData.id === cartState.tableId);
+  const existingOrder = (data.orders || []).find(o => o.tableId === cartState.tableId && o.status !== 'completed');
 
   const body = `
     <div style="font-weight:700;margin-bottom:12px;">${t('table')}: ${tbl ? tbl.name : ''}</div>
@@ -1032,6 +1191,8 @@ function submitOrderToKitchen() {
   const gstRate = parseFloat(data.gstRate) || 0;
   const serviceRate = parseFloat(data.serviceRate) || 0;
 
+  if (!data.orders) data.orders = [];
+
   const existingOrder = data.orders.find(o => o.tableId === cartState.tableId && o.status !== 'completed');
 
   if (existingOrder) {
@@ -1071,10 +1232,10 @@ function submitOrderToKitchen() {
     });
   }
 
-  const tbl = data.tables.find(tData => tData.id === cartState.tableId);
+  const tbl = (data.tables || []).find(tData => tData.id === cartState.tableId);
   if (tbl) tbl.status = 'occupied';
 
-  window.cloudSave();
+  saveCurrentData();
 
   cartState = { tableId: '', items: [] };
   closeSheet();
@@ -1083,32 +1244,34 @@ function submitOrderToKitchen() {
 
 function completeKOT(orderId) {
   const data = window.getData();
-  const o = data.orders.find(ord => ord.id === orderId);
+  const o = (data.orders || []).find(ord => ord.id === orderId);
   if (o) {
     o.status = 'ready_to_serve';
-    window.cloudSave();
+    saveCurrentData();
+    renderCurrentView();
   }
 }
 
 function settleBillAndReleaseTable(orderId) {
   const data = window.getData();
-  const o = data.orders.find(ord => ord.id === orderId);
+  const o = (data.orders || []).find(ord => ord.id === orderId);
   if (!o) return;
 
   if (!confirm(`Confirm payment of ₹ ${o.total.toFixed(2)} for Bill #${o.billNo}? Table will be marked AVAILABLE.`)) return;
 
   o.status = 'completed';
-  const tbl = data.tables.find(tData => tData.id === o.tableId);
+  const tbl = (data.tables || []).find(tData => tData.id === o.tableId);
   if (tbl) tbl.status = 'available';
 
-  window.cloudSave();
+  saveCurrentData();
+  renderCurrentView();
 }
 
 function showReceiptModal(orderId) {
   const data = window.getData();
-  const o = data.orders.find(ord => ord.id === orderId);
+  const o = (data.orders || []).find(ord => ord.id === orderId);
   if (!o) return;
-  const tbl = data.tables.find(tData => tData.id === o.tableId);
+  const tbl = (data.tables || []).find(tData => tData.id === o.tableId);
 
   const upiString = `upi://pay?pa=${data.upi}&pn=${encodeURIComponent(data.name)}&am=${o.total.toFixed(2)}&cu=INR&tn=Bill-${o.billNo}`;
   const upiQrImg = createSafeQR(upiString);
@@ -1189,10 +1352,10 @@ function exportReportsCSV() {
   let csv = "TableMaster Pro - Sales & Profit Report\n";
   csv += "Software Developed by,Debapriya Sarkar\n";
   csv += "Type,Date,Description,Amount\n";
-  data.orders.filter(o => o.status === 'completed').forEach(o => {
+  (data.orders || []).filter(o => o.status === 'completed').forEach(o => {
     csv += `Sales,${o.date || window.todayStr()},Bill #${o.billNo},${o.total.toFixed(2)}\n`;
   });
-  data.expenses.forEach(e => {
+  (data.expenses || []).forEach(e => {
     csv += `Expense,${e.date || window.todayStr()},"${e.desc}",${e.amount.toFixed(2)}\n`;
   });
 
@@ -1223,15 +1386,18 @@ function saveNewDish() {
   const cat = document.getElementById('add-dish-cat').value.trim() || 'General';
   const price = parseFloat(document.getElementById('add-dish-price').value);
   if (!name || isNaN(price) || price < 0) { alert('Please enter valid details'); return; }
+  if (!data.menu) data.menu = [];
   data.menu.push({ id: 'm_' + Date.now(), name, category: cat, price });
-  window.cloudSave();
+  saveCurrentData();
   closeSheet();
+  renderCurrentView();
 }
 function deleteDish(id) {
   const data = window.getData();
   if (!confirm(t('confirmDelete'))) return;
-  data.menu = data.menu.filter(m => m.id !== id);
-  window.cloudSave();
+  data.menu = (data.menu || []).filter(m => m.id !== id);
+  saveCurrentData();
+  renderCurrentView();
 }
 
 function openAddTableSheet() {
@@ -1249,9 +1415,11 @@ function saveNewTable() {
   const name = document.getElementById('tbl-in-name').value.trim();
   const seats = parseInt(document.getElementById('tbl-in-seats').value) || 4;
   if (!name) return;
+  if (!data.tables) data.tables = [];
   data.tables.push({ id: 't_' + Date.now(), name, seats, status: 'available' });
-  window.cloudSave();
+  saveCurrentData();
   closeSheet();
+  renderCurrentView();
 }
 
 function openExpenseSheet() {
@@ -1279,15 +1447,18 @@ function saveExpense() {
   const desc = document.getElementById('exp-desc').value.trim();
   const amt = parseFloat(document.getElementById('exp-amount').value);
   if (!amt || isNaN(amt) || !desc) { alert('Please enter valid expense details'); return; }
+  if (!data.expenses) data.expenses = [];
   data.expenses.unshift({ id: 'exp_' + Date.now(), category: cat, desc, amount: amt, date: window.todayStr() });
-  window.cloudSave();
+  saveCurrentData();
   closeSheet();
+  renderCurrentView();
 }
 function deleteExpense(id) {
   const data = window.getData();
   if (!confirm('Delete this expense entry?')) return;
-  data.expenses = data.expenses.filter(e => e.id !== id);
-  window.cloudSave();
+  data.expenses = (data.expenses || []).filter(e => e.id !== id);
+  saveCurrentData();
+  renderCurrentView();
 }
 
 function openStaffModal() {
@@ -1340,7 +1511,7 @@ function saveStaffMember() {
 
   if (!data.staff) data.staff = [];
   data.staff.push({ id: 'stf_' + Date.now(), name, username: user, password: pass, role });
-  window.cloudSave();
+  saveCurrentData();
   closeSheet();
   alert('Staff account created successfully!');
 }
@@ -1348,8 +1519,8 @@ function saveStaffMember() {
 function deleteStaff(id) {
   const data = window.getData();
   if (!confirm('Remove this staff member?')) return;
-  data.staff = data.staff.filter(s => s.id !== id);
-  window.cloudSave();
+  data.staff = (data.staff || []).filter(s => s.id !== id);
+  saveCurrentData();
   closeSheet();
 }
 
@@ -1357,7 +1528,7 @@ function openSettingsSheet() {
   const data = window.getData();
   const form = `
     <label>${t('restaurantName')}</label>
-    <input type="text" id="cfg-name" value="${data.name}">
+    <input type="text" id="cfg-name" value="${data.name || ''}">
     
     <label>${t('uploadLogo')}</label>
     <input type="file" id="cfg-logo-file" accept="image/*" onchange="handleLogoUpload(event)">
@@ -1369,13 +1540,13 @@ function openSettingsSheet() {
     ` : ''}
 
     <label>${t('phone')}</label>
-    <input type="text" id="cfg-phone" value="${data.phone}">
+    <input type="text" id="cfg-phone" value="${data.phone || ''}">
     <label>${t('address')}</label>
-    <input type="text" id="cfg-addr" value="${data.address}">
+    <input type="text" id="cfg-addr" value="${data.address || ''}">
     <label>${t('upiId')}</label>
-    <input type="text" id="cfg-upi" value="${data.upi}">
+    <input type="text" id="cfg-upi" value="${data.upi || ''}">
     <label>${t('googleReviewUrl')}</label>
-    <input type="text" id="cfg-review" value="${data.googleReview}">
+    <input type="text" id="cfg-review" value="${data.googleReview || ''}">
     
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
       <div>
@@ -1389,7 +1560,7 @@ function openSettingsSheet() {
     </div>
 
     <label>Master PIN (4 Digits)</label>
-    <input type="password" id="cfg-pin" pattern="[0-9]{4}" value="${data.masterPin}">
+    <input type="password" id="cfg-pin" pattern="[0-9]{4}" value="${data.masterPin || '1234'}">
     <button class="btn-primary" onclick="saveSettings()">${t('save')}</button>
   `;
   openSheet(t('restaurantSettings'), form);
@@ -1402,7 +1573,7 @@ function handleLogoUpload(e) {
   reader.onload = function(evt) {
     const data = window.getData();
     data.logo = evt.target.result;
-    window.cloudSave();
+    saveCurrentData();
     openSettingsSheet();
   };
   reader.readAsDataURL(file);
@@ -1411,7 +1582,7 @@ function handleLogoUpload(e) {
 function removeLogo() {
   const data = window.getData();
   data.logo = '';
-  window.cloudSave();
+  saveCurrentData();
   openSettingsSheet();
 }
 
@@ -1425,9 +1596,15 @@ function saveSettings() {
   data.gstRate = parseFloat(document.getElementById('cfg-gst').value) || 0;
   data.serviceRate = parseFloat(document.getElementById('cfg-service').value) || 0;
   data.masterPin = document.getElementById('cfg-pin').value.trim() || data.masterPin;
-  window.cloudSave();
+  saveCurrentData();
   closeSheet();
+  renderCurrentView();
 }
+
+// Initial Immediate Render (Never Blank)
+document.addEventListener('DOMContentLoaded', () => {
+  renderCurrentView();
+});
 </script>
 </body>
 </html>
