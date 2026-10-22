@@ -1586,8 +1586,6 @@ async function saveStaffMember() {
   const fakeEmail = `${username}@tablemaster.local`;
 
   try {
-    // 1. Create user in Firebase Auth using a secondary app instance
-    // This prevents the owner from being logged out
     let secondaryApp;
     if (!firebase.apps.find(app => app.name === 'Secondary')) {
       secondaryApp = firebase.initializeApp(firebaseConfig, "Secondary");
@@ -1597,9 +1595,8 @@ async function saveStaffMember() {
     const secondaryAuth = secondaryApp.auth();
     const cred = await secondaryAuth.createUserWithEmailAndPassword(fakeEmail, pass);
     const staffUid = cred.user.uid;
-    await secondaryApp.delete(); // Clean up
+    await secondaryApp.delete();
 
-    // 2. Save the mapping in Firestore so staff knows which cafe they belong to
     await db.collection("users").doc(staffUid).set({
       cafeId: data.cafeId,
       role: role,
@@ -1607,7 +1604,6 @@ async function saveStaffMember() {
       username: username
     });
 
-    // 3. Save to local staff list for the owner's view
     if (!data.staff) data.staff = [];
     data.staff.push({ id: staffUid, name, username, role });
     window.cloudSave();
@@ -1617,7 +1613,11 @@ async function saveStaffMember() {
 
   } catch (err) {
     console.error(err);
-    alert("Error creating staff account: " + err.message);
+    if (err.code === 'auth/email-already-in-use') {
+      alert(`দুঃখিত, "${username}" ইউজারনেমটি ইতিমধ্যে অন্য কেউ ব্যবহার করছে। অনুগ্রহ করে ভিন্ন কোনো ইউজারনেম দিন (যেমন: ${username}123)।`);
+    } else {
+      alert("Error creating staff account: " + err.message);
+    }
   } finally {
     btn.disabled = false; btn.innerText = "Create Staff Account";
   }
@@ -1637,7 +1637,6 @@ async function deleteStaff(id) {
   if (!confirm('Remove this staff member? (They will no longer be able to access this cafe.)')) return;
   data.staff = (data.staff || []).filter(s => s.id !== id);
   
-  // Also remove from users collection so they can't log in
   try { await db.collection("users").doc(id).delete(); } catch(e) { console.warn(e); }
 
   window.cloudSave();
