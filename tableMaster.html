@@ -320,7 +320,7 @@ label { display: block; font-size: 11px; font-weight: 700; color: var(--text-mut
   }
   #print-area .receipt-paper {
     width: 100% !important;
-    max-width: 80mm !important; /* Standard thermal printer width */
+    max-width: 80mm !important;
     border: none !important;
     padding: 0 !important;
     margin: 0 auto !important;
@@ -344,7 +344,6 @@ label { display: block; font-size: 11px; font-weight: 700; color: var(--text-mut
       <p style="font-size:11.5px;color:var(--text-muted);margin-top:2px">Multi-Tenant Secure Cloud Management</p>
     </div>
     
-    <!-- Error Message Container for Firebase Load Issues -->
     <div id="firebase-error-box" style="display:none; background:#fef2f2; border:1px solid #fecaca; color:#dc2626; padding:10px; border-radius:8px; font-size:12px; font-weight:600; margin-bottom:15px; text-align:center;">
       ⚠️ Firebase failed to load! Please check your internet connection or disable Ad-Blockers and refresh the page.
     </div>
@@ -354,8 +353,8 @@ label { display: block; font-size: 11px; font-weight: 700; color: var(--text-mut
       <button class="auth-tab" type="button" onclick="switchAuthTab('register')" id="tab-register">Register Cafe</button>
     </div>
     <form id="form-login" onsubmit="handleLogin(event)">
-      <label>Email Address</label>
-      <input id="log-email" type="email" required placeholder="owner@cafe.com" autocomplete="email">
+      <label>Email or Staff Username</label>
+      <input id="log-email" type="text" required placeholder="owner@cafe.com OR rohan" autocomplete="username">
       <label>Password</label>
       <input id="log-pass" type="password" required placeholder="••••••••" autocomplete="current-password">
       <button type="submit" class="btn-primary" style="margin-top:6px" id="btn-login-submit">Sign In →</button>
@@ -396,8 +395,11 @@ label { display: block; font-size: 11px; font-weight: 700; color: var(--text-mut
     <div class="top-actions">
       <div class="sync-badge syncing" id="sync-status">🔄 Connecting...</div>
       <button class="lang-toggle-btn" onclick="toggleLanguage()" id="btn-lang-toggle">🌐 <span>English</span></button>
-      <button class="btn-icon" id="btn-staff-header" onclick="openStaffModal()" title="Staff Switch / PIN"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></button>
-      <button class="btn-icon" id="btn-settings-header" onclick="openSettingsSheet()" title="Settings"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
+      
+      <!-- Owner Only Buttons -->
+      <button class="btn-icon owner-only" id="btn-staff-header" onclick="openStaffModal()" title="Staff Switch / PIN" style="display:none;"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></button>
+      <button class="btn-icon owner-only" id="btn-settings-header" onclick="openSettingsSheet()" title="Settings" style="display:none;"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
+      
       <button class="btn-icon" onclick="handleLogout()" title="Logout" style="color:var(--danger)"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg></button>
     </div>
   </header>
@@ -448,7 +450,7 @@ function initFirebaseApp() {
       console.log("✅ Firebase initialized successfully.");
       return true;
     } else {
-      console.error("❌ Firebase SDK is not loaded (Blocked by browser/network).");
+      console.error("❌ Firebase SDK is not loaded.");
       document.getElementById('firebase-error-box').style.display = 'block';
       return false;
     }
@@ -459,7 +461,6 @@ function initFirebaseApp() {
   }
 }
 
-// Try to initialize immediately
 const isFirebaseReady = initFirebaseApp();
 
 window.todayStr = function() {
@@ -501,66 +502,34 @@ function createNewCafeTemplate(cafeId, ownerUid, name, owner, phone, pin) {
   };
 }
 
-// Global active data store
 window.RESTAURANT_DATA = {
-  cafeId: 'default_cafe',
-  name: 'TableMaster Bistro',
-  phone: '',
-  address: '',
-  masterPin: '1234',
-  gstRate: 0,
-  serviceRate: 0,
-  tables: [
-    { id: 't1', name: 'T-01', seats: 2, status: 'available' },
-    { id: 't2', name: 'T-02', seats: 4, status: 'available' }
-  ],
-  menu: [
-    { id: 'm1', name: 'Special Chicken Biryani', category: 'Main Course', price: 190 }
-  ],
-  orders: [],
-  expenses: [],
-  staff: []
+  cafeId: 'default_cafe', name: 'TableMaster Bistro', phone: '', address: '', masterPin: '1234', gstRate: 0, serviceRate: 0,
+  tables: [{ id: 't1', name: 'T-01', seats: 2, status: 'available' }],
+  menu: [{ id: 'm1', name: 'Special Chicken Biryani', category: 'Main Course', price: 190 }],
+  orders: [], expenses: [], staff: []
 };
 
 window.CURRENT_USER_ROLE = sessionStorage.getItem('tmpro_role_mode') || 'owner';
+window.getData = function() { return window.RESTAURANT_DATA || {}; };
 
-window.getData = function() { 
-  return window.RESTAURANT_DATA || {}; 
-};
-
-// Realtime Listener for authenticated cafe
 function bindCafeCloudListener(cafeId) {
   if (!db || !cafeId) return;
-
-  if (currentCafeListener) {
-    currentCafeListener();
-  }
+  if (currentCafeListener) currentCafeListener();
 
   const badge = document.getElementById('sync-status');
-  if (badge) {
-    badge.className = 'sync-badge syncing';
-    badge.innerHTML = '🔄 Connecting...';
-  }
+  if (badge) { badge.className = 'sync-badge syncing'; badge.innerHTML = '🔄 Connecting...'; }
 
-  const docRef = db.collection("cafes").doc(cafeId);
-
-  currentCafeListener = docRef.onSnapshot((docSnap) => {
+  currentCafeListener = db.collection("cafes").doc(cafeId).onSnapshot((docSnap) => {
     if (docSnap.exists) {
       window.RESTAURANT_DATA = Object.assign({}, window.RESTAURANT_DATA, docSnap.data());
       window.RESTAURANT_DATA.cafeId = cafeId;
       localStorage.setItem('tmpro_cafe_cache_' + cafeId, JSON.stringify(window.RESTAURANT_DATA));
     }
-    if (badge) {
-      badge.className = 'sync-badge online';
-      badge.innerHTML = '☁️ Online';
-    }
+    if (badge) { badge.className = 'sync-badge online'; badge.innerHTML = '☁️ Online'; }
     renderCurrentView();
   }, (err) => {
     console.warn("Firestore sync warning:", err);
-    if (badge) {
-      badge.className = 'sync-badge syncing';
-      badge.innerHTML = '⚡ Local Mode';
-    }
+    if (badge) { badge.className = 'sync-badge syncing'; badge.innerHTML = '⚡ Local Mode'; }
     renderCurrentView();
   });
 }
@@ -569,42 +538,43 @@ window.cloudSave = function() {
   const data = window.getData();
   if (!data || !data.cafeId || !db) return;
 
-  try {
-    localStorage.setItem('tmpro_cafe_cache_' + data.cafeId, JSON.stringify(data));
-  } catch(e){}
+  try { localStorage.setItem('tmpro_cafe_cache_' + data.cafeId, JSON.stringify(data)); } catch(e){}
 
   const badge = document.getElementById('sync-status');
-  if (badge) {
-    badge.className = 'sync-badge syncing';
-    badge.innerHTML = '🔄 Syncing...';
-  }
+  if (badge) { badge.className = 'sync-badge syncing'; badge.innerHTML = '🔄 Syncing...'; }
 
   db.collection("cafes").doc(data.cafeId).set(data).then(() => {
-    if (badge) {
-      badge.className = 'sync-badge online';
-      badge.innerHTML = '☁️ Online';
-    }
+    if (badge) { badge.className = 'sync-badge online'; badge.innerHTML = '☁️ Online'; }
   }).catch(err => {
     console.error("Cloud save failed:", err);
-    if (badge) {
-      badge.className = 'sync-badge syncing';
-      badge.innerHTML = '⚠️ Error';
-    }
+    if (badge) { badge.className = 'sync-badge syncing'; badge.innerHTML = '⚠️ Error'; }
   });
 };
 
 /* ==========================================================================
-   AUTHENTICATION FLOW
+   AUTHENTICATION FLOW (UPDATED FOR STAFF)
    ========================================================================== */
 function checkAuth() {
-  if (!auth) {
-    console.warn("Auth is not initialized. Waiting for user action or network.");
-    return;
-  }
+  if (!auth) return;
 
   auth.onAuthStateChanged(async (user) => {
     if (user) {
-      const cafeId = 'cafe_' + user.uid;
+      let cafeId = 'cafe_' + user.uid;
+      let userRole = 'owner';
+
+      // Check if this user is a staff member
+      try {
+        const userDoc = await db.collection("users").doc(user.uid).get();
+        if (userDoc.exists) {
+          const userData = userDoc.data();
+          cafeId = userData.cafeId; // Staff gets assigned to the owner's cafe
+          userRole = userData.role;
+        }
+      } catch(e) { console.error("Error fetching user role", e); }
+
+      window.CURRENT_USER_ROLE = userRole;
+      sessionStorage.setItem('tmpro_role_mode', userRole);
+
       const cached = localStorage.getItem('tmpro_cafe_cache_' + cafeId);
       if (cached) {
         window.RESTAURANT_DATA = JSON.parse(cached);
@@ -615,14 +585,16 @@ function checkAuth() {
       document.getElementById('auth-screen').style.display = 'none';
       document.getElementById('app-container').style.display = 'block';
 
+      // Show/Hide owner-only buttons in header
+      document.querySelectorAll('.owner-only').forEach(el => {
+        el.style.display = (userRole === 'owner') ? 'flex' : 'none';
+      });
+
       bindCafeCloudListener(cafeId);
       setupNavigation();
       renderCurrentView();
     } else {
-      if (currentCafeListener) {
-        currentCafeListener();
-        currentCafeListener = null;
-      }
+      if (currentCafeListener) { currentCafeListener(); currentCafeListener = null; }
       document.getElementById('auth-screen').style.display = 'flex';
       document.getElementById('app-container').style.display = 'none';
     }
@@ -638,43 +610,31 @@ function switchAuthTab(tab) {
 
 async function handleLogin(e) {
   e.preventDefault();
-  
-  // If Firebase failed to load initially, try to re-initialize it now
-  if (!auth) {
-    const retrySuccess = initFirebaseApp();
-    if (!retrySuccess) {
-      alert("⚠️ ইন্টারনেট সমস্যা বা অ্যাড-ব্লকারের কারণে Firebase লোড হচ্ছে না। অনুগ্রহ করে ইন্টারনেট চেক করুন, অ্যাড-ব্লকার বন্ধ করুন এবং পেজটি রিফ্রেশ দিন।");
-      return;
-    }
-  }
+  if (!auth) { alert("⚠️ Firebase load error. Check internet."); return; }
 
-  const email = document.getElementById('log-email').value.trim();
+  let loginInput = document.getElementById('log-email').value.trim();
   const pass = document.getElementById('log-pass').value.trim();
   const btn = document.getElementById('btn-login-submit');
 
-  btn.disabled = true;
-  btn.innerText = "Signing in...";
+  // TRICK: If user types a username (no @ symbol), convert to fake email
+  if (!loginInput.includes('@')) {
+    loginInput = loginInput.toLowerCase().replace(/\s+/g, '') + '@tablemaster.local';
+  }
+
+  btn.disabled = true; btn.innerText = "Signing in...";
 
   try {
-    await auth.signInWithEmailAndPassword(email, pass);
+    await auth.signInWithEmailAndPassword(loginInput, pass);
   } catch (err) {
     alert("Login Failed: " + err.message);
   } finally {
-    btn.disabled = false;
-    btn.innerText = "Sign In →";
+    btn.disabled = false; btn.innerText = "Sign In →";
   }
 }
 
 async function handleRegister(e) {
   e.preventDefault();
-
-  if (!auth || !db) {
-    const retrySuccess = initFirebaseApp();
-    if (!retrySuccess) {
-      alert("⚠️ ইন্টারনেট সমস্যা বা অ্যাড-ব্লকারের কারণে Firebase লোড হচ্ছে না। অনুগ্রহ করে ইন্টারনেট চেক করুন এবং পেজটি রিফ্রেশ দিন।");
-      return;
-    }
-  }
+  if (!auth || !db) { alert("⚠️ Firebase load error."); return; }
 
   const name = document.getElementById('reg-name').value.trim();
   const owner = document.getElementById('reg-owner').value.trim();
@@ -684,13 +644,7 @@ async function handleRegister(e) {
   const pin = document.getElementById('reg-pin').value.trim();
   const btn = document.getElementById('btn-reg-submit');
 
-  if (!email || !pass || !name) {
-    alert("Please fill in all required fields!");
-    return;
-  }
-
-  btn.disabled = true;
-  btn.innerText = "Registering Cafe...";
+  btn.disabled = true; btn.innerText = "Registering Cafe...";
 
   try {
     const cred = await auth.createUserWithEmailAndPassword(email, pass);
@@ -707,8 +661,7 @@ async function handleRegister(e) {
   } catch (err) {
     alert("Registration Error: " + err.message);
   } finally {
-    btn.disabled = false;
-    btn.innerText = "Register & Launch My Cafe →";
+    btn.disabled = false; btn.innerText = "Register & Launch My Cafe →";
   }
 }
 
@@ -718,9 +671,7 @@ async function handleLogout() {
     window.CURRENT_USER_ROLE = 'owner';
     sessionStorage.removeItem('tmpro_role_mode');
     if(auth) await auth.signOut();
-  } catch (err) {
-    console.error(err);
-  }
+  } catch (err) { console.error(err); }
 }
 
 /* ==========================================================================
@@ -796,12 +747,8 @@ function sheetBackdropClick(e) { if (e.target.id === 'sheet-backdrop') closeShee
 
 function createSafeQR(text) {
   if (!text) return '';
-  try {
-    const qr = qrcode(0, 'M');
-    qr.addData(String(text));
-    qr.make();
-    return qr.createDataURL(4);
-  } catch (err) { return ''; }
+  try { const qr = qrcode(0, 'M'); qr.addData(String(text)); qr.make(); return qr.createDataURL(4); } 
+  catch (err) { return ''; }
 }
 
 const ALL_NAV_ITEMS = [
@@ -881,9 +828,7 @@ window.renderCurrentView = function() {
 
   document.getElementById('txt-cafe-name').innerText = data.name || 'TableMaster Pro';
   const roleBadge = document.getElementById('active-user-role');
-  if (roleBadge) {
-    roleBadge.innerText = (window.CURRENT_USER_ROLE || 'owner').toUpperCase();
-  }
+  if (roleBadge) { roleBadge.innerText = (window.CURRENT_USER_ROLE || 'owner').toUpperCase(); }
 
   const logoBox = document.getElementById('header-logo-container');
   if (data.logo) {
@@ -984,7 +929,7 @@ window.renderCurrentView = function() {
 
         ${activeOrderOnTable ? `
           <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px;margin-bottom:10px;font-size:12px;color:#1e40af;">
-            ℹ️ <b>Active Order (#${activeOrderOnTable.billNo})</b> is running on this table. Additional items will be marked as ADD-ON on KOT.
+            ℹ️ <b>Active Order (#${activeOrderOnTable.billNo})</b> is running on this table.
           </div>
         ` : ''}
 
@@ -1089,17 +1034,13 @@ window.renderCurrentView = function() {
   else if (activeTab === 'expenses') {
     const expenseCategories = ['All', 'Raw Materials', 'Utilities', 'Salaries', 'Rent', 'Marketing', 'Other'];
     let filteredExp = data.expenses || [];
-    if (expenseCategoryFilter !== 'All') {
-      filteredExp = filteredExp.filter(e => e.category === expenseCategoryFilter);
-    }
+    if (expenseCategoryFilter !== 'All') { filteredExp = filteredExp.filter(e => e.category === expenseCategoryFilter); }
     const today = window.todayStr();
     const todayExpenses = (data.expenses || []).filter(e => e.date === today).reduce((sum, e) => sum + e.amount, 0);
 
     const getBadgeClass = (c) => {
-      if (c === 'Raw Materials') return 'cat-raw';
-      if (c === 'Utilities') return 'cat-util';
-      if (c === 'Salaries') return 'cat-sal';
-      if (c === 'Rent') return 'cat-rent';
+      if (c === 'Raw Materials') return 'cat-raw'; if (c === 'Utilities') return 'cat-util';
+      if (c === 'Salaries') return 'cat-sal'; if (c === 'Rent') return 'cat-rent';
       return 'cat-other';
     };
 
@@ -1123,15 +1064,7 @@ window.renderCurrentView = function() {
 
         <div class="table-responsive">
           <table class="data-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Category</th>
-                <th>Description</th>
-                <th>Amount</th>
-                <th></th>
-              </tr>
-            </thead>
+            <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th></th></tr></thead>
             <tbody>
               ${filteredExp.length === 0 ? '<tr><td colspan="5" style="text-align:center;padding:20px;color:#94a3b8">No expense records found!</td></tr>' : ''}
               ${filteredExp.map(e => `
@@ -1140,9 +1073,7 @@ window.renderCurrentView = function() {
                   <td><span class="badge ${getBadgeClass(e.category)}">${e.category || 'Other'}</span></td>
                   <td>${e.desc}</td>
                   <td style="font-weight:700;color:#dc2626;">₹ ${e.amount.toFixed(2)}</td>
-                  <td>
-                    <button class="btn-danger" style="padding:3px 6px;font-size:10px;" onclick="deleteExpense('${e.id}')">✕</button>
-                  </td>
+                  <td><button class="btn-danger" style="padding:3px 6px;font-size:10px;" onclick="deleteExpense('${e.id}')">✕</button></td>
                 </tr>
               `).join('')}
             </tbody>
@@ -1162,8 +1093,7 @@ window.renderCurrentView = function() {
       filteredOrders = filteredOrders.filter(o => o.date === today);
       filteredExpenses = filteredExpenses.filter(e => e.date === today);
     } else if (reportFilter === 'week') {
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
+      const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
       const weekStr = weekAgo.toISOString().split('T')[0];
       filteredOrders = filteredOrders.filter(o => (o.date || today) >= weekStr);
       filteredExpenses = filteredExpenses.filter(e => (e.date || today) >= weekStr);
@@ -1172,14 +1102,8 @@ window.renderCurrentView = function() {
       filteredOrders = filteredOrders.filter(o => (o.date || today).startsWith(monthPrefix));
       filteredExpenses = filteredExpenses.filter(e => (e.date || today).startsWith(monthPrefix));
     } else if (reportFilter === 'custom') {
-      filteredOrders = filteredOrders.filter(o => {
-        const d = o.date || today;
-        return d >= reportCustomStart && d <= reportCustomEnd;
-      });
-      filteredExpenses = filteredExpenses.filter(e => {
-        const d = e.date || today;
-        return d >= reportCustomStart && d <= reportCustomEnd;
-      });
+      filteredOrders = filteredOrders.filter(o => (o.date || today) >= reportCustomStart && (o.date || today) <= reportCustomEnd);
+      filteredExpenses = filteredExpenses.filter(e => (e.date || today) >= reportCustomStart && (e.date || today) <= reportCustomEnd);
     }
 
     const totalSales = filteredOrders.reduce((sum, o) => sum + (o.total || 0), 0);
@@ -1190,8 +1114,7 @@ window.renderCurrentView = function() {
     filteredOrders.forEach(o => {
       (o.items || []).forEach(it => {
         if (!itemMap[it.name]) itemMap[it.name] = { qty: 0, revenue: 0 };
-        itemMap[it.name].qty += it.qty;
-        itemMap[it.name].revenue += (it.price * it.qty);
+        itemMap[it.name].qty += it.qty; itemMap[it.name].revenue += (it.price * it.qty);
       });
     });
     const topDishes = Object.entries(itemMap).sort((a,b) => b[1].revenue - a[1].revenue).slice(0, 5);
@@ -1227,14 +1150,8 @@ window.renderCurrentView = function() {
 
         ${reportFilter === 'custom' ? `
           <div class="custom-date-box">
-            <div>
-              <label>From Date</label>
-              <input type="date" value="${reportCustomStart}" onchange="reportCustomStart=this.value;renderCurrentView();" style="margin-bottom:0;">
-            </div>
-            <div>
-              <label>To Date</label>
-              <input type="date" value="${reportCustomEnd}" onchange="reportCustomEnd=this.value;renderCurrentView();" style="margin-bottom:0;">
-            </div>
+            <div><label>From Date</label><input type="date" value="${reportCustomStart}" onchange="reportCustomStart=this.value;renderCurrentView();" style="margin-bottom:0;"></div>
+            <div><label>To Date</label><input type="date" value="${reportCustomEnd}" onchange="reportCustomEnd=this.value;renderCurrentView();" style="margin-bottom:0;"></div>
           </div>
         ` : ''}
 
@@ -1244,14 +1161,8 @@ window.renderCurrentView = function() {
             <div class="val">₹ ${Math.abs(netProfit).toFixed(2)}</div>
           </div>
           <div class="profit-breakdown">
-            <div>
-              <span>${t('sales')}</span>
-              <span style="color:#059669;">₹ ${totalSales.toFixed(2)}</span>
-            </div>
-            <div>
-              <span>${t('expenses')}</span>
-              <span style="color:#dc2626;">₹ ${totalExp.toFixed(2)}</span>
-            </div>
+            <div><span>${t('sales')}</span><span style="color:#059669;">₹ ${totalSales.toFixed(2)}</span></div>
+            <div><span>${t('expenses')}</span><span style="color:#dc2626;">₹ ${totalExp.toFixed(2)}</span></div>
           </div>
         </div>
 
@@ -1271,14 +1182,7 @@ window.renderCurrentView = function() {
           <h4 style="font-size:12.5px;font-weight:700;margin-bottom:8px;">📅 ${t('dailyBreakdown')}</h4>
           <div class="table-responsive">
             <table class="data-table">
-              <thead>
-                <tr>
-                  <th>${t('date')}</th>
-                  <th>${t('sales')}</th>
-                  <th>${t('expenses')}</th>
-                  <th>${t('profit')}</th>
-                </tr>
-              </thead>
+              <thead><tr><th>${t('date')}</th><th>${t('sales')}</th><th>${t('expenses')}</th><th>${t('profit')}</th></tr></thead>
               <tbody>
                 ${dayRows.length === 0 ? '<tr><td colspan="4" style="text-align:center;">No records</td></tr>' : ''}
                 ${dayRows.map(([d, val]) => `
@@ -1326,10 +1230,7 @@ window.renderCurrentView = function() {
 };
 
 /* --- DATA PERSISTENCE & ACTIONS --- */
-function handleTableSelect(tblId) {
-  cartState.tableId = tblId;
-  navigate('pos');
-}
+function handleTableSelect(tblId) { cartState.tableId = tblId; navigate('pos'); }
 
 function addItemToCart(dishId) {
   const data = window.getData();
@@ -1344,27 +1245,18 @@ function addItemToCart(dishId) {
 function changeCartItemQty(index, change) {
   if (!cartState.items[index]) return;
   cartState.items[index].qty += change;
-  if (cartState.items[index].qty <= 0) {
-    cartState.items.splice(index, 1);
-  }
-  if (cartState.items.length === 0) {
-    closeSheet();
-    renderCurrentView();
-  } else {
-    openCartReviewSheet();
-  }
+  if (cartState.items[index].qty <= 0) { cartState.items.splice(index, 1); }
+  if (cartState.items.length === 0) { closeSheet(); renderCurrentView(); } 
+  else { openCartReviewSheet(); }
 }
 
 function openCartReviewSheet() {
   const data = window.getData();
-  if (!cartState.tableId) {
-    alert(t('selectDishWarning'));
-    return;
-  }
+  if (!cartState.tableId) { alert(t('selectDishWarning')); return; }
+  
   const subtotal = cartState.items.reduce((s, i) => s + (i.price * i.qty), 0);
   const gstRate = parseFloat(data.gstRate) || 0;
   const serviceRate = parseFloat(data.serviceRate) || 0;
-
   const gst = gstRate > 0 ? (subtotal * (gstRate / 100)) : 0;
   const service = serviceRate > 0 ? (subtotal * (serviceRate / 100)) : 0;
   const grandTotal = subtotal + gst + service;
@@ -1378,10 +1270,7 @@ function openCartReviewSheet() {
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
       ${cartState.items.map((it, idx) => `
         <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #f1f5f9;padding-bottom:6px;">
-          <div>
-            <div style="font-weight:700;">${it.name}</div>
-            <div style="font-size:11px;color:var(--text-muted);">₹ ${it.price} each</div>
-          </div>
+          <div><div style="font-weight:700;">${it.name}</div><div style="font-size:11px;color:var(--text-muted);">₹ ${it.price} each</div></div>
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="qty-ctrl-box">
               <button class="qty-btn" onclick="changeCartItemQty(${idx}, -1)">−</button>
@@ -1397,18 +1286,8 @@ function openCartReviewSheet() {
     <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px;">
       <span>${t('subtotal')}:</span><span>₹ ${subtotal.toFixed(2)}</span>
     </div>
-
-    ${gstRate > 0 ? `
-      <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px;">
-        <span>${t('tax')} (${gstRate}%):</span><span>₹ ${gst.toFixed(2)}</span>
-      </div>
-    ` : ''}
-
-    ${serviceRate > 0 ? `
-      <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:10px;">
-        <span>${t('serviceCharge')} (${serviceRate}%):</span><span>₹ ${service.toFixed(2)}</span>
-      </div>
-    ` : ''}
+    ${gstRate > 0 ? `<div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px;"><span>${t('tax')} (${gstRate}%):</span><span>₹ ${gst.toFixed(2)}</span></div>` : ''}
+    ${serviceRate > 0 ? `<div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:10px;"><span>${t('serviceCharge')} (${serviceRate}%):</span><span>₹ ${service.toFixed(2)}</span></div>` : ''}
 
     <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:800;margin-top:6px;margin-bottom:14px;border-top:1px dashed var(--border);padding-top:6px;">
       <span>${t('grandTotal')}:</span><span>₹ ${grandTotal.toFixed(2)}</span>
@@ -1422,24 +1301,16 @@ function submitOrderToKitchen() {
   const data = window.getData();
   const gstRate = parseFloat(data.gstRate) || 0;
   const serviceRate = parseFloat(data.serviceRate) || 0;
-
   if (!data.orders) data.orders = [];
-
   const existingOrder = data.orders.find(o => o.tableId === cartState.tableId && o.status !== 'completed');
 
   if (existingOrder) {
     existingOrder.items.forEach(it => it.isAddOn = false);
-
     cartState.items.forEach(newItem => {
       const match = existingOrder.items.find(i => i.dishId === newItem.dishId);
-      if (match) {
-        match.qty += newItem.qty;
-        match.isAddOn = true;
-      } else {
-        existingOrder.items.push({ ...newItem, isAddOn: true });
-      }
+      if (match) { match.qty += newItem.qty; match.isAddOn = true; } 
+      else { existingOrder.items.push({ ...newItem, isAddOn: true }); }
     });
-
     existingOrder.subtotal = existingOrder.items.reduce((s, i) => s + (i.price * i.qty), 0);
     existingOrder.gst = gstRate > 0 ? (existingOrder.subtotal * (gstRate / 100)) : 0;
     existingOrder.gstRate = gstRate;
@@ -1454,20 +1325,10 @@ function submitOrderToKitchen() {
     const orderNum = 100 + data.orders.length + 1;
 
     data.orders.push({
-      id: 'ord_' + Date.now(),
-      kotNo: orderNum,
-      billNo: orderNum,
-      tableId: cartState.tableId,
-      items: cartState.items.map(it => ({ ...it, isAddOn: true })),
-      subtotal: subtotal,
-      gst: gst,
-      gstRate: gstRate,
-      service: service,
-      serviceRate: serviceRate,
-      total: subtotal + gst + service,
-      status: 'preparing',
-      date: window.todayStr(),
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      id: 'ord_' + Date.now(), kotNo: orderNum, billNo: orderNum, tableId: cartState.tableId,
+      items: cartState.items.map(it => ({ ...it, isAddOn: true })), subtotal: subtotal, gst: gst, gstRate: gstRate,
+      service: service, serviceRate: serviceRate, total: subtotal + gst + service, status: 'preparing',
+      date: window.todayStr(), time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     });
   }
 
@@ -1475,10 +1336,8 @@ function submitOrderToKitchen() {
   if (tbl) tbl.status = 'occupied';
 
   window.cloudSave();
-
   cartState = { tableId: '', items: [] };
-  closeSheet();
-  navigate('kitchen');
+  closeSheet(); navigate('kitchen');
 }
 
 function completeKOT(orderId) {
@@ -1487,8 +1346,7 @@ function completeKOT(orderId) {
   if (o) {
     o.status = 'ready_to_serve';
     (o.items || []).forEach(it => it.isAddOn = false);
-    window.cloudSave();
-    renderCurrentView();
+    window.cloudSave(); renderCurrentView();
   }
 }
 
@@ -1496,15 +1354,13 @@ function settleBillAndReleaseTable(orderId) {
   const data = window.getData();
   const o = (data.orders || []).find(ord => ord.id === orderId);
   if (!o) return;
-
-  if (!confirm(`Confirm payment of ₹ ${o.total.toFixed(2)} for Bill #${o.billNo}? Table will be marked AVAILABLE.`)) return;
+  if (!confirm(`Confirm payment of ₹ ${o.total.toFixed(2)} for Bill #${o.billNo}?`)) return;
 
   o.status = 'completed';
   const tbl = (data.tables || []).find(tData => tData.id === o.tableId);
   if (tbl) tbl.status = 'available';
 
-  window.cloudSave();
-  renderCurrentView();
+  window.cloudSave(); renderCurrentView();
 }
 
 function showReceiptModal(orderId) {
@@ -1532,48 +1388,20 @@ function showReceiptModal(orderId) {
       <hr>
       ${o.items.map(i => `
         <div style="display:flex;justify-content:space-between;">
-          <span>${i.name} x${i.qty}</span>
-          <span>₹ ${(i.price * i.qty).toFixed(2)}</span>
+          <span>${i.name} x${i.qty}</span><span>₹ ${(i.price * i.qty).toFixed(2)}</span>
         </div>
       `).join('')}
       <hr>
-      <div style="display:flex;justify-content:space-between;">
-        <span>${t('subtotal')}:</span>
-        <span>₹ ${o.subtotal.toFixed(2)}</span>
-      </div>
-
-      ${hasTax ? `
-        <div style="display:flex;justify-content:space-between;">
-          <span>${t('tax')} (${o.gstRate}%):</span>
-          <span>₹ ${o.gst.toFixed(2)}</span>
-        </div>
-      ` : ''}
-
-      ${hasService ? `
-        <div style="display:flex;justify-content:space-between;">
-          <span>${t('serviceCharge')} (${o.serviceRate}%):</span>
-          <span>₹ ${o.service.toFixed(2)}</span>
-        </div>
-      ` : ''}
-
+      <div style="display:flex;justify-content:space-between;"><span>${t('subtotal')}:</span><span>₹ ${o.subtotal.toFixed(2)}</span></div>
+      ${hasTax ? `<div style="display:flex;justify-content:space-between;"><span>${t('tax')} (${o.gstRate}%):</span><span>₹ ${o.gst.toFixed(2)}</span></div>` : ''}
+      ${hasService ? `<div style="display:flex;justify-content:space-between;"><span>${t('serviceCharge')} (${o.serviceRate}%):</span><span>₹ ${o.service.toFixed(2)}</span></div>` : ''}
       <hr>
       <div style="display:flex;justify-content:space-between;font-weight:bold;font-size:12px;">
-        <span>${t('grandTotal')}:</span>
-        <span>₹ ${o.total.toFixed(2)}</span>
+        <span>${t('grandTotal')}:</span><span>₹ ${o.total.toFixed(2)}</span>
       </div>
       <hr>
-      ${upiQrImg ? `
-        <div class="c" style="margin:6px 0;">
-          <div style="font-size:9.5px;margin-bottom:3px;font-weight:bold;">${t('scanToPay')}</div>
-          <img src="${upiQrImg}" class="qr-img">
-        </div>
-      ` : ''}
-      ${reviewQrImg ? `
-        <div class="c" style="margin-top:6px;">
-          <div style="font-size:8.5px;">${t('reviewPrompt')}</div>
-          <img src="${reviewQrImg}" style="width:65px;height:65px;margin-top:2px;">
-        </div>
-      ` : ''}
+      ${upiQrImg ? `<div class="c" style="margin:6px 0;"><div style="font-size:9.5px;margin-bottom:3px;font-weight:bold;">${t('scanToPay')}</div><img src="${upiQrImg}" class="qr-img"></div>` : ''}
+      ${reviewQrImg ? `<div class="c" style="margin-top:6px;"><div style="font-size:8.5px;">${t('reviewPrompt')}</div><img src="${reviewQrImg}" style="width:65px;height:65px;margin-top:2px;"></div>` : ''}
       <div class="c" style="font-size:9.5px;margin-top:6px;">${t('thankYou')}</div>
       <div class="receipt-dev">Software Developed by: Debapriya Sarkar</div>
     </div>
@@ -1586,9 +1414,7 @@ function triggerPrint() {
   const paperElement = document.getElementById('paper-element');
   if (paperElement) {
     document.getElementById('print-area').innerHTML = paperElement.outerHTML;
-    setTimeout(() => {
-      window.print();
-    }, 100);
+    setTimeout(() => { window.print(); }, 100);
   }
 }
 
@@ -1606,10 +1432,7 @@ function exportReportsCSV() {
 
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `report_${window.todayStr()}.csv`;
-  a.click();
+  const a = document.createElement('a'); a.href = url; a.download = `report_${window.todayStr()}.csv`; a.click();
   URL.revokeObjectURL(url);
 }
 
@@ -1633,16 +1456,13 @@ function saveNewDish() {
   if (!name || isNaN(price) || price < 0) { alert('Please enter valid details'); return; }
   if (!data.menu) data.menu = [];
   data.menu.push({ id: 'm_' + Date.now(), name, category: cat, price });
-  window.cloudSave();
-  closeSheet();
-  renderCurrentView();
+  window.cloudSave(); closeSheet(); renderCurrentView();
 }
 function deleteDish(id) {
   const data = window.getData();
   if (!confirm(t('confirmDelete'))) return;
   data.menu = (data.menu || []).filter(m => m.id !== id);
-  window.cloudSave();
-  renderCurrentView();
+  window.cloudSave(); renderCurrentView();
 }
 
 function openAddTableSheet() {
@@ -1662,9 +1482,7 @@ function saveNewTable() {
   if (!name) return;
   if (!data.tables) data.tables = [];
   data.tables.push({ id: 't_' + Date.now(), name, seats, status: 'available' });
-  window.cloudSave();
-  closeSheet();
-  renderCurrentView();
+  window.cloudSave(); closeSheet(); renderCurrentView();
 }
 
 function openExpenseSheet() {
@@ -1694,25 +1512,20 @@ function saveExpense() {
   if (!amt || isNaN(amt) || !desc) { alert('Please enter valid expense details'); return; }
   if (!data.expenses) data.expenses = [];
   data.expenses.unshift({ id: 'exp_' + Date.now(), category: cat, desc, amount: amt, date: window.todayStr() });
-  window.cloudSave();
-  closeSheet();
-  renderCurrentView();
+  window.cloudSave(); closeSheet(); renderCurrentView();
 }
 function deleteExpense(id) {
   const data = window.getData();
   if (!confirm('Delete this expense entry?')) return;
   data.expenses = (data.expenses || []).filter(e => e.id !== id);
-  window.cloudSave();
-  renderCurrentView();
+  window.cloudSave(); renderCurrentView();
 }
 
+/* --- STAFF MANAGEMENT (UPDATED) --- */
 function openStaffModal() {
   const data = window.getData();
   const pin = prompt(t('masterPinPrompt'));
-  if (pin !== data.masterPin) {
-    alert('Incorrect Master PIN!');
-    return;
-  }
+  if (pin !== data.masterPin) { alert('Incorrect Master PIN!'); return; }
 
   const staffListHtml = (data.staff || []).map(s => `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f1f5f9;">
@@ -1721,7 +1534,6 @@ function openStaffModal() {
         <div style="font-size:11px;color:var(--text-muted);">${s.role.toUpperCase()}</div>
       </div>
       <div style="display:flex;gap:4px;">
-        <button class="btn-sm-outline" onclick="switchActiveRole('${s.role}')">Switch</button>
         <button class="btn-danger" style="padding:4px 8px;font-size:11px;" onclick="deleteStaff('${s.id}')">✕</button>
       </div>
     </div>
@@ -1729,27 +1541,86 @@ function openStaffModal() {
 
   const body = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-      <h4 style="font-size:13.5px;">Switch Role Mode</h4>
+      <h4 style="font-size:13.5px;">Manage Staff</h4>
       <button class="btn-sm-outline" onclick="switchActiveRole('owner')">Reset to Owner</button>
     </div>
     <div style="margin-bottom:14px;">${staffListHtml || '<div style="color:var(--text-muted);font-size:11.5px;">No staff registered yet.</div>'}</div>
     <hr style="border:none;border-top:1px solid #e2e8f0;margin:10px 0;">
+    
     <h4 style="font-size:13.5px;margin-bottom:10px;">Add New Staff Member</h4>
+    <p style="font-size:10.5px;color:var(--text-muted);margin-bottom:10px;">Staff will use this Username & Password to log in from their own device.</p>
+    
     <label>Staff Full Name</label>
     <input type="text" id="stf-name" placeholder="Rohan Kumar">
-    <label>Username</label>
-    <input type="text" id="stf-user" placeholder="rohan">
-    <label>Password</label>
+    
+    <label>Login Username (No spaces)</label>
+    <input type="text" id="stf-user" placeholder="e.g. rohan">
+    
+    <label>Login Password (Min 6 chars)</label>
     <input type="text" id="stf-pass" placeholder="pass123">
+    
     <label>${t('role')}</label>
     <select id="stf-role">
       <option value="waiter">Waiter (POS & Orders Only)</option>
       <option value="kitchen">Kitchen Staff (KOT Live Only)</option>
       <option value="cashier">Cashier (Orders, Bills & Dashboard)</option>
     </select>
-    <button class="btn-primary" onclick="saveStaffMember()">${t('save')}</button>
+    <button class="btn-primary" id="btn-save-staff" onclick="saveStaffMember()">Create Staff Account</button>
   `;
   openSheet(t('staffMgmt'), body);
+}
+
+async function saveStaffMember() {
+  const data = window.getData();
+  const name = document.getElementById('stf-name').value.trim();
+  const username = document.getElementById('stf-user').value.trim().toLowerCase().replace(/\s+/g, '');
+  const pass = document.getElementById('stf-pass').value.trim();
+  const role = document.getElementById('stf-role').value;
+  const btn = document.getElementById('btn-save-staff');
+
+  if (!name || !username || !pass) { alert('Please fill in all staff fields'); return; }
+  if (pass.length < 6) { alert('Password must be at least 6 characters'); return; }
+
+  btn.disabled = true; btn.innerText = "Creating Account...";
+
+  const fakeEmail = `${username}@tablemaster.local`;
+
+  try {
+    // 1. Create user in Firebase Auth using a secondary app instance
+    // This prevents the owner from being logged out
+    let secondaryApp;
+    if (!firebase.apps.find(app => app.name === 'Secondary')) {
+      secondaryApp = firebase.initializeApp(firebaseConfig, "Secondary");
+    } else {
+      secondaryApp = firebase.app("Secondary");
+    }
+    const secondaryAuth = secondaryApp.auth();
+    const cred = await secondaryAuth.createUserWithEmailAndPassword(fakeEmail, pass);
+    const staffUid = cred.user.uid;
+    await secondaryApp.delete(); // Clean up
+
+    // 2. Save the mapping in Firestore so staff knows which cafe they belong to
+    await db.collection("users").doc(staffUid).set({
+      cafeId: data.cafeId,
+      role: role,
+      name: name,
+      username: username
+    });
+
+    // 3. Save to local staff list for the owner's view
+    if (!data.staff) data.staff = [];
+    data.staff.push({ id: staffUid, name, username, role });
+    window.cloudSave();
+
+    closeSheet();
+    alert(`Staff account created successfully!\n\nStaff can now log in using:\nUsername: ${username}\nPassword: ${pass}`);
+
+  } catch (err) {
+    console.error(err);
+    alert("Error creating staff account: " + err.message);
+  } finally {
+    btn.disabled = false; btn.innerText = "Create Staff Account";
+  }
 }
 
 function switchActiveRole(role) {
@@ -1761,25 +1632,14 @@ function switchActiveRole(role) {
   alert("Mode Switched to: " + role.toUpperCase());
 }
 
-function saveStaffMember() {
+async function deleteStaff(id) {
   const data = window.getData();
-  const name = document.getElementById('stf-name').value.trim();
-  const user = document.getElementById('stf-user').value.trim();
-  const pass = document.getElementById('stf-pass').value.trim();
-  const role = document.getElementById('stf-role').value;
-  if (!name || !user || !pass) { alert('Please fill in all staff fields'); return; }
-
-  if (!data.staff) data.staff = [];
-  data.staff.push({ id: 'stf_' + Date.now(), name, username: user, password: pass, role });
-  window.cloudSave();
-  closeSheet();
-  alert('Staff account saved successfully!');
-}
-
-function deleteStaff(id) {
-  const data = window.getData();
-  if (!confirm('Remove this staff member?')) return;
+  if (!confirm('Remove this staff member? (They will no longer be able to access this cafe.)')) return;
   data.staff = (data.staff || []).filter(s => s.id !== id);
+  
+  // Also remove from users collection so they can't log in
+  try { await db.collection("users").doc(id).delete(); } catch(e) { console.warn(e); }
+
   window.cloudSave();
   closeSheet();
 }
@@ -1811,14 +1671,8 @@ function openSettingsSheet() {
     <input type="text" id="cfg-review" value="${data.googleReview || ''}">
     
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-      <div>
-        <label>${t('gstRate')}</label>
-        <input type="number" id="cfg-gst" value="${data.gstRate || 0}" step="0.01">
-      </div>
-      <div>
-        <label>${t('serviceRate')}</label>
-        <input type="number" id="cfg-service" value="${data.serviceRate || 0}" step="0.01">
-      </div>
+      <div><label>${t('gstRate')}</label><input type="number" id="cfg-gst" value="${data.gstRate || 0}" step="0.01"></div>
+      <div><label>${t('serviceRate')}</label><input type="number" id="cfg-service" value="${data.serviceRate || 0}" step="0.01"></div>
     </div>
 
     <label>Master PIN (4 Digits)</label>
@@ -1838,55 +1692,34 @@ function handleLogoUpload(e) {
     img.onload = function() {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-
       const maxDim = 150;
-      let width = img.width;
-      let height = img.height;
+      let width = img.width; let height = img.height;
 
-      if (width > height) {
-        if (width > maxDim) {
-          height = Math.round((height * maxDim) / width);
-          width = maxDim;
-        }
-      } else {
-        if (height > maxDim) {
-          width = Math.round((width * maxDim) / height);
-          height = maxDim;
-        }
-      }
+      if (width > height) { if (width > maxDim) { height = Math.round((height * maxDim) / width); width = maxDim; } } 
+      else { if (height > maxDim) { width = Math.round((width * maxDim) / height); height = maxDim; } }
 
-      canvas.width = width;
-      canvas.height = height;
+      canvas.width = width; canvas.height = height;
       ctx.drawImage(img, 0, 0, width, height);
 
       const imgData = ctx.getImageData(0, 0, width, height);
       const pixels = imgData.data;
       for (let i = 0; i < pixels.length; i += 4) {
         const grayscale = (pixels[i] * 0.3) + (pixels[i + 1] * 0.59) + (pixels[i + 2] * 0.11);
-        pixels[i] = grayscale;
-        pixels[i + 1] = grayscale;
-        pixels[i + 2] = grayscale;
+        pixels[i] = grayscale; pixels[i + 1] = grayscale; pixels[i + 2] = grayscale;
       }
       ctx.putImageData(imgData, 0, 0);
-
       const compressedB64 = canvas.toDataURL('image/jpeg', 0.6);
       
       const data = window.getData();
       data.logo = compressedB64;
-      window.cloudSave();
-      openSettingsSheet();
+      window.cloudSave(); openSettingsSheet();
     };
     img.src = evt.target.result;
   };
   reader.readAsDataURL(file);
 }
 
-function removeLogo() {
-  const data = window.getData();
-  data.logo = '';
-  window.cloudSave();
-  openSettingsSheet();
-}
+function removeLogo() { const data = window.getData(); data.logo = ''; window.cloudSave(); openSettingsSheet(); }
 
 function saveSettings() {
   const data = window.getData();
@@ -1898,14 +1731,10 @@ function saveSettings() {
   data.gstRate = parseFloat(document.getElementById('cfg-gst').value) || 0;
   data.serviceRate = parseFloat(document.getElementById('cfg-service').value) || 0;
   data.masterPin = document.getElementById('cfg-pin').value.trim() || data.masterPin;
-  window.cloudSave();
-  closeSheet();
-  renderCurrentView();
+  window.cloudSave(); closeSheet(); renderCurrentView();
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-  checkAuth();
-});
+window.addEventListener('DOMContentLoaded', () => { checkAuth(); });
 </script>
 </body>
 </html>
