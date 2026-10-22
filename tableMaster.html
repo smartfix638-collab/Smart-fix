@@ -301,10 +301,32 @@ label { display: block; font-size: 11px; font-weight: 700; color: var(--text-mut
 .receipt-logo { max-width: 80px; max-height: 50px; display: block; margin: 0 auto 4px; filter: grayscale(100%); }
 .receipt-dev { text-align: center; font-size: 9px; font-weight: 800; margin-top: 6px; border-top: 1px dotted #000; padding-top: 4px; text-transform: uppercase; }
 
+/* Fixed Print CSS */
 @media print {
-  body > * { display: none !important; }
-  #print-area { display: block !important; width: 100%; margin: 0; padding: 0; }
-  .receipt-paper { width: 100% !important; border: none !important; padding: 0 !important; }
+  body * {
+    visibility: hidden;
+  }
+  #print-area, #print-area * {
+    visibility: visible;
+  }
+  #print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    display: block !important;
+  }
+  #print-area .receipt-paper {
+    width: 100% !important;
+    max-width: 80mm !important; /* Standard thermal printer width */
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+    box-shadow: none !important;
+  }
+  @page { margin: 0; }
 }
 #print-area { display: none; }
 </style>
@@ -864,7 +886,6 @@ function createSafeQR(text) {
   } catch (err) { return ''; }
 }
 
-/* FIX: Ensure 'roles' array is explicitly defined on each item to prevent TypeError crash */
 const ALL_NAV_ITEMS = [
   { id: 'dashboard', i18n: 'navHome', icon: '<path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 011 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>', roles: ['owner', 'cashier'] },
   { id: 'pos', i18n: 'navPOS', icon: '<path d="M12 4v16m8-8H4"/>', roles: ['owner', 'waiter', 'cashier'] },
@@ -889,7 +910,6 @@ function setupNavigation() {
   const bottomBar = document.getElementById('app-bottom-bar');
   if (!bottomBar) return;
 
-  // Safe navigation filter
   const allowed = ALL_NAV_ITEMS.filter(it => !it.roles || it.roles.includes(role));
 
   bottomBar.innerHTML = allowed.map(it => `
@@ -1490,6 +1510,7 @@ function submitOrderToKitchen() {
   const existingOrder = data.orders.find(o => o.tableId === cartState.tableId && o.status !== 'completed');
 
   if (existingOrder) {
+    // Reset Add-on flags for previous items before applying new ones
     existingOrder.items.forEach(it => it.isAddOn = false);
 
     cartState.items.forEach(newItem => {
@@ -1520,7 +1541,7 @@ function submitOrderToKitchen() {
       kotNo: orderNum,
       billNo: orderNum,
       tableId: cartState.tableId,
-      items: cartState.items.map(it => ({ ...it, isAddOn: true })),
+      items: cartState.items.map(it => ({ ...it, isAddOn: true })), // New order, all items are add-on for KOT
       subtotal: subtotal,
       gst: gst,
       gstRate: gstRate,
@@ -1548,7 +1569,7 @@ function completeKOT(orderId) {
   const o = (data.orders || []).find(ord => ord.id === orderId);
   if (o) {
     o.status = 'ready_to_serve';
-    (o.items || []).forEach(it => it.isAddOn = false);
+    (o.items || []).forEach(it => it.isAddOn = false); // Clear add-on flags once cooked
     window.cloudSave();
     renderCurrentView();
   }
@@ -1645,8 +1666,15 @@ function showReceiptModal(orderId) {
 }
 
 function triggerPrint() {
-  document.getElementById('print-area').innerHTML = document.getElementById('paper-element').innerHTML;
-  window.print();
+  const paperElement = document.getElementById('paper-element');
+  if (paperElement) {
+    // Using outerHTML to preserve classes and CSS
+    document.getElementById('print-area').innerHTML = paperElement.outerHTML;
+    // Slight delay to ensure DOM updates before calling print
+    setTimeout(() => {
+      window.print();
+    }, 100);
+  }
 }
 
 function exportReportsCSV() {
