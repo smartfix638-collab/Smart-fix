@@ -3,14 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>TableMaster Pro — Multi-Tenant Cloud Restaurant Management</title>
+<title>TableMaster Pro — Secure Cloud Restaurant Management</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Hind+Siliguri:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 
-<!-- Firebase Standard UMD SDKs -->
+<!-- Firebase Standard UMD SDKs (App, Auth, Firestore) -->
 <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
 
 <style>
@@ -35,7 +36,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', 'Hind Siliguri', sans-serif; -webkit-tap-highlight-color: transparent; }
 body { background: var(--bg); color: var(--text-main); font-size: 14px; min-height: 100dvh; display: flex; flex-direction: column; overflow-x: hidden; }
 
-/* Authentication Screen */
+/* Auth Screen */
 .auth-wrap {
   min-height: 100dvh; display: flex; align-items: center; justify-content: center;
   padding: 16px; background: radial-gradient(ellipse at top left, #1e293b 0%, #0f172a 60%), #0f172a;
@@ -91,7 +92,7 @@ body { background: var(--bg); color: var(--text-main); font-size: 14px; min-heig
   color: var(--text-muted); cursor: pointer;
 }
 
-/* Layout Wrapper - Responsive */
+/* Layout Wrapper */
 .main-wrapper { 
   flex: 1; padding: 14px; padding-bottom: calc(90px + env(safe-area-inset-bottom)); 
   max-width: 900px; margin: 0 auto; width: 100%; 
@@ -185,7 +186,7 @@ body { background: var(--bg); color: var(--text-main); font-size: 14px; min-heig
 }
 .qty-display { font-size: 12.5px; font-weight: 700; min-width: 18px; text-align: center; }
 
-/* Reports & Profit Banner */
+/* Profit Banner & Reports */
 .profit-banner {
   padding: 16px; border-radius: var(--radius-lg); margin-bottom: 14px;
   display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
@@ -313,18 +314,18 @@ label { display: block; font-size: 11px; font-weight: 700; color: var(--text-mut
         <svg width="24" height="24" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path d="M3 3v18M3 8h4a4 4 0 010 8H3M17 3v18M17 8c0-2 3-2 3 0v6c0 2 3 2 3 0V3"/></svg>
       </div>
       <h2 style="font-size:20px;font-weight:800;color:#0f172a">TableMaster Pro</h2>
-      <p style="font-size:11.5px;color:var(--text-muted);margin-top:2px">Multi-Tenant Cloud Restaurant Management</p>
+      <p style="font-size:11.5px;color:var(--text-muted);margin-top:2px">Multi-Tenant Secure Cloud Management</p>
     </div>
     <div class="auth-tabs">
       <button class="auth-tab active" type="button" onclick="switchAuthTab('login')" id="tab-login">Login</button>
       <button class="auth-tab" type="button" onclick="switchAuthTab('register')" id="tab-register">Register Cafe</button>
     </div>
     <form id="form-login" onsubmit="handleLogin(event)">
-      <label>Cafe Username / Staff ID</label>
-      <input id="log-user" required placeholder="admin or your cafe username" autocomplete="username">
+      <label>Email Address</label>
+      <input id="log-email" type="email" required placeholder="owner@cafe.com" autocomplete="email">
       <label>Password</label>
       <input id="log-pass" type="password" required placeholder="••••••••" autocomplete="current-password">
-      <button type="submit" class="btn-primary" style="margin-top:6px">Sign In →</button>
+      <button type="submit" class="btn-primary" style="margin-top:6px" id="btn-login-submit">Sign In →</button>
     </form>
     <form id="form-register" style="display:none" onsubmit="handleRegister(event)">
       <label>Restaurant / Cafe Name</label>
@@ -333,16 +334,16 @@ label { display: block; font-size: 11px; font-weight: 700; color: var(--text-mut
       <input id="reg-owner" required placeholder="Full Name">
       <label>Phone Number</label>
       <input id="reg-phone" required placeholder="+91 XXXXX XXXXX">
-      <label>Admin Username (Unique ID)</label>
-      <input id="reg-user" required placeholder="e.g. royalcafe" autocomplete="username">
-      <label>Admin Password</label>
-      <input id="reg-pass" type="password" required placeholder="Password" autocomplete="new-password">
+      <label>Email Address</label>
+      <input id="reg-email" type="email" required placeholder="owner@cafe.com" autocomplete="email">
+      <label>Password (Min 6 chars)</label>
+      <input id="reg-pass" type="password" required minlength="6" placeholder="Password" autocomplete="new-password">
       <label>Master PIN (4 Digits)</label>
       <input id="reg-pin" type="password" pattern="[0-9]{4}" required placeholder="e.g. 1234">
-      <button type="submit" class="btn-primary" style="margin-top:6px">Register & Launch My Cafe →</button>
+      <button type="submit" class="btn-primary" style="margin-top:6px" id="btn-reg-submit">Register & Launch My Cafe →</button>
     </form>
     <div style="text-align:center;font-size:10.5px;color:#94a3b8;margin-top:14px;">
-      Software Architecture by <b>Debapriya Sarkar</b>
+      Enterprise Security by <b>Debapriya Sarkar</b>
     </div>
   </div>
 </div>
@@ -369,7 +370,7 @@ label { display: block; font-size: 11px; font-weight: 700; color: var(--text-mut
   <nav class="bottom-bar" id="app-bottom-bar"></nav>
 </div>
 
-<!-- Sheet Modal -->
+<!-- Modal Sheet -->
 <div class="sheet-backdrop" id="sheet-backdrop" onclick="sheetBackdropClick(event)">
   <div class="sheet-modal" id="sheet-modal">
     <div class="sheet-head">
@@ -384,8 +385,31 @@ label { display: block; font-size: 11px; font-weight: 700; color: var(--text-mut
 
 <script>
 /* ==========================================================================
-   GLOBAL MULTI-TENANT CONFIGURATION
+   FIREBASE CONFIG & INITIALIZATION
    ========================================================================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyCbIno4DtuJ_EBtXXGu_JuBQ9I2KoMvkWY",
+  authDomain: "smartfix-a6733-b231d.firebaseapp.com",
+  projectId: "smartfix-a6733-b231d",
+  storageBucket: "smartfix-a6733-b231d.firebasestorage.app",
+  messagingSenderId: "548062625107",
+  appId: "1:548062625107:web:c457685f0f9d53dbd435a6"
+};
+
+let auth = null;
+let db = null;
+let currentCafeListener = null;
+
+try {
+  if (typeof firebase !== 'undefined') {
+    firebase.initializeApp(firebaseConfig);
+    auth = firebase.auth();
+    db = firebase.firestore();
+  }
+} catch(e) {
+  console.error("Firebase Initialization Error:", e);
+}
+
 window.todayStr = function() {
   const d = new Date();
   const year = d.getFullYear();
@@ -394,16 +418,14 @@ window.todayStr = function() {
   return `${year}-${month}-${day}`;
 };
 
-// Initial state template for a brand new Cafe
-function createNewCafeTemplate(name, owner, phone, user, pass, pin) {
+function createNewCafeTemplate(cafeId, ownerUid, name, owner, phone, pin) {
   return {
-    cafeId: user.toLowerCase(),
+    cafeId: cafeId,
+    ownerUid: ownerUid,
     name: name,
     ownerName: owner,
     phone: phone,
     address: 'City, State',
-    adminUsername: user,
-    adminPassword: pass,
     masterPin: pin,
     upi: 'pay@upi',
     googleReview: '',
@@ -427,43 +449,15 @@ function createNewCafeTemplate(name, owner, phone, user, pass, pin) {
   };
 }
 
-// Active cafe state in memory
 window.RESTAURANT_DATA = null;
+window.getData = function() { return window.RESTAURANT_DATA || {}; };
 
-window.getData = function() {
-  return window.RESTAURANT_DATA || {};
-};
-
-/* ==========================================================================
-   FIREBASE MULTI-TENANT INITIALIZATION (UMD)
-   ========================================================================== */
-const firebaseConfig = {
-  apiKey: "AIzaSyCbIno4DtuJ_EBtXXGu_JuBQ9I2KoMvkWY",
-  authDomain: "smartfix-a6733-b231d.firebaseapp.com",
-  projectId: "smartfix-a6733-b231d",
-  storageBucket: "smartfix-a6733-b231d.firebasestorage.app",
-  messagingSenderId: "548062625107",
-  appId: "1:548062625107:web:c457685f0f9d53dbd435a6"
-};
-
-let db = null;
-let currentUnsubscribeListener = null;
-
-try {
-  if (typeof firebase !== 'undefined') {
-    firebase.initializeApp(firebaseConfig);
-    db = firebase.firestore();
-  }
-} catch(e) {
-  console.error("Firebase init failed:", e);
-}
-
-// Connect active cafe to its own Firebase Document
+// Realtime Listener for the authenticated cafe
 function bindCafeCloudListener(cafeId) {
   if (!db || !cafeId) return;
 
-  if (currentUnsubscribeListener) {
-    currentUnsubscribeListener();
+  if (currentCafeListener) {
+    currentCafeListener();
   }
 
   const badge = document.getElementById('sync-status');
@@ -474,24 +468,18 @@ function bindCafeCloudListener(cafeId) {
 
   const docRef = db.collection("cafes").doc(cafeId);
 
-  currentUnsubscribeListener = docRef.onSnapshot((docSnap) => {
+  currentCafeListener = docRef.onSnapshot((docSnap) => {
     if (docSnap.exists) {
       window.RESTAURANT_DATA = docSnap.data();
       localStorage.setItem('tmpro_cafe_cache_' + cafeId, JSON.stringify(window.RESTAURANT_DATA));
-    } else {
-      // If doc not created yet, set local template
-      if (window.RESTAURANT_DATA) {
-        docRef.set(window.RESTAURANT_DATA);
-      }
     }
-
     if (badge) {
       badge.className = 'sync-badge online';
       badge.innerHTML = '☁️ Online';
     }
     renderCurrentView();
   }, (err) => {
-    console.warn("Firebase listener error:", err);
+    console.warn("Firestore sync warning:", err);
     if (badge) {
       badge.className = 'sync-badge syncing';
       badge.innerHTML = '⚡ Local Mode';
@@ -499,67 +487,64 @@ function bindCafeCloudListener(cafeId) {
   });
 }
 
-// Save active cafe data to its specific document
 window.cloudSave = function() {
   const data = window.getData();
-  if (!data || !data.cafeId) return;
+  if (!data || !data.cafeId || !db) return;
 
   try {
     localStorage.setItem('tmpro_cafe_cache_' + data.cafeId, JSON.stringify(data));
   } catch(e){}
 
-  if (db && data.cafeId) {
-    const badge = document.getElementById('sync-status');
+  const badge = document.getElementById('sync-status');
+  if (badge) {
+    badge.className = 'sync-badge syncing';
+    badge.innerHTML = '🔄 Syncing...';
+  }
+
+  db.collection("cafes").doc(data.cafeId).set(data).then(() => {
+    if (badge) {
+      badge.className = 'sync-badge online';
+      badge.innerHTML = '☁️ Online';
+    }
+  }).catch(err => {
+    console.error("Cloud save failed:", err);
     if (badge) {
       badge.className = 'sync-badge syncing';
-      badge.innerHTML = '🔄 Syncing...';
+      badge.innerHTML = '⚠️ Error';
     }
-
-    db.collection("cafes").doc(data.cafeId).set(data).then(() => {
-      if (badge) {
-        badge.className = 'sync-badge online';
-        badge.innerHTML = '☁️ Online';
-      }
-    }).catch(err => {
-      console.error("Cloud save failed:", err);
-      if (badge) {
-        badge.className = 'sync-badge syncing';
-        badge.innerHTML = '⚡ Local Mode';
-      }
-    });
-  }
+  });
 };
 
 /* ==========================================================================
-   MULTI-TENANT AUTHENTICATION & LOGIN/REGISTRATION
+   SECURE AUTHENTICATION FLOW
    ========================================================================== */
 function checkAuth() {
-  const currentSessionStr = sessionStorage.getItem('tmpro_active_session');
-  if (currentSessionStr) {
-    const session = JSON.parse(currentSessionStr);
-    
-    // Load cached data for this cafe if available
-    const cached = localStorage.getItem('tmpro_cafe_cache_' + session.cafeId);
-    if (cached) {
-      window.RESTAURANT_DATA = JSON.parse(cached);
+  if (!auth) return;
+
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      const cafeId = 'cafe_' + user.uid;
+      const cached = localStorage.getItem('tmpro_cafe_cache_' + cafeId);
+      if (cached) {
+        window.RESTAURANT_DATA = JSON.parse(cached);
+      }
+
+      document.getElementById('auth-screen').style.display = 'none';
+      document.getElementById('app-container').style.display = 'block';
+
+      bindCafeCloudListener(cafeId);
+      setupNavigation();
+      renderCurrentView();
+    } else {
+      if (currentCafeListener) {
+        currentCafeListener();
+        currentCafeListener = null;
+      }
+      window.RESTAURANT_DATA = null;
+      document.getElementById('auth-screen').style.display = 'flex';
+      document.getElementById('app-container').style.display = 'none';
     }
-
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('app-container').style.display = 'block';
-    
-    const role = session.role || 'owner';
-    const btnStaff = document.getElementById('btn-staff-header');
-    const btnSettings = document.getElementById('btn-settings-header');
-    if (btnStaff) btnStaff.style.display = (role === 'owner') ? 'flex' : 'none';
-    if (btnSettings) btnSettings.style.display = (role === 'owner') ? 'flex' : 'none';
-
-    bindCafeCloudListener(session.cafeId);
-    setupNavigation();
-    renderCurrentView();
-  } else {
-    document.getElementById('auth-screen').style.display = 'flex';
-    document.getElementById('app-container').style.display = 'none';
-  }
+  });
 }
 
 function switchAuthTab(tab) {
@@ -571,74 +556,21 @@ function switchAuthTab(tab) {
 
 async function handleLogin(e) {
   e.preventDefault();
-  const u = document.getElementById('log-user').value.trim();
-  const p = document.getElementById('log-pass').value.trim();
+  const email = document.getElementById('log-email').value.trim();
+  const pass = document.getElementById('log-pass').value.trim();
+  const btn = document.getElementById('btn-login-submit');
 
-  // 1. Direct Default Admin Demo Login
-  if (u.toLowerCase() === 'admin' && p === '123') {
-    const defaultCafeId = 'admin';
-    let cafeData = null;
+  btn.disabled = true;
+  btn.innerText = "Signing in...";
 
-    // Check Cloud or Local
-    if (db) {
-      try {
-        const snap = await db.collection("cafes").doc(defaultCafeId).get();
-        if (snap.exists) cafeData = snap.data();
-      } catch(err){}
-    }
-
-    if (!cafeData) {
-      cafeData = createNewCafeTemplate('TableMaster Bistro', 'Admin Master', '+91 98765 43210', 'admin', '123', '1234');
-    }
-
-    window.RESTAURANT_DATA = cafeData;
-    sessionStorage.setItem('tmpro_active_session', JSON.stringify({ cafeId: defaultCafeId, role: 'owner', name: 'Admin' }));
-    checkAuth();
-    return;
+  try {
+    await auth.signInWithEmailAndPassword(email, pass);
+  } catch (err) {
+    alert("Login Failed: " + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "Sign In →";
   }
-
-  // 2. Multi-Tenant Cafe Lookup via Cloud Firestore
-  if (db) {
-    try {
-      const cafeId = u.toLowerCase();
-      const cafeDoc = await db.collection("cafes").doc(cafeId).get();
-
-      if (cafeDoc.exists) {
-        const data = cafeDoc.data();
-        if (data.adminPassword === p) {
-          window.RESTAURANT_DATA = data;
-          sessionStorage.setItem('tmpro_active_session', JSON.stringify({ cafeId: cafeId, role: 'owner', name: data.ownerName || data.name }));
-          checkAuth();
-          return;
-        }
-
-        // Check if employee/staff of this cafe
-        const staff = (data.staff || []).find(s => s.username === u && s.password === p);
-        if (staff) {
-          window.RESTAURANT_DATA = data;
-          sessionStorage.setItem('tmpro_active_session', JSON.stringify({ cafeId: cafeId, role: staff.role, name: staff.name }));
-          checkAuth();
-          return;
-        }
-      }
-    } catch(err) {
-      console.error("Login verification failed:", err);
-    }
-  }
-
-  // 3. Check local cache fallback
-  const localCafeCache = localStorage.getItem('tmpro_cafe_cache_' + u.toLowerCase());
-  if (localCafeCache) {
-    const data = JSON.parse(localCafeCache);
-    if (data.adminPassword === p) {
-      window.RESTAURANT_DATA = data;
-      sessionStorage.setItem('tmpro_active_session', JSON.stringify({ cafeId: data.cafeId, role: 'owner', name: data.ownerName }));
-      checkAuth();
-      return;
-    }
-  }
-
-  alert('Invalid Credentials! (Demo: admin / 123) or check your cafe username.');
 }
 
 async function handleRegister(e) {
@@ -646,59 +578,50 @@ async function handleRegister(e) {
   const name = document.getElementById('reg-name').value.trim();
   const owner = document.getElementById('reg-owner').value.trim();
   const phone = document.getElementById('reg-phone').value.trim();
-  const user = document.getElementById('reg-user').value.trim().toLowerCase();
+  const email = document.getElementById('reg-email').value.trim();
   const pass = document.getElementById('reg-pass').value.trim();
   const pin = document.getElementById('reg-pin').value.trim();
+  const btn = document.getElementById('btn-reg-submit');
 
-  if (!user || !pass || !name) {
-    alert('Please fill in all details');
+  if (!email || !pass || !name) {
+    alert("Please fill in all required fields!");
     return;
   }
 
-  const cafeId = user;
+  btn.disabled = true;
+  btn.innerText = "Registering Cafe...";
 
-  // Check if cafe username already registered in cloud
-  if (db) {
-    try {
-      const existing = await db.collection("cafes").doc(cafeId).get();
-      if (existing.exists) {
-        alert('This Cafe Username is already registered! Please choose another unique username.');
-        return;
-      }
-    } catch(err){}
+  try {
+    const cred = await auth.createUserWithEmailAndPassword(email, pass);
+    const uid = cred.user.uid;
+    const cafeId = 'cafe_' + uid;
+
+    const newCafe = createNewCafeTemplate(cafeId, uid, name, owner, phone, pin);
+    window.RESTAURANT_DATA = newCafe;
+
+    await db.collection("cafes").doc(cafeId).set(newCafe);
+    localStorage.setItem('tmpro_cafe_cache_' + cafeId, JSON.stringify(newCafe));
+
+    alert(`✓ Registration Successful for "${name}"!`);
+  } catch (err) {
+    alert("Registration Error: " + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "Register & Launch My Cafe →";
   }
-
-  const newCafe = createNewCafeTemplate(name, owner, phone, user, pass, pin);
-  window.RESTAURANT_DATA = newCafe;
-
-  // Save to cloud & local
-  if (db) {
-    try {
-      await db.collection("cafes").doc(cafeId).set(newCafe);
-    } catch(err){
-      console.error(err);
-    }
-  }
-  localStorage.setItem('tmpro_cafe_cache_' + cafeId, JSON.stringify(newCafe));
-
-  sessionStorage.setItem('tmpro_active_session', JSON.stringify({ cafeId: cafeId, role: 'owner', name: owner }));
-  alert(`✓ Registration Successful for "${name}"! Launching your Cafe Dashboard...`);
-  checkAuth();
 }
 
-function handleLogout() {
+async function handleLogout() {
   if (!confirm('Log out from your Cafe account?')) return;
-  if (currentUnsubscribeListener) {
-    currentUnsubscribeListener();
-    currentUnsubscribeListener = null;
+  try {
+    await auth.signOut();
+  } catch (err) {
+    console.error(err);
   }
-  sessionStorage.removeItem('tmpro_active_session');
-  window.RESTAURANT_DATA = null;
-  checkAuth();
 }
 
 /* ==========================================================================
-   MULTI-LANGUAGE STRINGS & UI SETUP
+   UI / NAVIGATION / RENDERING
    ========================================================================== */
 const I18N = {
   en: {
@@ -905,13 +828,13 @@ function createSafeQR(text) {
 }
 
 const ALL_NAV_ITEMS = [
-  { id: 'dashboard', i18n: 'navHome', icon: '<path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 011 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>', roles: ['owner', 'cashier'] },
-  { id: 'pos', i18n: 'navPOS', icon: '<path d="M12 4v16m8-8H4"/>', roles: ['owner', 'waiter', 'cashier'] },
-  { id: 'kitchen', i18n: 'navKitchen', icon: '<path d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/>', roles: ['owner', 'kitchen'] },
-  { id: 'bills', i18n: 'navBills', icon: '<path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>', roles: ['owner', 'cashier'] },
-  { id: 'expenses', i18n: 'navExpenses', icon: '<path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>', roles: ['owner'] },
-  { id: 'reports', i18n: 'navReports', icon: '<path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>', roles: ['owner'] },
-  { id: 'menu', i18n: 'navMenu', icon: '<path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>', roles: ['owner'] }
+  { id: 'dashboard', i18n: 'navHome', icon: '<path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 011 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>' },
+  { id: 'pos', i18n: 'navPOS', icon: '<path d="M12 4v16m8-8H4"/>' },
+  { id: 'kitchen', i18n: 'navKitchen', icon: '<path d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/>' },
+  { id: 'bills', i18n: 'navBills', icon: '<path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>' },
+  { id: 'expenses', i18n: 'navExpenses', icon: '<path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>' },
+  { id: 'reports', i18n: 'navReports', icon: '<path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>' },
+  { id: 'menu', i18n: 'navMenu', icon: '<path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>' }
 ];
 
 let activeTab = 'dashboard';
@@ -924,23 +847,18 @@ let expenseCategoryFilter = 'All';
 let cartState = { tableId: '', items: [] };
 
 function setupNavigation() {
-  const currentSessionStr = sessionStorage.getItem('tmpro_active_session');
-  const role = currentSessionStr ? (JSON.parse(currentSessionStr).role || 'owner') : 'owner';
-
   const bottomBar = document.getElementById('app-bottom-bar');
   if (!bottomBar) return;
 
-  const allowed = ALL_NAV_ITEMS.filter(it => it.roles.includes(role));
-
-  bottomBar.innerHTML = allowed.map(it => `
+  bottomBar.innerHTML = ALL_NAV_ITEMS.map(it => `
     <button class="bar-item ${activeTab === it.id ? 'active' : ''}" onclick="navigate('${it.id}')" id="nav-${it.id}">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">${it.icon}</svg>
       <span>${t(it.i18n)}</span>
     </button>
   `).join('');
 
-  if (!allowed.some(it => it.id === activeTab)) {
-    activeTab = allowed[0].id;
+  if (!ALL_NAV_ITEMS.some(it => it.id === activeTab)) {
+    activeTab = ALL_NAV_ITEMS[0].id;
   }
 }
 
@@ -979,7 +897,7 @@ function onSearchKeyInput(query) {
 window.renderCurrentView = function() {
   const data = window.getData();
   const container = document.getElementById('main-view');
-  if (!container || !data) return;
+  if (!container || !data || !data.cafeId) return;
 
   document.getElementById('txt-cafe-name').innerText = data.name || 'TableMaster Pro';
 
@@ -1420,13 +1338,6 @@ window.renderCurrentView = function() {
   }
 };
 
-/* --- DATA PERSISTENCE & ACTIONS --- */
-function saveCurrentData() {
-  if (typeof window.cloudSave === 'function') {
-    window.cloudSave();
-  }
-}
-
 function handleTableSelect(tblId) {
   cartState.tableId = tblId;
   navigate('pos');
@@ -1568,7 +1479,7 @@ function submitOrderToKitchen() {
   const tbl = (data.tables || []).find(tData => tData.id === cartState.tableId);
   if (tbl) tbl.status = 'occupied';
 
-  saveCurrentData();
+  window.cloudSave();
 
   cartState = { tableId: '', items: [] };
   closeSheet();
@@ -1580,7 +1491,7 @@ function completeKOT(orderId) {
   const o = (data.orders || []).find(ord => ord.id === orderId);
   if (o) {
     o.status = 'ready_to_serve';
-    saveCurrentData();
+    window.cloudSave();
     renderCurrentView();
   }
 }
@@ -1596,7 +1507,7 @@ function settleBillAndReleaseTable(orderId) {
   const tbl = (data.tables || []).find(tData => tData.id === o.tableId);
   if (tbl) tbl.status = 'available';
 
-  saveCurrentData();
+  window.cloudSave();
   renderCurrentView();
 }
 
@@ -1721,7 +1632,7 @@ function saveNewDish() {
   if (!name || isNaN(price) || price < 0) { alert('Please enter valid details'); return; }
   if (!data.menu) data.menu = [];
   data.menu.push({ id: 'm_' + Date.now(), name, category: cat, price });
-  saveCurrentData();
+  window.cloudSave();
   closeSheet();
   renderCurrentView();
 }
@@ -1729,7 +1640,7 @@ function deleteDish(id) {
   const data = window.getData();
   if (!confirm(t('confirmDelete'))) return;
   data.menu = (data.menu || []).filter(m => m.id !== id);
-  saveCurrentData();
+  window.cloudSave();
   renderCurrentView();
 }
 
@@ -1750,7 +1661,7 @@ function saveNewTable() {
   if (!name) return;
   if (!data.tables) data.tables = [];
   data.tables.push({ id: 't_' + Date.now(), name, seats, status: 'available' });
-  saveCurrentData();
+  window.cloudSave();
   closeSheet();
   renderCurrentView();
 }
@@ -1782,7 +1693,7 @@ function saveExpense() {
   if (!amt || isNaN(amt) || !desc) { alert('Please enter valid expense details'); return; }
   if (!data.expenses) data.expenses = [];
   data.expenses.unshift({ id: 'exp_' + Date.now(), category: cat, desc, amount: amt, date: window.todayStr() });
-  saveCurrentData();
+  window.cloudSave();
   closeSheet();
   renderCurrentView();
 }
@@ -1790,7 +1701,7 @@ function deleteExpense(id) {
   const data = window.getData();
   if (!confirm('Delete this expense entry?')) return;
   data.expenses = (data.expenses || []).filter(e => e.id !== id);
-  saveCurrentData();
+  window.cloudSave();
   renderCurrentView();
 }
 
@@ -1844,7 +1755,7 @@ function saveStaffMember() {
 
   if (!data.staff) data.staff = [];
   data.staff.push({ id: 'stf_' + Date.now(), name, username: user, password: pass, role });
-  saveCurrentData();
+  window.cloudSave();
   closeSheet();
   alert('Staff account created successfully!');
 }
@@ -1853,7 +1764,7 @@ function deleteStaff(id) {
   const data = window.getData();
   if (!confirm('Remove this staff member?')) return;
   data.staff = (data.staff || []).filter(s => s.id !== id);
-  saveCurrentData();
+  window.cloudSave();
   closeSheet();
 }
 
@@ -1906,7 +1817,7 @@ function handleLogoUpload(e) {
   reader.onload = function(evt) {
     const data = window.getData();
     data.logo = evt.target.result;
-    saveCurrentData();
+    window.cloudSave();
     openSettingsSheet();
   };
   reader.readAsDataURL(file);
@@ -1915,7 +1826,7 @@ function handleLogoUpload(e) {
 function removeLogo() {
   const data = window.getData();
   data.logo = '';
-  saveCurrentData();
+  window.cloudSave();
   openSettingsSheet();
 }
 
@@ -1929,12 +1840,11 @@ function saveSettings() {
   data.gstRate = parseFloat(document.getElementById('cfg-gst').value) || 0;
   data.serviceRate = parseFloat(document.getElementById('cfg-service').value) || 0;
   data.masterPin = document.getElementById('cfg-pin').value.trim() || data.masterPin;
-  saveCurrentData();
+  window.cloudSave();
   closeSheet();
   renderCurrentView();
 }
 
-// Initial Boot execution
 window.addEventListener('DOMContentLoaded', () => {
   checkAuth();
 });
