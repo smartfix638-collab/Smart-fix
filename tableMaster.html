@@ -459,12 +459,14 @@ function initFirebaseApp() {
 
 initFirebaseApp();
 
+// ভারতীয় সময় (IST) অনুযায়ী রাত ১২:০০ টায় অটোমেটিক ডেট রোলওভার
 window.todayStr = function() {
-  const d = new Date();
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(new Date());
 };
 
 function createNewCafeTemplate(cafeId, ownerUid, name, owner, phone, pin) {
@@ -492,6 +494,12 @@ function createNewCafeTemplate(cafeId, ownerUid, name, owner, phone, pin) {
       { id: 'm2', name: 'Cold Coffee with Ice Cream', category: 'Beverages', price: 90 },
       { id: 'm3', name: 'Crispy French Fries', category: 'Snacks', price: 80 }
     ],
+    // ডিফল্ট অনলাইন প্ল্যাটফর্ম
+    platforms: [
+      { id: 'plt_swiggy', name: 'Swiggy', commissionRate: 20 },
+      { id: 'plt_zomato', name: 'Zomato', commissionRate: 22 }
+    ],
+    platformPayouts: [],
     orders: [],
     expenses: [],
     staff: []
@@ -502,6 +510,11 @@ window.RESTAURANT_DATA = {
   cafeId: 'default_cafe', name: 'TableMaster Bistro', phone: '', address: '', masterPin: '1234', gstRate: 0, serviceRate: 0,
   tables: [{ id: 't1', name: 'T-01', seats: 2, status: 'available' }],
   menu: [{ id: 'm1', name: 'Special Chicken Biryani', category: 'Main Course', price: 190 }],
+  platforms: [
+    { id: 'plt_swiggy', name: 'Swiggy', commissionRate: 20 },
+    { id: 'plt_zomato', name: 'Zomato', commissionRate: 22 }
+  ],
+  platformPayouts: [],
   orders: [], expenses: [], staff: []
 };
 
@@ -519,6 +532,13 @@ function bindCafeCloudListener(cafeId) {
     if (docSnap.exists) {
       window.RESTAURANT_DATA = Object.assign({}, window.RESTAURANT_DATA, docSnap.data());
       window.RESTAURANT_DATA.cafeId = cafeId;
+      if (!window.RESTAURANT_DATA.platforms) {
+        window.RESTAURANT_DATA.platforms = [
+          { id: 'plt_swiggy', name: 'Swiggy', commissionRate: 20 },
+          { id: 'plt_zomato', name: 'Zomato', commissionRate: 22 }
+        ];
+      }
+      if (!window.RESTAURANT_DATA.platformPayouts) window.RESTAURANT_DATA.platformPayouts = [];
       localStorage.setItem('tmpro_cafe_cache_' + cafeId, JSON.stringify(window.RESTAURANT_DATA));
     }
     if (badge) { badge.className = 'sync-badge online'; badge.innerHTML = '☁️ Online'; }
@@ -606,20 +626,31 @@ async function handleLogin(e) {
   e.preventDefault();
   if (!auth) { alert("⚠️ Firebase load error. Check internet."); return; }
 
-  let loginInput = document.getElementById('log-email').value.trim();
-  const pass = document.getElementById('log-pass').value.trim();
+  let loginInput = document.getElementById('log-email').value.trim().toLowerCase();
+  const pass = document.getElementById('log-pass').value;
   const btn = document.getElementById('btn-login-submit');
-
-  if (!loginInput.includes('@')) {
-    loginInput = loginInput.toLowerCase().replace(/\s+/g, '') + '@tablemaster.com';
-  }
 
   btn.disabled = true; btn.innerText = "Signing in...";
 
+  let targetEmail = loginInput;
+  if (!loginInput.includes('@')) {
+    targetEmail = loginInput.replace(/\s+/g, '') + '@tablemaster.com';
+  }
+
   try {
-    await auth.signInWithEmailAndPassword(loginInput, pass);
+    await auth.signInWithEmailAndPassword(targetEmail, pass);
   } catch (err) {
-    alert("Login Failed: " + err.message);
+    if (!loginInput.includes('@') && (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found')) {
+      try {
+        const fallbackEmail = loginInput.replace(/\s+/g, '') + '@tablemaster.local';
+        await auth.signInWithEmailAndPassword(fallbackEmail, pass);
+        return;
+      } catch (fallbackErr) {
+        alert("Login Failed: ইউজারনেম অথবা পাসওয়ার্ড সঠিক নয়।");
+      }
+    } else {
+      alert("Login Failed: " + err.message);
+    }
   } finally {
     btn.disabled = false; btn.innerText = "Sign In →";
   }
@@ -672,13 +703,13 @@ async function handleLogout() {
    ========================================================================== */
 const I18N = {
   en: {
-    navHome: "Home", navPOS: "Order", navKitchen: "Kitchen", navBills: "Bills", navExpenses: "Expenses", navReports: "Reports", navMenu: "Menu",
+    navHome: "Home", navPOS: "Order", navKitchen: "Kitchen", navBills: "Bills", navPlatforms: "Online Portals", navExpenses: "Expenses", navReports: "Reports", navMenu: "Menu",
     todaySales: "Today's Total Sales", totalOrders: "Total Orders", activeKOT: "Active Kitchen KOT",
     newOrder: "New Order (POS)", newOrderSub: "Take customer order", kitchenLive: "Kitchen Live", kitchenLiveSub: "orders preparing",
     billsAndPrint: "Bills & Print", billsAndPrintSub: "UPI QR payment", reportsAndProfit: "Profit & Reports", reportsAndProfitSub: "Sales vs Expenses",
     dailyExpenses: "Expenses Log", dailyExpensesSub: "Kitchen market & supplies", floorMap: "Floor Table Map", addTable: "+ Add Table", seater: "Seater",
-    searchPlaceholder: "🔍 Search dishes or category...", selectDishWarning: "Please select a table first!", selectedItems: "items selected",
-    confirmOrderKOT: "Confirm Order (Send KOT) →", orderConfirmation: "Order Confirmation & Quantities", table: "Table", subtotal: "Subtotal",
+    searchPlaceholder: "🔍 Search dishes or category...", selectDishWarning: "Please select a table or online channel first!", selectedItems: "items selected",
+    confirmOrderKOT: "Confirm Order (Send KOT) →", orderConfirmation: "Order Confirmation & Quantities", table: "Channel / Table", subtotal: "Subtotal",
     tax: "Tax / GST", serviceCharge: "Service Charge", grandTotal: "Total Due", sendToKitchen: "Send Order to Kitchen",
     liveKitchenDisplay: "Live Kitchen Monitor", runningOrders: "running orders", noKOT: "No active orders in kitchen!", readyToServe: "Ready to Serve ✓",
     markServed: "Mark as Served ✓", readyToServeHeader: "Ready to Serve",
@@ -691,16 +722,19 @@ const I18N = {
     reviewPrompt: "Leave us a review on Google", thankYou: "Thank you for dining with us! Visit again.", netProfit: "Net Profit", netLoss: "Net Loss",
     sales: "Sales", expenses: "Expenses", filterToday: "Today", filterWeek: "This Week", filterMonth: "This Month", filterCustom: "Custom Date",
     filterAll: "All Time", topSelling: "Top Selling Items", dailyBreakdown: "Daily Breakdown", exportCSV: "📥 Export CSV", date: "Date", profit: "Profit",
-    staffMgmt: "Staff & Role Switch", role: "Role", masterPinPrompt: "Enter 4-Digit Master PIN:"
+    staffMgmt: "Staff & Role Switch", role: "Role", masterPinPrompt: "Enter 4-Digit Master PIN:",
+    onlinePlatformsTitle: "Online Delivery Partners (Swiggy, Zomato, Local)", addPlatform: "+ Add Partner",
+    platformName: "Platform Name", commission: "Commission %", recordPayout: "Receive Payment", totalGross: "Total Gross",
+    netPayable: "Net After Comm.", received: "Received", pendingDue: "Pending Due"
   },
   bn: {
-    navHome: "হোম", navPOS: "অর্ডার", navKitchen: "কিচেন", navBills: "বিলিং", navExpenses: "খরচের খাতা", navReports: "রিপোর্ট", navMenu: "মেনু",
-    todaySales: "আজকের মোট বিক্রি (Today's Sales)", totalOrders: "মোট অর্ডার", activeKOT: "চলতি কিচেন KOT",
+    navHome: "হোম", navPOS: "অর্ডার", navKitchen: "কিচেন", navBills: "বিলিং", navPlatforms: "অনলাইন পোর্টাল", navExpenses: "খরচের খাতা", navReports: "রিপোর্ট", navMenu: "মেনু",
+    todaySales: "আজকের মোট বিক্রি (Today's Sales)", totalOrders: "আজকের মোট অর্ডার", activeKOT: "চলতি কিচেন KOT",
     newOrder: "নতুন অর্ডার (POS)", newOrderSub: "কাস্টমার অর্ডার এন্ট্রি", kitchenLive: "কিচেন লাইভ", kitchenLiveSub: "টি অর্ডার তৈরি হচ্ছে",
     billsAndPrint: "বিল ও প্রিন্ট", billsAndPrintSub: "QR দিয়ে UPI পেমেন্ট", reportsAndProfit: "লাভ-ক্ষতি ও রিপোর্ট", reportsAndProfitSub: "বিক্রি ও খরচের হিসাব",
     dailyExpenses: "খরচের খাতা", dailyExpensesSub: "বাজার ও ভেন্ডর হিসাব", floorMap: "ইন্টারেক্টিভ টেবিল ম্যাপ (Floor Map)", addTable: "+ টেবিল যোগ", seater: "সিটার",
-    searchPlaceholder: "🔍 খাবার বা মেনু সার্চ করুন...", selectDishWarning: "দয়া করে আগে টেবিল নির্বাচন করুন!", selectedItems: "টি আইটেম সিলেক্টেড",
-    confirmOrderKOT: "অর্ডার নিশ্চিত করুন (KOT) →", orderConfirmation: "অর্ডার ও পরিমাণের তালিকা", table: "টেবিল", subtotal: "সাবটোটাল",
+    searchPlaceholder: "🔍 খাবার বা মেনু সার্চ করুন...", selectDishWarning: "দয়া করে টেবিল অথবা অনলাইন চ্যানেল সিলেক্ট করুন!", selectedItems: "টি আইটেম সিলেক্টেড",
+    confirmOrderKOT: "অর্ডার নিশ্চিত করুন (KOT) →", orderConfirmation: "অর্ডার ও পরিমাণের তালিকা", table: "চ্যানেল / টেবিল", subtotal: "সাবটোটাল",
     tax: "ট্যাক্স / GST", serviceCharge: "সার্ভিস চার্জ", grandTotal: "সর্বমোট দেয় টাকা", sendToKitchen: "রান্নাঘরে অর্ডার পাঠান (Send KOT)",
     liveKitchenDisplay: "লাইভ কিচেন মনিটর (KOT)", runningOrders: "রানিং অর্ডার", noKOT: "কিচেনে কোনো পেন্ডিং অর্ডার নেই!", readyToServe: "খাবার প্রস্তুত (Ready) ✓",
     markServed: "সার্ভ করা হয়েছে (Served) ✓", readyToServeHeader: "সার্ভ করার জন্য প্রস্তুত",
@@ -713,7 +747,10 @@ const I18N = {
     reviewPrompt: "গুগলে আপনার মূল্যবান রিভিউ দিন", thankYou: "আমাদের এখানে আসার জন্য ধন্যবাদ! আবার আসবেন।", netProfit: "নিট লাভ (Net Profit)", netLoss: "নিট ক্ষতি (Net Loss)",
     sales: "মোট বিক্রি", expenses: "মোট খরচ", filterToday: "আজকে", filterWeek: "এই সপ্তাহ", filterMonth: "এই মাস", filterCustom: "কাস্টম তারিখ",
     filterAll: "সব সময়", topSelling: "সবচেয়ে বেশি বিক্রি হওয়া খাবার", dailyBreakdown: "দৈনিক লাভ-ক্ষতির তালিকা", exportCSV: "📥 CSV ডাউনলোড", date: "তারিখ", profit: "লাভ",
-    staffMgmt: "স্টাফ ও ভূমিকা পরিবর্তন", role: "দায়িত্ব / রোল", masterPinPrompt: "৪-ডিজিট মাস্টার পিন (Master PIN) দিন:"
+    staffMgmt: "স্টাফ ও ভূমিকা পরিবর্তন", role: "দায়িত্ব / রোল", masterPinPrompt: "৪-ডিজিট মাস্টার পিন (Master PIN) দিন:",
+    onlinePlatformsTitle: "অনলাইন ডেলিভারি পার্টনার (Swiggy, Zomato, লোকাল)", addPlatform: "+ পার্টনার যোগ",
+    platformName: "প্ল্যাটফর্মের নাম", commission: "কমিশন %", recordPayout: "পেমেন্ট জমা নিন", totalGross: "মোট অর্ডার ভ্যালু",
+    netPayable: "কমিশন বাদে প্রাপ্য", received: "পেমেন্ট রিসিভড", pendingDue: "বকেয়া ব্যালেন্স"
   }
 };
 
@@ -751,6 +788,7 @@ const ALL_NAV_ITEMS = [
   { id: 'pos', i18n: 'navPOS', icon: '<path d="M12 4v16m8-8H4"/>', roles: ['owner', 'waiter', 'cashier'] },
   { id: 'kitchen', i18n: 'navKitchen', icon: '<path d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/>', roles: ['owner', 'kitchen', 'waiter'] },
   { id: 'bills', i18n: 'navBills', icon: '<path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>', roles: ['owner', 'cashier'] },
+  { id: 'platforms', i18n: 'navPlatforms', icon: '<path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>', roles: ['owner'] },
   { id: 'expenses', i18n: 'navExpenses', icon: '<path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>', roles: ['owner'] },
   { id: 'reports', i18n: 'navReports', icon: '<path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>', roles: ['owner'] },
   { id: 'menu', i18n: 'navMenu', icon: '<path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>', roles: ['owner'] }
@@ -842,18 +880,23 @@ window.renderCurrentView = function() {
     </div>
   `;
 
+  // ১. ড্যাশবোর্ড স্ক্রিন (শুধুমাত্র আজকের IST সেলস ফিল্টার করা)
   if (activeTab === 'dashboard') {
-    const totalSales = (data.orders || []).filter(o => o.status === 'completed').reduce((sum, o) => sum + (o.total || 0), 0);
-    const totalExp = (data.expenses || []).reduce((sum, e) => sum + (e.amount || 0), 0);
+    const today = window.todayStr();
+    const todayCompletedOrders = (data.orders || []).filter(o => o.status === 'completed' && (o.date === today));
+    const todaySales = todayCompletedOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+    
+    const todayExpenses = (data.expenses || []).filter(e => e.date === today).reduce((sum, e) => sum + (e.amount || 0), 0);
+    const todayProfit = todaySales - todayExpenses;
     const activeKOTCount = (data.orders || []).filter(o => o.status === 'preparing').length;
 
     container.innerHTML = `
       <div class="tm-card" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color:#fff;">
         <div style="font-size:11px; text-transform:uppercase; color:#94a3b8; font-weight:700;">${t('todaySales')}</div>
-        <div style="font-size:30px; font-weight:800; color:#38bdf8; margin:4px 0 8px;">₹ ${totalSales.toFixed(2)}</div>
+        <div style="font-size:30px; font-weight:800; color:#38bdf8; margin:4px 0 8px;">₹ ${todaySales.toFixed(2)}</div>
         <div style="font-size:12px; color:#cbd5e1; display:flex; justify-content:space-between;">
-          <span>${t('totalOrders')}: <b>${(data.orders || []).length}</b></span>
-          <span>${t('netProfit')}: <b style="color:#4ade80;">₹ ${(totalSales - totalExp).toFixed(2)}</b></span>
+          <span>${t('totalOrders')}: <b>${todayCompletedOrders.length}</b></span>
+          <span>${t('netProfit')}: <b style="color:${todayProfit >= 0 ? '#4ade80' : '#f87171'};">₹ ${todayProfit.toFixed(2)}</b></span>
         </div>
       </div>
 
@@ -873,10 +916,10 @@ window.renderCurrentView = function() {
           <div class="tile-title">${t('reportsAndProfit')}</div>
           <div class="tile-desc">${t('reportsAndProfitSub')}</div>
         </div>
-        <div class="quick-tile purple" onclick="navigate('expenses')">
-          <div class="tile-bubble"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg></div>
-          <div class="tile-title">${t('dailyExpenses')}</div>
-          <div class="tile-desc">${t('dailyExpensesSub')}</div>
+        <div class="quick-tile purple" onclick="navigate('platforms')">
+          <div class="tile-bubble"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg></div>
+          <div class="tile-title">Swiggy & Zomato</div>
+          <div class="tile-desc">Online Partners & Dues</div>
         </div>
       </div>
 
@@ -899,6 +942,7 @@ window.renderCurrentView = function() {
     `;
   }
 
+  // ২. POS স্ক্রিন (টেবিলের পাশাপাশি সুইগি, জোম্যাটো ও লোকাল ডেলিভারি নির্বাচন)
   else if (activeTab === 'pos') {
     const cats = ['All', ...new Set((data.menu || []).map(m => m.category))];
     let dishes = posCategoryFilter === 'All' ? (data.menu || []) : (data.menu || []).filter(m => m.category === posCategoryFilter);
@@ -913,18 +957,29 @@ window.renderCurrentView = function() {
 
     container.innerHTML = `
       <div class="tm-card">
+        <label>Select Table / Online Channel</label>
         <select id="pos-table-select" style="margin-bottom:10px;" onchange="cartState.tableId = this.value; renderCurrentView();">
-          <option value="">-- ${t('table')} --</option>
-          ${(data.tables || []).map(tData => `
-            <option value="${tData.id}" ${cartState.tableId === tData.id ? 'selected':''}>
-              ${tData.name} (${tData.seats} ${t('seater')}) - ${tData.status.toUpperCase()}
-            </option>
-          `).join('')}
+          <option value="">-- Choose Channel --</option>
+          <optgroup label="🪑 Dine-in Floor Tables">
+            ${(data.tables || []).map(tData => `
+              <option value="${tData.id}" ${cartState.tableId === tData.id ? 'selected':''}>
+                ${tData.name} (${tData.seats} Seater) - ${tData.status.toUpperCase()}
+              </option>
+            `).join('')}
+          </optgroup>
+          <optgroup label="🛵 Online Delivery Partners">
+            ${(data.platforms || []).map(p => `
+              <option value="platform_${p.id}" ${cartState.tableId === 'platform_' + p.id ? 'selected':''}>
+                ${p.name} (Online - Comm ${p.commissionRate}%)
+              </option>
+            `).join('')}
+            <option value="takeaway" ${cartState.tableId === 'takeaway' ? 'selected':''}>🛍️ Direct Takeaway / Parcel</option>
+          </optgroup>
         </select>
 
         ${activeOrderOnTable ? `
           <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px;margin-bottom:10px;font-size:12px;color:#1e40af;">
-            ℹ️ <b>Active Order (#${activeOrderOnTable.billNo})</b> is running on this table.
+            ℹ️ <b>Active Order (#${activeOrderOnTable.billNo})</b> is running on this channel.
           </div>
         ` : ''}
 
@@ -959,9 +1014,21 @@ window.renderCurrentView = function() {
     `;
   }
 
+  // ৩. কিচেন লাইভ স্ক্রিন
   else if (activeTab === 'kitchen') {
     const liveKOT = (data.orders || []).filter(o => o.status === 'preparing');
     const readyKOT = (data.orders || []).filter(o => o.status === 'ready_to_serve');
+
+    const getChannelLabel = (tId) => {
+      if (tId && tId.startsWith('platform_')) {
+        const pId = tId.replace('platform_', '');
+        const p = (data.platforms || []).find(x => x.id === pId);
+        return p ? '🛵 ' + p.name : '🛵 Online';
+      }
+      if (tId === 'takeaway') return '🛍️ Takeaway';
+      const tbl = (data.tables || []).find(tData => tData.id === tId);
+      return tbl ? '🪑 ' + tbl.name : 'Counter';
+    };
 
     container.innerHTML = `
       <div class="tm-card">
@@ -971,30 +1038,26 @@ window.renderCurrentView = function() {
         </div>
         ${liveKOT.length === 0 ? `<div style="text-align:center;padding:18px;color:var(--text-muted);">${t('noKOT')}</div>` : ''}
         <div style="display:flex;flex-direction:column;gap:10px;">
-          ${liveKOT.map(o => {
-            const tbl = (data.tables || []).find(tData => tData.id === o.tableId);
-            return `
-              <div style="border:1.5px solid var(--border);border-radius:10px;padding:12px;background:#fff;">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                  <strong style="font-size:15px;">${t('table')}: ${tbl ? tbl.name : 'Takeaway'} (#KOT-${o.kotNo})</strong>
-                  <span style="font-size:10.5px;padding:3px 8px;border-radius:12px;background:#fef3c7;color:#b45309;font-weight:700;">PREPARING</span>
-                </div>
-                <div style="font-size:12.5px;color:#334155;line-height:1.5;margin-bottom:10px;">
-                  ${o.items.map(i => `
-                    <div style="display:flex;justify-content:space-between;">
-                      <span>• <b>${i.qty}x</b> ${i.name}</span>
-                      ${i.isAddOn ? `<span style="font-size:10px;color:#b45309;font-weight:800;background:#fef3c7;padding:1px 4px;border-radius:4px;">NEW ADD-ON</span>` : `<span style="font-size:10px;color:#64748b;">(Standard)</span>`}
-                    </div>
-                  `).join('')}
-                </div>
-                <button class="btn-primary" style="padding:9px;font-size:12.5px;" onclick="completeKOT('${o.id}')">${t('readyToServe')}</button>
+          ${liveKOT.map(o => `
+            <div style="border:1.5px solid var(--border);border-radius:10px;padding:12px;background:#fff;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <strong style="font-size:15px;">${getChannelLabel(o.tableId)} (#KOT-${o.kotNo})</strong>
+                <span style="font-size:10.5px;padding:3px 8px;border-radius:12px;background:#fef3c7;color:#b45309;font-weight:700;">PREPARING</span>
               </div>
-            `;
-          }).join('')}
+              <div style="font-size:12.5px;color:#334155;line-height:1.5;margin-bottom:10px;">
+                ${o.items.map(i => `
+                  <div style="display:flex;justify-content:space-between;">
+                    <span>• <b>${i.qty}x</b> ${i.name}</span>
+                    ${i.isAddOn ? `<span style="font-size:10px;color:#b45309;font-weight:800;background:#fef3c7;padding:1px 4px;border-radius:4px;">NEW ADD-ON</span>` : `<span style="font-size:10px;color:#64748b;">(Standard)</span>`}
+                  </div>
+                `).join('')}
+              </div>
+              <button class="btn-primary" style="padding:9px;font-size:12.5px;" onclick="completeKOT('${o.id}')">${t('readyToServe')}</button>
+            </div>
+          `).join('')}
         </div>
       </div>
 
-      <!-- Ready to Serve Section -->
       ${readyKOT.length > 0 ? `
         <div class="tm-card" style="border-left: 4px solid var(--success);">
           <div class="tm-card-title">
@@ -1002,21 +1065,18 @@ window.renderCurrentView = function() {
             <small style="color:var(--success);font-weight:700;">${readyKOT.length} Ready</small>
           </div>
           <div style="display:flex;flex-direction:column;gap:10px;">
-            ${readyKOT.map(o => {
-              const tbl = (data.tables || []).find(tData => tData.id === o.tableId);
-              return `
-                <div style="border:1px solid #a7f3d0;border-radius:10px;padding:12px;background:#ecfdf5;">
-                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                    <strong style="font-size:14px;color:#065f46;">${t('table')}: ${tbl ? tbl.name : 'Takeaway'} (#Bill-${o.billNo})</strong>
-                    <span style="font-size:10px;padding:2px 8px;border-radius:12px;background:#d1fae5;color:#047857;font-weight:700;">FOOD READY</span>
-                  </div>
-                  <div style="font-size:12px;color:#334155;margin-bottom:8px;">
-                    ${o.items.map(i => `<div>• ${i.qty}x ${i.name}</div>`).join('')}
-                  </div>
-                  <button class="btn-primary" style="background:#059669;padding:7px;font-size:11.5px;" onclick="markOrderServed('${o.id}')">${t('markServed')}</button>
+            ${readyKOT.map(o => `
+              <div style="border:1px solid #a7f3d0;border-radius:10px;padding:12px;background:#ecfdf5;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                  <strong style="font-size:14px;color:#065f46;">${getChannelLabel(o.tableId)} (#Bill-${o.billNo})</strong>
+                  <span style="font-size:10px;padding:2px 8px;border-radius:12px;background:#d1fae5;color:#047857;font-weight:700;">FOOD READY</span>
                 </div>
-              `;
-            }).join('')}
+                <div style="font-size:12px;color:#334155;margin-bottom:8px;">
+                  ${o.items.map(i => `<div>• ${i.qty}x ${i.name}</div>`).join('')}
+                </div>
+                <button class="btn-primary" style="background:#059669;padding:7px;font-size:11.5px;" onclick="markOrderServed('${o.id}')">${t('markServed')}</button>
+              </div>
+            `).join('')}
           </div>
         </div>
       ` : ''}
@@ -1025,20 +1085,31 @@ window.renderCurrentView = function() {
     `;
   }
 
+  // ৪. বিলিং হিস্ট্রি
   else if (activeTab === 'bills') {
+    const getChannelName = (tId) => {
+      if (tId && tId.startsWith('platform_')) {
+        const pId = tId.replace('platform_', '');
+        const p = (data.platforms || []).find(x => x.id === pId);
+        return p ? '🛵 ' + p.name : '🛵 Online';
+      }
+      if (tId === 'takeaway') return '🛍️ Takeaway';
+      const tbl = (data.tables || []).find(tData => tData.id === tId);
+      return tbl ? '🪑 ' + tbl.name : 'Counter';
+    };
+
     container.innerHTML = `
       <div class="tm-card">
         <div class="tm-card-title">${t('billingHistory')}</div>
         <div style="display:flex;flex-direction:column;gap:10px;">
           ${(data.orders || []).length === 0 ? `<div style="text-align:center;padding:24px;color:var(--text-muted);">${t('noBills')}</div>` : ''}
           ${(data.orders || []).map(o => {
-            const tbl = (data.tables || []).find(tData => tData.id === o.tableId);
             const isSettled = o.status === 'completed';
             return `
               <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border:1px solid var(--border);border-radius:10px;${isSettled ? 'background:#f8fafc;' : 'background:#fff;'}">
                 <div>
                   <div style="font-weight:700;">
-                    #${o.billNo} — ${tbl ? tbl.name : 'Takeaway'}
+                    #${o.billNo} — ${getChannelName(o.tableId)}
                     <span class="badge ${isSettled ? 'cat-sal' : 'cat-raw'}" style="margin-left:4px;font-size:9px;">${isSettled ? 'PAID' : 'UNPAID'}</span>
                   </div>
                   <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px;">${o.items.length} items · <b>₹ ${o.total.toFixed(2)}</b></div>
@@ -1056,6 +1127,90 @@ window.renderCurrentView = function() {
     `;
   }
 
+  // ৫. অনলাইন ডেলিভারি পার্টনার খাতা ও পেমেন্ট ম্যানেজমেন্ট (Swiggy, Zomato, Local Portals)
+  else if (activeTab === 'platforms') {
+    const platforms = data.platforms || [];
+    const orders = (data.orders || []).filter(o => o.status === 'completed');
+    const payouts = data.platformPayouts || [];
+
+    const stats = platforms.map(p => {
+      const pOrders = orders.filter(o => o.tableId === 'platform_' + p.id);
+      const grossSales = pOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+      const commissionAmount = grossSales * ((p.commissionRate || 0) / 100);
+      const netReceivable = grossSales - commissionAmount;
+
+      const totalReceived = payouts.filter(pay => pay.platformId === p.id).reduce((sum, pay) => sum + (pay.amount || 0), 0);
+      const pendingDue = netReceivable - totalReceived;
+
+      return { ...p, grossSales, commissionAmount, netReceivable, totalReceived, pendingDue, orderCount: pOrders.length };
+    });
+
+    container.innerHTML = `
+      <div class="tm-card">
+        <div class="tm-card-title">
+          <span>🛵 ${t('onlinePlatformsTitle')}</span>
+          <button class="btn-sm-outline" onclick="openAddPlatformSheet()">${t('addPlatform')}</button>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          ${stats.map(s => `
+            <div style="border:1.5px solid var(--border);border-radius:12px;padding:12px;background:#fff;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <div>
+                  <h4 style="font-size:15px;font-weight:800;">${s.name}</h4>
+                  <span style="font-size:11px;color:var(--text-muted);">Commission: <b>${s.commissionRate}%</b> · Orders: <b>${s.orderCount}</b></span>
+                </div>
+                <button class="btn-sm-outline" style="background:#ecfdf5;color:#059669;border-color:#a7f3d0;" onclick="openRecordPayoutSheet('${s.id}', '${s.name}')">+ ${t('recordPayout')}</button>
+              </div>
+
+              <div style="display:grid;grid-template-columns: repeat(3, 1fr);gap:6px;background:#f8fafc;padding:10px;border-radius:8px;margin-bottom:8px;text-align:center;">
+                <div>
+                  <div style="font-size:9.5px;color:#64748b;font-weight:700;">${t('totalGross')}</div>
+                  <div style="font-size:13px;font-weight:800;">₹ ${s.grossSales.toFixed(0)}</div>
+                </div>
+                <div>
+                  <div style="font-size:9.5px;color:#64748b;font-weight:700;">${t('received')}</div>
+                  <div style="font-size:13px;font-weight:800;color:#059669;">₹ ${s.totalReceived.toFixed(0)}</div>
+                </div>
+                <div>
+                  <div style="font-size:9.5px;color:#64748b;font-weight:700;">${t('pendingDue')}</div>
+                  <div style="font-size:13px;font-weight:800;color:${s.pendingDue > 0 ? '#dc2626' : '#059669'};">₹ ${s.pendingDue.toFixed(0)}</div>
+                </div>
+              </div>
+
+              <div style="text-align:right;">
+                <button class="btn-danger" style="padding:3px 8px;font-size:10px;" onclick="deletePlatform('${s.id}')">Remove Partner</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="tm-card">
+        <div class="tm-card-title">📜 Settlement & Payout Logs</div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead><tr><th>Date</th><th>Platform</th><th>Reference / Note</th><th>Amount</th><th></th></tr></thead>
+            <tbody>
+              ${payouts.length === 0 ? '<tr><td colspan="5" style="text-align:center;padding:16px;">No settlement records found</td></tr>' : ''}
+              ${payouts.map(p => `
+                <tr>
+                  <td><b>${p.date}</b></td>
+                  <td>${p.platformName}</td>
+                  <td>${p.note || 'Settlement'}</td>
+                  <td style="color:#059669;font-weight:800;">₹ ${p.amount.toFixed(2)}</td>
+                  <td><button class="btn-danger" style="padding:2px 6px;font-size:10px;" onclick="deletePayout('${p.id}')">✕</button></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      ${developerFooterHtml}
+    `;
+  }
+
+  // ৬. খরচের খাতা
   else if (activeTab === 'expenses') {
     const expenseCategories = ['All', 'Raw Materials', 'Utilities', 'Salaries', 'Rent', 'Marketing', 'Other'];
     let filteredExp = data.expenses || [];
@@ -1109,6 +1264,7 @@ window.renderCurrentView = function() {
     `;
   }
 
+  // ৭. রিপোর্ট ও লাভ-ক্ষতি (হুবহু IST ডেট ফিল্টার সহকারে)
   else if (activeTab === 'reports') {
     const today = window.todayStr();
     let filteredOrders = (data.orders || []).filter(o => o.status === 'completed');
@@ -1118,8 +1274,8 @@ window.renderCurrentView = function() {
       filteredOrders = filteredOrders.filter(o => o.date === today);
       filteredExpenses = filteredExpenses.filter(e => e.date === today);
     } else if (reportFilter === 'week') {
-      const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
-      const weekStr = weekAgo.toISOString().split('T')[0];
+      const d = new Date(); d.setDate(d.getDate() - 7);
+      const weekStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
       filteredOrders = filteredOrders.filter(o => (o.date || today) >= weekStr);
       filteredExpenses = filteredExpenses.filter(e => (e.date || today) >= weekStr);
     } else if (reportFilter === 'month') {
@@ -1227,6 +1383,7 @@ window.renderCurrentView = function() {
     `;
   }
 
+  // ৮. ডিজিটাল মেনু
   else if (activeTab === 'menu') {
     container.innerHTML = `
       <div class="tm-card">
@@ -1286,11 +1443,20 @@ function openCartReviewSheet() {
   const service = serviceRate > 0 ? (subtotal * (serviceRate / 100)) : 0;
   const grandTotal = subtotal + gst + service;
 
-  const tbl = (data.tables || []).find(tData => tData.id === cartState.tableId);
+  let channelName = "Takeaway";
+  if (cartState.tableId.startsWith('platform_')) {
+    const pId = cartState.tableId.replace('platform_', '');
+    const p = (data.platforms || []).find(x => x.id === pId);
+    channelName = p ? '🛵 ' + p.name : '🛵 Online';
+  } else {
+    const tbl = (data.tables || []).find(tData => tData.id === cartState.tableId);
+    if (tbl) channelName = '🪑 ' + tbl.name;
+  }
+
   const existingOrder = (data.orders || []).find(o => o.tableId === cartState.tableId && o.status !== 'completed');
 
   const body = `
-    <div style="font-weight:700;margin-bottom:10px;">${t('table')}: ${tbl ? tbl.name : ''}</div>
+    <div style="font-weight:700;margin-bottom:10px;">${t('table')}: ${channelName}</div>
     ${existingOrder ? `<div style="font-size:11px;color:#1e40af;margin-bottom:8px;">Appending items to Running Bill #${existingOrder.billNo}</div>` : ''}
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
       ${cartState.items.map((it, idx) => `
@@ -1390,7 +1556,7 @@ function settleBillAndReleaseTable(orderId) {
   const data = window.getData();
   const o = (data.orders || []).find(ord => ord.id === orderId);
   if (!o) return;
-  if (!confirm(`Confirm payment of ₹ ${o.total.toFixed(2)} for Bill #${o.billNo}?`)) return;
+  if (!confirm(`Confirm settlement of ₹ ${o.total.toFixed(2)} for Bill #${o.billNo}?`)) return;
 
   o.status = 'completed';
   const tbl = (data.tables || []).find(tData => tData.id === o.tableId);
@@ -1404,7 +1570,16 @@ function showReceiptModal(orderId) {
   const data = window.getData();
   const o = (data.orders || []).find(ord => ord.id === orderId);
   if (!o) return;
-  const tbl = (data.tables || []).find(tData => tData.id === o.tableId);
+
+  let channelLabel = "Takeaway";
+  if (o.tableId && o.tableId.startsWith('platform_')) {
+    const pId = o.tableId.replace('platform_', '');
+    const p = (data.platforms || []).find(x => x.id === pId);
+    channelLabel = p ? p.name : 'Online';
+  } else {
+    const tbl = (data.tables || []).find(tData => tData.id === o.tableId);
+    if (tbl) channelLabel = tbl.name;
+  }
 
   const upiString = `upi://pay?pa=${data.upi}&pn=${encodeURIComponent(data.name)}&am=${o.total.toFixed(2)}&cu=INR&tn=Bill-${o.billNo}`;
   const upiQrImg = createSafeQR(upiString);
@@ -1420,7 +1595,7 @@ function showReceiptModal(orderId) {
       <div class="c" style="font-size:9.5px;">${data.address}</div>
       <div class="c" style="font-size:9.5px;">Ph: ${data.phone}</div>
       <hr>
-      <div>Bill #: ${o.billNo} | ${t('table')}: ${tbl ? tbl.name : 'Takeaway'}</div>
+      <div>Bill #: ${o.billNo} | Channel: ${channelLabel}</div>
       <div>Date: ${o.date || window.todayStr()} ${o.time}</div>
       <hr>
       ${o.items.map(i => `
@@ -1522,6 +1697,74 @@ function saveNewTable() {
   window.cloudSave(); closeSheet(); renderCurrentView();
 }
 
+/* --- ONLINE DELIVERY PLATFORM ACTIONS --- */
+function openAddPlatformSheet() {
+  const form = `
+    <label>${t('platformName')}</label>
+    <input type="text" id="plt-in-name" placeholder="e.g. Swiggy, Zomato, Local Delivery">
+    <label>${t('commission')}</label>
+    <input type="number" id="plt-in-comm" placeholder="e.g. 20" step="0.1">
+    <button class="btn-primary" onclick="saveNewPlatform()">${t('save')}</button>
+  `;
+  openSheet(t('addPlatform'), form);
+}
+
+function saveNewPlatform() {
+  const data = window.getData();
+  const name = document.getElementById('plt-in-name').value.trim();
+  const comm = parseFloat(document.getElementById('plt-in-comm').value) || 0;
+  if (!name) return;
+  if (!data.platforms) data.platforms = [];
+  data.platforms.push({ id: 'plt_' + Date.now(), name, commissionRate: comm });
+  window.cloudSave(); closeSheet(); renderCurrentView();
+}
+
+function deletePlatform(pId) {
+  const data = window.getData();
+  if (!confirm('Remove this platform partner?')) return;
+  data.platforms = (data.platforms || []).filter(p => p.id !== pId);
+  window.cloudSave(); renderCurrentView();
+}
+
+function openRecordPayoutSheet(pId, pName) {
+  const form = `
+    <div style="font-weight:700;margin-bottom:10px;">Platform: ${pName}</div>
+    <label>Settlement Amount Received (₹)</label>
+    <input type="number" id="pay-amt" placeholder="e.g. 5000">
+    <label>Reference / UTR / Note (Weekly/Monthly)</label>
+    <input type="text" id="pay-note" placeholder="e.g. Week 42 Payout via HDFC">
+    <button class="btn-primary" onclick="savePlatformPayout('${pId}', '${pName}')">Save Payment Log</button>
+  `;
+  openSheet(t('recordPayout'), form);
+}
+
+function savePlatformPayout(pId, pName) {
+  const data = window.getData();
+  const amt = parseFloat(document.getElementById('pay-amt').value);
+  const note = document.getElementById('pay-note').value.trim();
+  if (!amt || isNaN(amt) || amt <= 0) { alert('Please enter valid amount'); return; }
+
+  if (!data.platformPayouts) data.platformPayouts = [];
+  data.platformPayouts.unshift({
+    id: 'payout_' + Date.now(),
+    platformId: pId,
+    platformName: pName,
+    amount: amt,
+    note: note,
+    date: window.todayStr()
+  });
+
+  window.cloudSave(); closeSheet(); renderCurrentView();
+}
+
+function deletePayout(id) {
+  const data = window.getData();
+  if (!confirm('Delete this payout record?')) return;
+  data.platformPayouts = (data.platformPayouts || []).filter(p => p.id !== id);
+  window.cloudSave(); renderCurrentView();
+}
+
+/* --- EXPENSE ACTIONS --- */
 function openExpenseSheet() {
   const form = `
     <label>Expense Category</label>
