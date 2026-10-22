@@ -9,6 +9,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Hind+Siliguri:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 
+<!-- Firebase Standard UMD SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
+
 <style>
 :root {
   --primary: #2563eb;
@@ -21,7 +25,7 @@
   --success: #10b981;
   --warning: #f59e0b;
   --danger: #ef4444;
-  --radius-xl: 20px;
+  --radius-xl: 18px;
   --radius-lg: 14px;
   --radius-md: 10px;
   --shadow-sm: 0 1px 3px rgba(15,23,42,0.06);
@@ -31,181 +35,200 @@
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', 'Hind Siliguri', sans-serif; -webkit-tap-highlight-color: transparent; }
 body { background: var(--bg); color: var(--text-main); font-size: 14px; min-height: 100dvh; display: flex; flex-direction: column; overflow-x: hidden; }
 
+/* Auth Screen */
+.auth-wrap {
+  min-height: 100dvh; display: flex; align-items: center; justify-content: center;
+  padding: 16px; background: radial-gradient(ellipse at top left, #1e293b 0%, #0f172a 60%), #0f172a;
+}
+.auth-card {
+  background: #fff; padding: 28px 22px; border-radius: 20px; width: 100%; max-width: 420px;
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.35); text-align: left;
+}
+.auth-brand { text-align: center; margin-bottom: 20px; }
+.auth-brand .icon {
+  width: 48px; height: 48px; background: var(--primary-gradient); border-radius: 12px;
+  display: inline-flex; align-items: center; justify-content: center; color: #fff; margin-bottom: 8px;
+}
+.auth-tabs { display: flex; gap: 4px; background: #f1f5f9; padding: 4px; border-radius: 12px; margin-bottom: 18px; }
+.auth-tab {
+  flex: 1; padding: 8px; border-radius: 8px; border: none; background: transparent;
+  color: var(--text-muted); font-weight: 700; font-size: 13px; cursor: pointer;
+}
+.auth-tab.active { background: #fff; color: var(--primary); box-shadow: var(--shadow-sm); }
+
 /* Top Header */
 .topbar {
   position: sticky; top: 0; z-index: 100; background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
   display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 16px; padding-top: calc(12px + env(safe-area-inset-top));
+  padding: 10px 16px; padding-top: calc(10px + env(safe-area-inset-top));
 }
-.brand-box { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 17px; color: var(--primary); }
+.brand-box { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 16px; color: var(--primary); }
 .brand-icon {
-  width: 36px; height: 36px; background: var(--primary-gradient);
-  border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff;
-  box-shadow: 0 4px 12px rgba(37,99,235,0.3); overflow: hidden;
+  width: 34px; height: 34px; background: var(--primary-gradient);
+  border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff;
+  overflow: hidden;
 }
 .brand-icon img { width: 100%; height: 100%; object-fit: cover; }
-.top-actions { display: flex; align-items: center; gap: 8px; }
+.top-actions { display: flex; align-items: center; gap: 6px; }
 
 .sync-badge {
-  font-size: 11px; padding: 4px 8px; border-radius: 20px; font-weight: 700;
+  font-size: 11px; padding: 3px 8px; border-radius: 20px; font-weight: 700;
   display: flex; align-items: center; gap: 4px;
 }
 .sync-badge.online { background: #dcfce7; color: #15803d; }
 .sync-badge.syncing { background: #fef3c7; color: #b45309; }
 
 .lang-toggle-btn {
-  display: flex; align-items: center; gap: 6px; padding: 6px 12px;
-  border-radius: 20px; border: 1.5px solid var(--border); background: #fff;
-  font-size: 12px; font-weight: 700; color: var(--primary); cursor: pointer; transition: 0.15s;
+  display: flex; align-items: center; gap: 4px; padding: 5px 10px;
+  border-radius: 16px; border: 1px solid var(--border); background: #fff;
+  font-size: 11px; font-weight: 700; color: var(--primary); cursor: pointer;
 }
-.lang-toggle-btn:active { transform: scale(0.95); background: #f1f5f9; }
 
 .btn-icon {
-  width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--border);
+  width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border);
   background: #fff; display: flex; align-items: center; justify-content: center;
-  color: var(--text-muted); cursor: pointer; transition: 0.15s;
+  color: var(--text-muted); cursor: pointer;
 }
-.btn-icon:active { transform: scale(0.92); background: #f1f5f9; }
 
-/* Main Content */
-.main-wrapper { flex: 1; padding: 16px; padding-bottom: calc(100px + env(safe-area-inset-bottom)); max-width: 850px; margin: 0 auto; width: 100%; }
+/* Layout Wrapper */
+.main-wrapper { 
+  flex: 1; padding: 14px; padding-bottom: calc(90px + env(safe-area-inset-bottom)); 
+  max-width: 900px; margin: 0 auto; width: 100%; 
+}
 
 .tm-card {
-  background: var(--surface); border-radius: var(--radius-xl); padding: 18px;
-  box-shadow: var(--shadow-md); border: 1px solid rgba(226, 232, 240, 0.8); margin-bottom: 16px;
+  background: var(--surface); border-radius: var(--radius-xl); padding: 16px;
+  box-shadow: var(--shadow-md); border: 1px solid rgba(226, 232, 240, 0.8); margin-bottom: 14px;
 }
 .tm-card-title {
   display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 14px; font-weight: 700; font-size: 15px; color: var(--text-main);
+  margin-bottom: 12px; font-weight: 700; font-size: 14.5px;
 }
 
 /* Quick Action Tiles */
-.quick-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
-.quick-tile {
-  background: var(--surface); border-radius: var(--radius-xl); padding: 16px;
-  border: 1px solid var(--border); box-shadow: var(--shadow-sm); display: flex;
-  flex-direction: column; align-items: flex-start; gap: 8px; cursor: pointer;
-  position: relative; overflow: hidden; transition: 0.15s; border-left: 5px solid var(--primary);
+.quick-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
+@media (min-width: 600px) {
+  .quick-grid { grid-template-columns: repeat(4, 1fr); }
 }
-.quick-tile:active { transform: scale(0.96); }
+.quick-tile {
+  background: var(--surface); border-radius: var(--radius-lg); padding: 14px;
+  border: 1px solid var(--border); box-shadow: var(--shadow-sm); display: flex;
+  flex-direction: column; align-items: flex-start; gap: 6px; cursor: pointer;
+  border-left: 4px solid var(--primary);
+}
 .quick-tile.amber { border-left-color: var(--warning); }
 .quick-tile.emerald { border-left-color: var(--success); }
 .quick-tile.purple { border-left-color: #8b5cf6; }
 .tile-bubble {
-  width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center;
+  width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center;
   justify-content: center; background: #eff6ff; color: var(--primary);
 }
 .quick-tile.amber .tile-bubble { background: #fffbeb; color: var(--warning); }
 .quick-tile.emerald .tile-bubble { background: #ecfdf5; color: var(--success); }
 .quick-tile.purple .tile-bubble { background: #f3e8ff; color: #8b5cf6; }
-.tile-title { font-weight: 700; font-size: 14px; margin-top: 2px; }
-.tile-desc { font-size: 11.5px; color: var(--text-muted); }
+.tile-title { font-weight: 700; font-size: 13.5px; }
+.tile-desc { font-size: 11px; color: var(--text-muted); }
 
-/* Floor Map */
-.table-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
+/* Floor Table Visuals */
+.table-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
 .table-card {
-  background: #fff; border: 2px solid var(--border); border-radius: var(--radius-lg);
-  padding: 16px 12px; text-align: center; cursor: pointer; position: relative; transition: 0.15s;
+  background: #fff; border: 2px solid var(--border); border-radius: var(--radius-md);
+  padding: 14px 10px; text-align: center; cursor: pointer; position: relative;
 }
-.table-card:active { transform: scale(0.96); }
 .table-card.available { border-color: #a7f3d0; background: linear-gradient(180deg, #ecfdf5 0%, #fff 100%); }
 .table-card.occupied { border-color: #fde68a; background: linear-gradient(180deg, #fffbeb 0%, #fff 100%); }
-.table-dot { position: absolute; top: 8px; right: 8px; width: 8px; height: 8px; border-radius: 50%; }
+.table-dot { position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; border-radius: 50%; }
 .table-card.available .table-dot { background: var(--success); }
 .table-card.occupied .table-dot { background: var(--warning); animation: pulse 1.4s infinite; }
 @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
 
 /* POS Menu */
-.cat-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 12px; scrollbar-width: none; }
+.cat-scroll { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 10px; scrollbar-width: none; }
 .cat-scroll::-webkit-scrollbar { display: none; }
 .cat-btn {
-  padding: 8px 16px; border-radius: 99px; background: #f1f5f9; border: none;
-  font-size: 12.5px; font-weight: 600; color: var(--text-muted); white-space: nowrap; cursor: pointer;
+  padding: 6px 14px; border-radius: 99px; background: #f1f5f9; border: none;
+  font-size: 12px; font-weight: 600; color: var(--text-muted); white-space: nowrap; cursor: pointer;
 }
-.cat-btn.active { background: var(--primary-gradient); color: #fff; box-shadow: 0 4px 10px rgba(37,99,235,0.25); }
+.cat-btn.active { background: var(--primary-gradient); color: #fff; }
 
-.dish-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.dish-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
 .dish-card {
   background: #fff; border: 1.5px solid var(--border); border-radius: var(--radius-md);
-  padding: 12px; display: flex; flex-direction: column; justify-content: space-between;
-  cursor: pointer; min-height: 85px; transition: 0.15s;
+  padding: 10px; display: flex; flex-direction: column; justify-content: space-between;
+  cursor: pointer; min-height: 80px;
 }
-.dish-card:active { border-color: var(--primary); background: #f8fafc; }
-.dish-name { font-weight: 600; font-size: 13.5px; line-height: 1.3; }
-.dish-price { font-weight: 800; color: var(--primary); margin-top: 6px; font-size: 14px; }
+.dish-name { font-weight: 600; font-size: 13px; line-height: 1.3; }
+.dish-price { font-weight: 800; color: var(--primary); margin-top: 4px; font-size: 13.5px; }
 
 /* Sticky Cart */
 .floating-cart {
-  position: fixed; bottom: calc(68px + env(safe-area-inset-bottom)); left: 14px; right: 14px;
-  background: var(--text-main); color: #fff; border-radius: 16px; padding: 12px 18px;
+  position: fixed; bottom: calc(64px + env(safe-area-inset-bottom)); left: 12px; right: 12px;
+  background: var(--text-main); color: #fff; border-radius: 14px; padding: 10px 16px;
   display: flex; align-items: center; justify-content: space-between;
-  box-shadow: 0 12px 28px rgba(15,23,42,0.3); z-index: 95;
+  box-shadow: 0 10px 25px rgba(15,23,42,0.3); z-index: 95;
 }
 .btn-place {
-  background: var(--success); color: #fff; border: none; border-radius: 10px;
-  padding: 9px 18px; font-weight: 700; font-size: 13px; cursor: pointer;
+  background: var(--success); color: #fff; border: none; border-radius: 8px;
+  padding: 8px 16px; font-weight: 700; font-size: 12.5px; cursor: pointer;
 }
 
 /* Quantity Control Box */
 .qty-ctrl-box {
-  display: flex; align-items: center; gap: 8px; background: #f1f5f9;
-  padding: 3px 6px; border-radius: 8px; border: 1px solid var(--border);
+  display: flex; align-items: center; gap: 6px; background: #f1f5f9;
+  padding: 2px 6px; border-radius: 6px; border: 1px solid var(--border);
 }
 .qty-btn {
-  background: #fff; border: 1px solid var(--border); width: 28px; height: 28px;
-  border-radius: 6px; font-weight: 800; font-size: 15px; color: var(--primary);
+  background: #fff; border: 1px solid var(--border); width: 26px; height: 26px;
+  border-radius: 4px; font-weight: 800; font-size: 14px; color: var(--primary);
   display: flex; align-items: center; justify-content: center; cursor: pointer;
 }
-.qty-btn:active { background: var(--primary); color: #fff; }
-.qty-display { font-size: 13px; font-weight: 700; min-width: 20px; text-align: center; }
+.qty-display { font-size: 12.5px; font-weight: 700; min-width: 18px; text-align: center; }
 
 /* Reports & Profit Banner */
 .profit-banner {
-  padding: 18px; border-radius: var(--radius-lg); margin-bottom: 16px;
-  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;
+  padding: 16px; border-radius: var(--radius-lg); margin-bottom: 14px;
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
 }
-.profit-banner.profit { background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border-left: 5px solid #059669; }
-.profit-banner.loss { background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border-left: 5px solid #dc2626; }
-.profit-banner .label { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+.profit-banner.profit { background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border-left: 4px solid #059669; }
+.profit-banner.loss { background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border-left: 4px solid #dc2626; }
+.profit-banner .label { font-size: 11px; font-weight: 800; text-transform: uppercase; }
 .profit-banner.profit .label { color: #047857; }
 .profit-banner.loss .label { color: #b91c1c; }
-.profit-banner .val { font-size: 28px; font-weight: 800; }
+.profit-banner .val { font-size: 26px; font-weight: 800; }
 .profit-banner.profit .val { color: #065f46; }
 .profit-banner.loss .val { color: #991b1b; }
-.profit-breakdown { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; }
+.profit-breakdown { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11.5px; }
 .profit-breakdown div { display: flex; flex-direction: column; }
-.profit-breakdown span:first-child { color: #64748b; font-weight: 700; font-size: 10px; text-transform: uppercase; }
-.profit-breakdown span:last-child { font-size: 14px; font-weight: 800; margin-top: 2px; }
+.profit-breakdown span:first-child { color: #64748b; font-weight: 700; font-size: 9.5px; text-transform: uppercase; }
+.profit-breakdown span:last-child { font-size: 13.5px; font-weight: 800; margin-top: 1px; }
 
-.filter-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.filter-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
 .filter-chip {
-  padding: 6px 14px; border-radius: 99px; background: #f1f5f9; border: none;
-  font-size: 12px; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: 0.15s;
+  padding: 5px 12px; border-radius: 99px; background: #f1f5f9; border: none;
+  font-size: 11.5px; font-weight: 600; color: var(--text-muted); cursor: pointer;
 }
-.filter-chip.active { background: var(--primary-gradient); color: #fff; box-shadow: 0 4px 10px rgba(37,99,235,0.25); }
+.filter-chip.active { background: var(--primary-gradient); color: #fff; }
 
 .custom-date-box {
-  background: #f8fafc; border: 1px solid var(--border); border-radius: 12px;
-  padding: 12px; margin-bottom: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  background: #f8fafc; border: 1px solid var(--border); border-radius: 10px;
+  padding: 10px; margin-bottom: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
 }
 
-.bar-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
-.bar-row:last-child { border-bottom: none; }
-.bar-label { flex: 0 0 35%; font-size: 12.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bar-track { flex: 1; height: 8px; background: #f1f5f9; border-radius: 4px; overflow: hidden; }
+.bar-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #f1f5f9; }
+.bar-label { flex: 0 0 38%; font-size: 12px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-track { flex: 1; height: 7px; background: #f1f5f9; border-radius: 4px; overflow: hidden; }
 .bar-fill { height: 100%; border-radius: 4px; background: var(--primary-gradient); }
 .bar-fill.green { background: linear-gradient(90deg, #10b981, #059669); }
-.bar-val { flex: 0 0 auto; font-size: 12px; font-weight: 700; text-align: right; min-width: 70px; }
+.bar-val { flex: 0 0 auto; font-size: 11.5px; font-weight: 700; text-align: right; min-width: 65px; }
 
 /* Table Elements */
-.table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: var(--radius-md); border: 1px solid var(--border); }
-.data-table { width: 100%; border-collapse: collapse; font-size: 12.5px; text-align: left; }
-.data-table th, .data-table td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; }
-.data-table th { background: #f8fafc; font-weight: 700; color: var(--text-muted); font-size: 11px; text-transform: uppercase; }
-.data-table tr:last-child td { border-bottom: none; }
+.table-responsive { width: 100%; overflow-x: auto; border-radius: var(--radius-md); border: 1px solid var(--border); }
+.data-table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; }
+.data-table th, .data-table td { padding: 9px 10px; border-bottom: 1px solid #f1f5f9; }
+.data-table th { background: #f8fafc; font-weight: 700; color: var(--text-muted); font-size: 10.5px; text-transform: uppercase; }
 
-.badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+.badge { display: inline-flex; align-items: center; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
 .badge.cat-raw { background: #fee2e2; color: #b91c1c; }
 .badge.cat-util { background: #fef3c7; color: #b45309; }
 .badge.cat-sal { background: #e0e7ff; color: #4338ca; }
@@ -217,20 +240,20 @@ body { background: var(--bg); color: var(--text-main); font-size: 14px; min-heig
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
   background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(16px);
   border-top: 1px solid var(--border); display: flex; justify-content: space-around;
-  padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
+  padding: 6px 2px calc(6px + env(safe-area-inset-bottom));
 }
 .bar-item {
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
-  background: transparent; border: none; font-size: 10px; font-weight: 600;
-  color: var(--text-muted); cursor: pointer; padding: 6px 4px; border-radius: 10px; flex: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background: transparent; border: none; font-size: 9.5px; font-weight: 600;
+  color: var(--text-muted); cursor: pointer; padding: 4px; border-radius: 8px; flex: 1;
 }
 .bar-item.active { color: var(--primary); background: #eff6ff; }
-.bar-item svg { width: 19px; height: 19px; }
+.bar-item svg { width: 18px; height: 18px; }
 
 /* Developer Watermark Footer */
 .dev-footer {
-  text-align: center; padding: 18px 10px; font-size: 12px; color: var(--text-muted);
-  border-top: 1px solid var(--border); margin-top: 24px;
+  text-align: center; padding: 14px 10px; font-size: 11.5px; color: var(--text-muted);
+  border-top: 1px solid var(--border); margin-top: 20px;
 }
 .dev-footer b { color: var(--primary); font-weight: 800; }
 
@@ -242,36 +265,35 @@ body { background: var(--bg); color: var(--text-main); font-size: 14px; min-heig
 }
 .sheet-backdrop.active { display: flex; }
 .sheet-modal {
-  background: #fff; width: 100%; max-width: 520px; border-radius: 24px 24px 0 0;
-  padding: 20px; max-height: 88dvh; overflow-y: auto; display: flex; flex-direction: column;
+  background: #fff; width: 100%; max-width: 500px; border-radius: 20px 20px 0 0;
+  padding: 18px; max-height: 85dvh; overflow-y: auto; display: flex; flex-direction: column;
 }
-.sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-.sheet-title { font-size: 17px; font-weight: 800; }
-.btn-x { background: #f1f5f9; border: none; border-radius: 50%; width: 32px; height: 32px; font-weight: bold; cursor: pointer; }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.sheet-title { font-size: 16px; font-weight: 800; }
+.btn-x { background: #f1f5f9; border: none; border-radius: 50%; width: 30px; height: 30px; font-weight: bold; cursor: pointer; }
 
 input, select, textarea {
-  width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 10px;
-  font-size: 14px; margin-bottom: 12px; background: #fff; font-family: inherit;
+  width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px;
+  font-size: 13.5px; margin-bottom: 10px; background: #fff;
 }
-input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); }
-label { display: block; font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px; }
+label { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
 
-.btn-primary { width: 100%; background: var(--primary-gradient); color: #fff; border: none; padding: 12px; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; }
-.btn-danger { background: var(--danger); color: #fff; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 600; cursor: pointer; }
-.btn-sm-outline { border: 1px solid var(--border); background: #fff; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; }
+.btn-primary { width: 100%; background: var(--primary-gradient); color: #fff; border: none; padding: 11px; border-radius: 10px; font-weight: 700; font-size: 13.5px; cursor: pointer; }
+.btn-danger { background: var(--danger); color: #fff; border: none; padding: 6px 10px; border-radius: 6px; font-weight: 600; cursor: pointer; }
+.btn-sm-outline { border: 1px solid var(--border); background: #fff; padding: 5px 10px; border-radius: 6px; font-weight: 700; font-size: 11.5px; cursor: pointer; }
 
 /* Thermal Receipt Paper */
 .receipt-paper {
-  font-family: 'JetBrains Mono', monospace; font-size: 11px; background: #fff;
-  color: #000; padding: 14px; border: 1px dashed #cbd5e1; border-radius: 8px;
-  width: 290px; margin: 0 auto; text-align: left; line-height: 1.4;
+  font-family: 'JetBrains Mono', monospace; font-size: 10.5px; background: #fff;
+  color: #000; padding: 12px; border: 1px dashed #cbd5e1; border-radius: 8px;
+  width: 280px; margin: 0 auto; text-align: left; line-height: 1.35;
 }
-.receipt-paper hr { border: none; border-top: 1px dashed #000; margin: 7px 0; }
+.receipt-paper hr { border: none; border-top: 1px dashed #000; margin: 6px 0; }
 .receipt-paper .c { text-align: center; }
 .receipt-paper .r { text-align: right; }
-.receipt-paper .qr-img { width: 105px; height: 105px; display: block; margin: 0 auto; }
-.receipt-logo { max-width: 90px; max-height: 55px; display: block; margin: 0 auto 6px; filter: grayscale(100%); }
-.receipt-dev { text-align: center; font-size: 9.5px; font-weight: 800; margin-top: 8px; border-top: 1px dotted #000; padding-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+.receipt-paper .qr-img { width: 100px; height: 100px; display: block; margin: 0 auto; }
+.receipt-logo { max-width: 80px; max-height: 50px; display: block; margin: 0 auto 4px; filter: grayscale(100%); }
+.receipt-dev { text-align: center; font-size: 9px; font-weight: 800; margin-top: 6px; border-top: 1px dotted #000; padding-top: 4px; text-transform: uppercase; }
 
 @media print {
   body > * { display: none !important; }
@@ -283,32 +305,71 @@ label { display: block; font-size: 11.5px; font-weight: 700; color: var(--text-m
 </head>
 <body>
 
-<header class="topbar">
-  <div class="brand-box">
-    <div class="brand-icon" id="header-logo-container">
-      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M3 3v18M3 8h4a4 4 0 010 8H3M17 3v18M17 8c0-2 3-2 3 0v6c0 2 3 2 3 0V3"/></svg>
+<!-- AUTHENTICATION SCREEN -->
+<div id="auth-screen" class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="icon">
+        <svg width="24" height="24" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path d="M3 3v18M3 8h4a4 4 0 010 8H3M17 3v18M17 8c0-2 3-2 3 0v6c0 2 3 2 3 0V3"/></svg>
+      </div>
+      <h2 style="font-size:20px;font-weight:800;color:#0f172a">TableMaster Pro</h2>
+      <p style="font-size:11.5px;color:var(--text-muted);margin-top:2px">Software Developed by <b>Debapriya Sarkar</b></p>
     </div>
-    <span id="txt-cafe-name">TableMaster Pro</span>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')" id="tab-login">Login</button>
+      <button class="auth-tab" onclick="switchAuthTab('register')" id="tab-register">Register Cafe</button>
+    </div>
+    <form id="form-login" onsubmit="handleLogin(event)">
+      <label>Username</label>
+      <input id="log-user" required placeholder="admin or staff username">
+      <label>Password</label>
+      <input id="log-pass" type="password" required placeholder="••••••••">
+      <button type="submit" class="btn-primary" style="margin-top:6px">Sign In →</button>
+    </form>
+    <form id="form-register" style="display:none" onsubmit="handleRegister(event)">
+      <label>Restaurant / Cafe Name</label>
+      <input id="reg-name" required placeholder="e.g. Royal Cafe">
+      <label>Owner Name</label>
+      <input id="reg-owner" required placeholder="Full Name">
+      <label>Phone Number</label>
+      <input id="reg-phone" required placeholder="+91 XXXXX XXXXX">
+      <label>Admin Username</label>
+      <input id="reg-user" required placeholder="Choose username">
+      <label>Admin Password</label>
+      <input id="reg-pass" type="password" required placeholder="Password">
+      <label>Master PIN (4 Digits)</label>
+      <input id="reg-pin" type="password" pattern="[0-9]{4}" required placeholder="e.g. 1234">
+      <button type="submit" class="btn-primary" style="margin-top:6px">Register & Launch →</button>
+    </form>
+    <div style="text-align:center;font-size:10.5px;color:#94a3b8;margin-top:14px;">
+      Enterprise Cloud by <b>Debapriya Sarkar</b>
+    </div>
   </div>
-  <div class="top-actions">
-    <div class="sync-badge syncing" id="sync-status">🔄 Connecting...</div>
-    <button class="lang-toggle-btn" onclick="toggleLanguage()" id="btn-lang-toggle">
-      🌐 <span>English</span>
-    </button>
-    <button class="btn-icon" id="btn-staff-header" onclick="openStaffModal()" title="Staff Management">
-      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-    </button>
-    <button class="btn-icon" id="btn-settings-header" onclick="openSettingsSheet()" title="Settings">
-      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-    </button>
-  </div>
-</header>
+</div>
 
-<main class="main-wrapper" id="main-view"></main>
+<!-- MAIN DASHBOARD SHELL -->
+<div id="app-container" style="display:none;">
+  <header class="topbar">
+    <div class="brand-box">
+      <div class="brand-icon" id="header-logo-container">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M3 3v18M3 8h4a4 4 0 010 8H3M17 3v18M17 8c0-2 3-2 3 0v6c0 2 3 2 3 0V3"/></svg>
+      </div>
+      <span id="txt-cafe-name">TableMaster Pro</span>
+    </div>
+    <div class="top-actions">
+      <div class="sync-badge syncing" id="sync-status">🔄 Connecting...</div>
+      <button class="lang-toggle-btn" onclick="toggleLanguage()" id="btn-lang-toggle">🌐 <span>English</span></button>
+      <button class="btn-icon" id="btn-staff-header" onclick="openStaffModal()" title="Staff"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></button>
+      <button class="btn-icon" id="btn-settings-header" onclick="openSettingsSheet()" title="Settings"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
+      <button class="btn-icon" onclick="handleLogout()" title="Logout" style="color:var(--danger)"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg></button>
+    </div>
+  </header>
 
-<nav class="bottom-bar" id="app-bottom-bar"></nav>
+  <main class="main-wrapper" id="main-view"></main>
+  <nav class="bottom-bar" id="app-bottom-bar"></nav>
+</div>
 
-<!-- Sheet Modal -->
+<!-- Modal Sheet -->
 <div class="sheet-backdrop" id="sheet-backdrop" onclick="sheetBackdropClick(event)">
   <div class="sheet-modal" id="sheet-modal">
     <div class="sheet-head">
@@ -333,7 +394,7 @@ window.todayStr = function() {
   return `${year}-${month}-${day}`;
 };
 
-// Default fallback data (Immediate render ensures no blank screen)
+// Default fallback data
 window.RESTAURANT_DATA = {
   name: 'TableMaster Bistro',
   phone: '+91 98765 43210',
@@ -360,7 +421,7 @@ window.RESTAURANT_DATA = {
   staff: []
 };
 
-// Load cached local copy if available
+// Load cached copy
 try {
   const localCopy = localStorage.getItem('tmpro_local_cache');
   if (localCopy) {
@@ -577,14 +638,15 @@ function createSafeQR(text) {
   } catch (err) { return ''; }
 }
 
+/* Role Based Nav Setup */
 const ALL_NAV_ITEMS = [
-  { id: 'dashboard', i18n: 'navHome', icon: '<path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 011 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>' },
-  { id: 'pos', i18n: 'navPOS', icon: '<path d="M12 4v16m8-8H4"/>' },
-  { id: 'kitchen', i18n: 'navKitchen', icon: '<path d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/>' },
-  { id: 'bills', i18n: 'navBills', icon: '<path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>' },
-  { id: 'expenses', i18n: 'navExpenses', icon: '<path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>' },
-  { id: 'reports', i18n: 'navReports', icon: '<path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>' },
-  { id: 'menu', i18n: 'navMenu', icon: '<path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>' }
+  { id: 'dashboard', i18n: 'navHome', icon: '<path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 011 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>', roles: ['owner', 'cashier'] },
+  { id: 'pos', i18n: 'navPOS', icon: '<path d="M12 4v16m8-8H4"/>', roles: ['owner', 'waiter', 'cashier'] },
+  { id: 'kitchen', i18n: 'navKitchen', icon: '<path d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/>', roles: ['owner', 'kitchen'] },
+  { id: 'bills', i18n: 'navBills', icon: '<path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>', roles: ['owner', 'cashier'] },
+  { id: 'expenses', i18n: 'navExpenses', icon: '<path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>', roles: ['owner'] },
+  { id: 'reports', i18n: 'navReports', icon: '<path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>', roles: ['owner'] },
+  { id: 'menu', i18n: 'navMenu', icon: '<path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>', roles: ['owner'] }
 ];
 
 let activeTab = 'dashboard';
@@ -597,14 +659,24 @@ let expenseCategoryFilter = 'All';
 let cartState = { tableId: '', items: [] };
 
 function setupNavigation() {
+  const currentSession = sessionStorage.getItem('tmpro_active_session');
+  const role = currentSession ? (JSON.parse(currentSession).role || 'owner') : 'owner';
+
   const bottomBar = document.getElementById('app-bottom-bar');
   if (!bottomBar) return;
-  bottomBar.innerHTML = ALL_NAV_ITEMS.map(it => `
+
+  const allowed = ALL_NAV_ITEMS.filter(it => it.roles.includes(role));
+
+  bottomBar.innerHTML = allowed.map(it => `
     <button class="bar-item ${activeTab === it.id ? 'active' : ''}" onclick="navigate('${it.id}')" id="nav-${it.id}">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">${it.icon}</svg>
       <span>${t(it.i18n)}</span>
     </button>
   `).join('');
+
+  if (!allowed.some(it => it.id === activeTab)) {
+    activeTab = allowed[0].id;
+  }
 }
 
 function navigate(tab) {
@@ -651,7 +723,7 @@ window.renderCurrentView = function() {
   if (data.logo) {
     logoBox.innerHTML = `<img src="${data.logo}" alt="Logo">`;
   } else {
-    logoBox.innerHTML = `<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M3 3v18M3 8h4a4 4 0 010 8H3M17 3v18M17 8c0-2 3-2 3 0v6c0 2 3 2 3 0V3"/></svg>`;
+    logoBox.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M3 3v18M3 8h4a4 4 0 010 8H3M17 3v18M17 8c0-2 3-2 3 0v6c0 2 3 2 3 0V3"/></svg>`;
   }
 
   updateLanguageDisplay();
@@ -660,7 +732,7 @@ window.renderCurrentView = function() {
   const developerFooterHtml = `
     <div class="dev-footer">
       Software Developed by <b>Debapriya Sarkar</b><br>
-      <span style="font-size:10.5px;opacity:0.8;">TableMaster Pro Cloud Realtime</span>
+      <span style="font-size:10.5px;opacity:0.8;">TableMaster Pro Enterprise Edition</span>
     </div>
   `;
 
@@ -672,7 +744,7 @@ window.renderCurrentView = function() {
     container.innerHTML = `
       <div class="tm-card" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color:#fff;">
         <div style="font-size:11px; text-transform:uppercase; color:#94a3b8; font-weight:700;">${t('todaySales')}</div>
-        <div style="font-size:32px; font-weight:800; color:#38bdf8; margin:6px 0 10px;">₹ ${totalSales.toFixed(2)}</div>
+        <div style="font-size:30px; font-weight:800; color:#38bdf8; margin:4px 0 8px;">₹ ${totalSales.toFixed(2)}</div>
         <div style="font-size:12px; color:#cbd5e1; display:flex; justify-content:space-between;">
           <span>${t('totalOrders')}: <b>${(data.orders || []).length}</b></span>
           <span>${t('netProfit')}: <b style="color:#4ade80;">₹ ${(totalSales - totalExp).toFixed(2)}</b></span>
@@ -681,22 +753,22 @@ window.renderCurrentView = function() {
 
       <div class="quick-grid">
         <div class="quick-tile" onclick="navigate('pos')">
-          <div class="tile-bubble"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"/></svg></div>
+          <div class="tile-bubble"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"/></svg></div>
           <div class="tile-title">${t('newOrder')}</div>
           <div class="tile-desc">${t('newOrderSub')}</div>
         </div>
         <div class="quick-tile amber" onclick="navigate('kitchen')">
-          <div class="tile-bubble"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/></svg></div>
+          <div class="tile-bubble"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/></svg></div>
           <div class="tile-title">${t('kitchenLive')}</div>
           <div class="tile-desc">${activeKOTCount} ${t('kitchenLiveSub')}</div>
         </div>
         <div class="quick-tile emerald" onclick="navigate('reports')">
-          <div class="tile-bubble"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg></div>
+          <div class="tile-bubble"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg></div>
           <div class="tile-title">${t('reportsAndProfit')}</div>
           <div class="tile-desc">${t('reportsAndProfitSub')}</div>
         </div>
         <div class="quick-tile purple" onclick="navigate('expenses')">
-          <div class="tile-bubble"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg></div>
+          <div class="tile-bubble"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg></div>
           <div class="tile-title">${t('dailyExpenses')}</div>
           <div class="tile-desc">${t('dailyExpensesSub')}</div>
         </div>
@@ -705,14 +777,14 @@ window.renderCurrentView = function() {
       <div class="tm-card">
         <div class="tm-card-title">
           <span>${t('floorMap')}</span>
-          <button style="border:none;background:#eff6ff;color:var(--primary);padding:6px 12px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;" onclick="openAddTableSheet()">${t('addTable')}</button>
+          <button style="border:none;background:#eff6ff;color:var(--primary);padding:5px 10px;border-radius:6px;font-weight:700;font-size:11.5px;cursor:pointer;" onclick="openAddTableSheet()">${t('addTable')}</button>
         </div>
         <div class="table-grid">
           ${(data.tables || []).map(tData => `
             <div class="table-card ${tData.status}" onclick="handleTableSelect('${tData.id}')">
               <span class="table-dot"></span>
-              <div style="font-size:16px;font-weight:800;">${tData.name}</div>
-              <div style="font-size:11.5px;color:var(--text-muted);">${tData.seats} ${t('seater')}</div>
+              <div style="font-size:15px;font-weight:800;">${tData.name}</div>
+              <div style="font-size:11px;color:var(--text-muted);">${tData.seats} ${t('seater')}</div>
             </div>
           `).join('')}
         </div>
@@ -735,7 +807,7 @@ window.renderCurrentView = function() {
 
     container.innerHTML = `
       <div class="tm-card">
-        <select id="pos-table-select" style="margin-bottom:12px;" onchange="cartState.tableId = this.value; renderCurrentView();">
+        <select id="pos-table-select" style="margin-bottom:10px;" onchange="cartState.tableId = this.value; renderCurrentView();">
           <option value="">-- ${t('table')} --</option>
           ${(data.tables || []).map(tData => `
             <option value="${tData.id}" ${cartState.tableId === tData.id ? 'selected':''}>
@@ -745,12 +817,12 @@ window.renderCurrentView = function() {
         </select>
 
         ${activeOrderOnTable ? `
-          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px;margin-bottom:12px;font-size:12.5px;color:#1e40af;">
+          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px;margin-bottom:10px;font-size:12px;color:#1e40af;">
             ℹ️ <b>Active Order (#${activeOrderOnTable.billNo})</b> is running on this table. Additional items will be added to this bill.
           </div>
         ` : ''}
 
-        <input type="text" id="pos-search-input" placeholder="${t('searchPlaceholder')}" value="${posSearchQuery}" oninput="onSearchKeyInput(this.value)" style="margin-bottom:12px;">
+        <input type="text" id="pos-search-input" placeholder="${t('searchPlaceholder')}" value="${posSearchQuery}" oninput="onSearchKeyInput(this.value)" style="margin-bottom:10px;">
 
         <div class="cat-scroll">
           ${cats.map(c => `
@@ -771,8 +843,8 @@ window.renderCurrentView = function() {
       ${cartItemCount > 0 ? `
         <div class="floating-cart">
           <div>
-            <div style="font-size:11px;opacity:0.85;">${cartItemCount} ${t('selectedItems')}</div>
-            <div style="font-size:18px;font-weight:800;">₹ ${cartSubtotal.toFixed(2)}</div>
+            <div style="font-size:10.5px;opacity:0.85;">${cartItemCount} ${t('selectedItems')}</div>
+            <div style="font-size:17px;font-weight:800;">₹ ${cartSubtotal.toFixed(2)}</div>
           </div>
           <button class="btn-place" onclick="openCartReviewSheet()">${t('confirmOrderKOT')}</button>
         </div>
@@ -789,20 +861,20 @@ window.renderCurrentView = function() {
           <span>${t('liveKitchenDisplay')}</span>
           <small style="color:var(--warning);font-weight:700;">${liveKOT.length} ${t('runningOrders')}</small>
         </div>
-        ${liveKOT.length === 0 ? `<div style="text-align:center;padding:30px;color:var(--text-muted);">${t('noKOT')}</div>` : ''}
-        <div style="display:flex;flex-direction:column;gap:12px;">
+        ${liveKOT.length === 0 ? `<div style="text-align:center;padding:24px;color:var(--text-muted);">${t('noKOT')}</div>` : ''}
+        <div style="display:flex;flex-direction:column;gap:10px;">
           ${liveKOT.map(o => {
             const tbl = (data.tables || []).find(tData => tData.id === o.tableId);
             return `
-              <div style="border:1.5px solid var(--border);border-radius:12px;padding:14px;background:#fff;">
+              <div style="border:1.5px solid var(--border);border-radius:10px;padding:12px;background:#fff;">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                  <strong style="font-size:16px;">${t('table')}: ${tbl ? tbl.name : 'Takeaway'} (#KOT-${o.kotNo})</strong>
-                  <span style="font-size:11px;padding:3px 8px;border-radius:14px;background:#fef3c7;color:#b45309;font-weight:700;">PREPARING</span>
+                  <strong style="font-size:15px;">${t('table')}: ${tbl ? tbl.name : 'Takeaway'} (#KOT-${o.kotNo})</strong>
+                  <span style="font-size:10.5px;padding:3px 8px;border-radius:12px;background:#fef3c7;color:#b45309;font-weight:700;">PREPARING</span>
                 </div>
-                <div style="font-size:13px;color:#334155;line-height:1.6;margin-bottom:12px;">
+                <div style="font-size:12.5px;color:#334155;line-height:1.5;margin-bottom:10px;">
                   ${o.items.map(i => `<div>• <b>${i.qty}x</b> ${i.name}</div>`).join('')}
                 </div>
-                <button class="btn-primary" style="padding:10px;font-size:13px;" onclick="completeKOT('${o.id}')">${t('readyToServe')}</button>
+                <button class="btn-primary" style="padding:9px;font-size:12.5px;" onclick="completeKOT('${o.id}')">${t('readyToServe')}</button>
               </div>
             `;
           }).join('')}
@@ -817,22 +889,22 @@ window.renderCurrentView = function() {
       <div class="tm-card">
         <div class="tm-card-title">${t('billingHistory')}</div>
         <div style="display:flex;flex-direction:column;gap:10px;">
-          ${(data.orders || []).length === 0 ? `<div style="text-align:center;padding:30px;color:var(--text-muted);">${t('noBills')}</div>` : ''}
+          ${(data.orders || []).length === 0 ? `<div style="text-align:center;padding:24px;color:var(--text-muted);">${t('noBills')}</div>` : ''}
           ${(data.orders || []).map(o => {
             const tbl = (data.tables || []).find(tData => tData.id === o.tableId);
             const isSettled = o.status === 'completed';
             return `
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid var(--border);border-radius:12px;${isSettled ? 'background:#f8fafc;' : 'background:#fff;'}">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border:1px solid var(--border);border-radius:10px;${isSettled ? 'background:#f8fafc;' : 'background:#fff;'}">
                 <div>
                   <div style="font-weight:700;">
                     #${o.billNo} — ${tbl ? tbl.name : 'Takeaway'}
-                    <span class="badge ${isSettled ? 'cat-raw' : 'cat-sal'}" style="margin-left:6px;font-size:9.5px;">${isSettled ? 'PAID & CLOSED' : 'ACTIVE / UNPAID'}</span>
+                    <span class="badge ${isSettled ? 'cat-raw' : 'cat-sal'}" style="margin-left:4px;font-size:9px;">${isSettled ? 'PAID' : 'UNPAID'}</span>
                   </div>
-                  <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">${o.items.length} items · <b>₹ ${o.total.toFixed(2)}</b></div>
+                  <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px;">${o.items.length} items · <b>₹ ${o.total.toFixed(2)}</b></div>
                 </div>
                 <div style="display:flex;gap:6px;">
                   <button class="btn-sm-outline" onclick="showReceiptModal('${o.id}')">Receipt</button>
-                  ${!isSettled ? `<button class="btn-primary" style="width:auto;padding:6px 12px;font-size:12px;" onclick="settleBillAndReleaseTable('${o.id}')">✓ Settle Bill</button>` : ''}
+                  ${!isSettled ? `<button class="btn-primary" style="width:auto;padding:5px 10px;font-size:11.5px;" onclick="settleBillAndReleaseTable('${o.id}')">✓ Settle</button>` : ''}
                 </div>
               </div>
             `;
@@ -867,9 +939,9 @@ window.renderCurrentView = function() {
           <button class="btn-sm-outline" onclick="openExpenseSheet()">+ ${t('expenseTitle')}</button>
         </div>
 
-        <div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:14px;padding:14px;margin-bottom:16px;">
-          <div style="font-size:11px;font-weight:700;color:#991b1b;text-transform:uppercase;">Today's Total Spend</div>
-          <div style="font-size:24px;font-weight:800;color:#dc2626;margin-top:2px;">₹ ${todayExpenses.toFixed(2)}</div>
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:12px;margin-bottom:12px;">
+          <div style="font-size:10.5px;font-weight:700;color:#991b1b;text-transform:uppercase;">Today's Spend</div>
+          <div style="font-size:22px;font-weight:800;color:#dc2626;margin-top:2px;">₹ ${todayExpenses.toFixed(2)}</div>
         </div>
 
         <div class="cat-scroll">
@@ -886,11 +958,11 @@ window.renderCurrentView = function() {
                 <th>Category</th>
                 <th>Description</th>
                 <th>Amount</th>
-                <th>Action</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
-              ${filteredExp.length === 0 ? '<tr><td colspan="5" style="text-align:center;padding:24px;color:#94a3b8">No expense records found!</td></tr>' : ''}
+              ${filteredExp.length === 0 ? '<tr><td colspan="5" style="text-align:center;padding:20px;color:#94a3b8">No expense records found!</td></tr>' : ''}
               ${filteredExp.map(e => `
                 <tr>
                   <td><b>${e.date}</b></td>
@@ -898,7 +970,7 @@ window.renderCurrentView = function() {
                   <td>${e.desc}</td>
                   <td style="font-weight:700;color:#dc2626;">₹ ${e.amount.toFixed(2)}</td>
                   <td>
-                    <button class="btn-danger" style="padding:4px 8px;font-size:11px;" onclick="deleteExpense('${e.id}')">✕</button>
+                    <button class="btn-danger" style="padding:3px 6px;font-size:10px;" onclick="deleteExpense('${e.id}')">✕</button>
                   </td>
                 </tr>
               `).join('')}
@@ -1014,20 +1086,20 @@ window.renderCurrentView = function() {
           </div>
         </div>
 
-        <div style="margin-top:20px;margin-bottom:20px;">
-          <h4 style="font-size:13px;font-weight:700;margin-bottom:10px;">🏆 ${t('topSelling')}</h4>
-          ${topDishes.length === 0 ? '<div style="font-size:12px;color:var(--text-muted);">No sales data</div>' : ''}
+        <div style="margin-top:16px;margin-bottom:16px;">
+          <h4 style="font-size:12.5px;font-weight:700;margin-bottom:8px;">🏆 ${t('topSelling')}</h4>
+          ${topDishes.length === 0 ? '<div style="font-size:11.5px;color:var(--text-muted);">No sales data</div>' : ''}
           ${topDishes.map(([name, d]) => `
             <div class="bar-row">
               <div class="bar-label">${name}</div>
               <div class="bar-track"><div class="bar-fill green" style="width:${(d.revenue/maxRev)*100}%"></div></div>
-              <div class="bar-val">₹ ${d.revenue.toFixed(0)} <span style="font-size:10px;color:var(--text-muted);">(${d.qty})</span></div>
+              <div class="bar-val">₹ ${d.revenue.toFixed(0)} <span style="font-size:9.5px;color:var(--text-muted);">(${d.qty})</span></div>
             </div>
           `).join('')}
         </div>
 
-        <div style="margin-top:20px;">
-          <h4 style="font-size:13px;font-weight:700;margin-bottom:10px;">📅 ${t('dailyBreakdown')}</h4>
+        <div style="margin-top:16px;">
+          <h4 style="font-size:12.5px;font-weight:700;margin-bottom:8px;">📅 ${t('dailyBreakdown')}</h4>
           <div class="table-responsive">
             <table class="data-table">
               <thead>
@@ -1062,18 +1134,18 @@ window.renderCurrentView = function() {
       <div class="tm-card">
         <div class="tm-card-title">
           <span>${t('digitalMenuCard')}</span>
-          <button style="border:none;background:#eff6ff;color:var(--primary);padding:6px 12px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;" onclick="openAddDishSheet()">${t('addNewDish')}</button>
+          <button style="border:none;background:#eff6ff;color:var(--primary);padding:5px 10px;border-radius:6px;font-weight:700;font-size:11.5px;cursor:pointer;" onclick="openAddDishSheet()">${t('addNewDish')}</button>
         </div>
         <div style="display:flex;flex-direction:column;gap:8px;">
           ${(data.menu || []).map(d => `
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid var(--border);border-radius:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border:1px solid var(--border);border-radius:8px;">
               <div>
                 <div style="font-weight:700;">${d.name}</div>
-                <div style="font-size:11.5px;color:var(--text-muted);">${d.category}</div>
+                <div style="font-size:11px;color:var(--text-muted);">${d.category}</div>
               </div>
-              <div style="display:flex;align-items:center;gap:10px;">
+              <div style="display:flex;align-items:center;gap:8px;">
                 <span style="font-weight:800;color:var(--primary);">₹ ${d.price}</span>
-                <button class="btn-danger" style="padding:6px 10px;font-size:11px;" onclick="deleteDish('${d.id}')">${t('delete')}</button>
+                <button class="btn-danger" style="padding:4px 8px;font-size:10px;" onclick="deleteDish('${d.id}')">${t('delete')}</button>
               </div>
             </div>
           `).join('')}
@@ -1141,44 +1213,44 @@ function openCartReviewSheet() {
   const existingOrder = (data.orders || []).find(o => o.tableId === cartState.tableId && o.status !== 'completed');
 
   const body = `
-    <div style="font-weight:700;margin-bottom:12px;">${t('table')}: ${tbl ? tbl.name : ''}</div>
-    ${existingOrder ? `<div style="font-size:11.5px;color:#1e40af;margin-bottom:8px;">Appending items to Running Bill #${existingOrder.billNo}</div>` : ''}
-    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
+    <div style="font-weight:700;margin-bottom:10px;">${t('table')}: ${tbl ? tbl.name : ''}</div>
+    ${existingOrder ? `<div style="font-size:11px;color:#1e40af;margin-bottom:8px;">Appending items to Running Bill #${existingOrder.billNo}</div>` : ''}
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
       ${cartState.items.map((it, idx) => `
-        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #f1f5f9;padding-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #f1f5f9;padding-bottom:6px;">
           <div>
             <div style="font-weight:700;">${it.name}</div>
-            <div style="font-size:11.5px;color:var(--text-muted);">₹ ${it.price} each</div>
+            <div style="font-size:11px;color:var(--text-muted);">₹ ${it.price} each</div>
           </div>
-          <div style="display:flex;align-items:center;gap:12px;">
+          <div style="display:flex;align-items:center;gap:10px;">
             <div class="qty-ctrl-box">
               <button class="qty-btn" onclick="changeCartItemQty(${idx}, -1)">−</button>
               <span class="qty-display">${it.qty}</span>
               <button class="qty-btn" onclick="changeCartItemQty(${idx}, 1)">+</button>
             </div>
-            <strong style="min-width:60px;text-align:right;">₹ ${(it.price * it.qty).toFixed(2)}</strong>
+            <strong style="min-width:55px;text-align:right;">₹ ${(it.price * it.qty).toFixed(2)}</strong>
           </div>
         </div>
       `).join('')}
     </div>
 
-    <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
+    <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px;">
       <span>${t('subtotal')}:</span><span>₹ ${subtotal.toFixed(2)}</span>
     </div>
 
     ${gstRate > 0 ? `
-      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px;">
         <span>${t('tax')} (${gstRate}%):</span><span>₹ ${gst.toFixed(2)}</span>
       </div>
     ` : ''}
 
     ${serviceRate > 0 ? `
-      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:10px;">
         <span>${t('serviceCharge')} (${serviceRate}%):</span><span>₹ ${service.toFixed(2)}</span>
       </div>
     ` : ''}
 
-    <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:800;margin-top:6px;margin-bottom:16px;border-top:1px dashed var(--border);padding-top:8px;">
+    <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:800;margin-top:6px;margin-bottom:14px;border-top:1px dashed var(--border);padding-top:6px;">
       <span>${t('grandTotal')}:</span><span>₹ ${grandTotal.toFixed(2)}</span>
     </div>
     <button class="btn-primary" onclick="submitOrderToKitchen()">${t('sendToKitchen')}</button>
@@ -1283,9 +1355,9 @@ function showReceiptModal(orderId) {
   const receiptHtml = `
     <div class="receipt-paper" id="paper-element">
       ${data.logo ? `<img src="${data.logo}" class="receipt-logo" alt="Logo">` : ''}
-      <div class="c" style="font-size:14px;font-weight:bold;">${data.name}</div>
-      <div class="c" style="font-size:10px;">${data.address}</div>
-      <div class="c" style="font-size:10px;">Ph: ${data.phone}</div>
+      <div class="c" style="font-size:13px;font-weight:bold;">${data.name}</div>
+      <div class="c" style="font-size:9.5px;">${data.address}</div>
+      <div class="c" style="font-size:9.5px;">Ph: ${data.phone}</div>
       <hr>
       <div>Bill #: ${o.billNo} | ${t('table')}: ${tbl ? tbl.name : 'Takeaway'}</div>
       <div>Date: ${o.date || window.todayStr()} ${o.time}</div>
@@ -1317,27 +1389,27 @@ function showReceiptModal(orderId) {
       ` : ''}
 
       <hr>
-      <div style="display:flex;justify-content:space-between;font-weight:bold;font-size:13px;">
+      <div style="display:flex;justify-content:space-between;font-weight:bold;font-size:12px;">
         <span>${t('grandTotal')}:</span>
         <span>₹ ${o.total.toFixed(2)}</span>
       </div>
       <hr>
       ${upiQrImg ? `
-        <div class="c" style="margin:8px 0;">
-          <div style="font-size:10px;margin-bottom:4px;font-weight:bold;">${t('scanToPay')}</div>
+        <div class="c" style="margin:6px 0;">
+          <div style="font-size:9.5px;margin-bottom:3px;font-weight:bold;">${t('scanToPay')}</div>
           <img src="${upiQrImg}" class="qr-img">
         </div>
       ` : ''}
       ${reviewQrImg ? `
         <div class="c" style="margin-top:6px;">
-          <div style="font-size:9px;">${t('reviewPrompt')}</div>
-          <img src="${reviewQrImg}" style="width:70px;height:70px;margin-top:2px;">
+          <div style="font-size:8.5px;">${t('reviewPrompt')}</div>
+          <img src="${reviewQrImg}" style="width:65px;height:65px;margin-top:2px;">
         </div>
       ` : ''}
-      <div class="c" style="font-size:10px;margin-top:8px;">${t('thankYou')}</div>
+      <div class="c" style="font-size:9.5px;margin-top:6px;">${t('thankYou')}</div>
       <div class="receipt-dev">Software Developed by: Debapriya Sarkar</div>
     </div>
-    <button class="btn-primary" style="margin-top:14px;" onclick="triggerPrint()">${t('printThermalReceipt')}</button>
+    <button class="btn-primary" style="margin-top:12px;" onclick="triggerPrint()">${t('printThermalReceipt')}</button>
   `;
   openSheet(t('billsAndPrint'), receiptHtml);
 }
@@ -1480,10 +1552,10 @@ function openStaffModal() {
   `).join('');
 
   const body = `
-    <h4 style="font-size:14px;margin-bottom:12px;">Existing Staff</h4>
-    <div style="margin-bottom:16px;">${staffListHtml || '<div style="color:var(--text-muted);font-size:12px;">No staff accounts yet.</div>'}</div>
-    <hr style="border:none;border-top:1px solid #e2e8f0;margin:12px 0;">
-    <h4 style="font-size:14px;margin-bottom:12px;">Add New Staff Member</h4>
+    <h4 style="font-size:13.5px;margin-bottom:10px;">Existing Staff</h4>
+    <div style="margin-bottom:14px;">${staffListHtml || '<div style="color:var(--text-muted);font-size:11.5px;">No staff accounts yet.</div>'}</div>
+    <hr style="border:none;border-top:1px solid #e2e8f0;margin:10px 0;">
+    <h4 style="font-size:13.5px;margin-bottom:10px;">Add New Staff Member</h4>
     <label>Staff Full Name</label>
     <input type="text" id="stf-name" placeholder="Rohan Kumar">
     <label>Username</label>
@@ -1533,9 +1605,9 @@ function openSettingsSheet() {
     <label>${t('uploadLogo')}</label>
     <input type="file" id="cfg-logo-file" accept="image/*" onchange="handleLogoUpload(event)">
     ${data.logo ? `
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-        <img src="${data.logo}" style="width:50px;height:50px;border-radius:8px;object-fit:cover;border:1px solid var(--border);">
-        <button class="btn-danger" style="padding:4px 8px;font-size:11px;" onclick="removeLogo()">Remove Logo</button>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <img src="${data.logo}" style="width:45px;height:45px;border-radius:6px;object-fit:cover;border:1px solid var(--border);">
+        <button class="btn-danger" style="padding:4px 8px;font-size:10.5px;" onclick="removeLogo()">Remove Logo</button>
       </div>
     ` : ''}
 
@@ -1548,7 +1620,7 @@ function openSettingsSheet() {
     <label>${t('googleReviewUrl')}</label>
     <input type="text" id="cfg-review" value="${data.googleReview || ''}">
     
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
       <div>
         <label>${t('gstRate')}</label>
         <input type="number" id="cfg-gst" value="${data.gstRate || 0}" step="0.01">
@@ -1600,11 +1672,6 @@ function saveSettings() {
   closeSheet();
   renderCurrentView();
 }
-
-// Initial Immediate Render (Never Blank)
-document.addEventListener('DOMContentLoaded', () => {
-  renderCurrentView();
-});
 </script>
 </body>
 </html>
