@@ -354,7 +354,7 @@ label { display: block; font-size: 11px; font-weight: 700; color: var(--text-mut
     </div>
     <form id="form-login" onsubmit="handleLogin(event)">
       <label>Email or Staff Username</label>
-      <input id="log-email" type="text" required placeholder="owner@cafe.com OR rohan" autocomplete="username">
+      <input id="log-email" type="text" required placeholder="owner@cafe.com OR staff_user" autocomplete="username">
       <label>Password</label>
       <input id="log-pass" type="password" required placeholder="••••••••" autocomplete="current-password">
       <button type="submit" class="btn-primary" style="margin-top:6px" id="btn-login-submit">Sign In →</button>
@@ -459,7 +459,7 @@ function initFirebaseApp() {
 
 initFirebaseApp();
 
-// ভারতীয় সময় (IST) অনুযায়ী রাত ১২:০০ টায় ডেট রোলওভার
+// ভারতীয় সময় (IST) অনুযায়ী রাত ১২:০০ টায় অটোমেটিক ডেট রোলওভার
 window.todayStr = function() {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Kolkata',
@@ -581,20 +581,23 @@ function checkAuth() {
         const userDoc = await db.collection("users").doc(user.uid).get();
         if (userDoc.exists) {
           const userData = userDoc.data();
-          cafeId = userData.cafeId;
-          userRole = userData.role;
+          cafeId = userData.cafeId || ('cafe_' + user.uid);
+          userRole = userData.role || 'owner';
         }
-      } catch(e) { console.error("Error fetching user role", e); }
+      } catch(e) { 
+        console.warn("Role fetching fallback to owner:", e); 
+      }
 
       window.CURRENT_USER_ROLE = userRole;
       sessionStorage.setItem('tmpro_role_mode', userRole);
 
       const cached = localStorage.getItem('tmpro_cafe_cache_' + cafeId);
       if (cached) {
-        window.RESTAURANT_DATA = JSON.parse(cached);
-      } else {
-        window.RESTAURANT_DATA.cafeId = cafeId;
+        try {
+          window.RESTAURANT_DATA = JSON.parse(cached);
+        } catch(e){}
       }
+      window.RESTAURANT_DATA.cafeId = cafeId;
 
       document.getElementById('auth-screen').style.display = 'none';
       document.getElementById('app-container').style.display = 'block';
@@ -623,32 +626,44 @@ function switchAuthTab(tab) {
 
 async function handleLogin(e) {
   e.preventDefault();
-  if (!auth) { alert("⚠️ Firebase load error. Check internet."); return; }
+  if (!auth) { alert("⚠️ Firebase load error. Check internet connection."); return; }
 
-  let loginInput = document.getElementById('log-email').value.trim().toLowerCase();
+  let loginInput = document.getElementById('log-email').value.trim();
   const pass = document.getElementById('log-pass').value;
   const btn = document.getElementById('btn-login-submit');
+
+  if (!loginInput || !pass) {
+    alert("অনুগ্রহ করে ইমেইল/ইউজারনেম এবং পাসওয়ার্ড দিন।");
+    return;
+  }
 
   btn.disabled = true; btn.innerText = "Signing in...";
 
   let targetEmail = loginInput;
   if (!loginInput.includes('@')) {
-    targetEmail = loginInput.replace(/\s+/g, '') + '@tablemaster.com';
+    targetEmail = loginInput.toLowerCase().replace(/\s+/g, '') + '@tablemaster.com';
+  } else {
+    targetEmail = loginInput.toLowerCase();
   }
 
   try {
     await auth.signInWithEmailAndPassword(targetEmail, pass);
   } catch (err) {
-    if (!loginInput.includes('@') && (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found')) {
+    console.warn("Primary login error:", err);
+    if (!loginInput.includes('@')) {
       try {
-        const fallbackEmail = loginInput.replace(/\s+/g, '') + '@tablemaster.local';
+        const fallbackEmail = loginInput.toLowerCase().replace(/\s+/g, '') + '@tablemaster.local';
         await auth.signInWithEmailAndPassword(fallbackEmail, pass);
         return;
       } catch (fallbackErr) {
         alert("Login Failed: ইউজারনেম অথবা পাসওয়ার্ড সঠিক নয়।");
       }
     } else {
-      alert("Login Failed: " + err.message);
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+        alert("লগইন ব্যর্থ হয়েছে: দেওয়া ইমেইল/ইউজারনেম অথবা পাসওয়ার্ডটি ভুল।");
+      } else {
+        alert("লগইন এরর: " + err.message);
+      }
     }
   } finally {
     btn.disabled = false; btn.innerText = "Sign In →";
@@ -662,10 +677,15 @@ async function handleRegister(e) {
   const name = document.getElementById('reg-name').value.trim();
   const owner = document.getElementById('reg-owner').value.trim();
   const phone = document.getElementById('reg-phone').value.trim();
-  const email = document.getElementById('reg-email').value.trim();
-  const pass = document.getElementById('reg-pass').value.trim();
+  const email = document.getElementById('reg-email').value.trim().toLowerCase();
+  const pass = document.getElementById('reg-pass').value;
   const pin = document.getElementById('reg-pin').value.trim();
   const btn = document.getElementById('btn-reg-submit');
+
+  if (pass.length < 6) {
+    alert("পাসওয়ার্ড নূন্যতম ৬ অক্ষরের হতে হবে।");
+    return;
+  }
 
   btn.disabled = true; btn.innerText = "Registering Cafe...";
 
@@ -678,11 +698,23 @@ async function handleRegister(e) {
     window.RESTAURANT_DATA = newCafe;
 
     await db.collection("cafes").doc(cafeId).set(newCafe);
-    localStorage.setItem('tmpro_cafe_cache_' + cafeId, JSON.stringify(newCafe));
 
+    await db.collection("users").doc(uid).set({
+      cafeId: cafeId,
+      role: 'owner',
+      name: owner,
+      email: email
+    });
+
+    localStorage.setItem('tmpro_cafe_cache_' + cafeId, JSON.stringify(newCafe));
     alert(`✓ Registration Successful for "${name}"!`);
   } catch (err) {
-    alert("Registration Error: " + err.message);
+    console.error("Registration Error:", err);
+    if (err.code === 'auth/email-already-in-use') {
+      alert("এই ইমেইলটি ইতিমধ্যে নিবন্ধিত রয়েছে। অনুগ্রহ করে লগইন করুন।");
+    } else {
+      alert("Registration Error: " + err.message);
+    }
   } finally {
     btn.disabled = false; btn.innerText = "Register & Launch My Cafe →";
   }
@@ -1100,10 +1132,10 @@ window.renderCurrentView = function() {
     const today = window.todayStr();
     let ordersList = [...(data.orders || [])];
 
-    // লাস্ট বিল সবার উপরে (Descending Order by kotNo or timestamp)
+    // সর্টিং: নতুন বিল সবার উপরে
     ordersList.sort((a, b) => (b.kotNo || 0) - (a.kotNo || 0));
 
-    // ফিল্টারিং লজিক
+    // ফিল্টারিং
     if (billFilter === 'today') {
       ordersList = ordersList.filter(o => o.date === today);
     } else if (billFilter === 'unpaid') {
@@ -1130,7 +1162,6 @@ window.renderCurrentView = function() {
           <small style="color:var(--text-muted);font-weight:600;">Showing: ${ordersList.length} bills</small>
         </div>
 
-        <!-- ফিল্টার চিপস -->
         <div class="filter-bar">
           <button class="filter-chip ${billFilter==='today'?'active':''}" onclick="billFilter='today';renderCurrentView();">${t('filterToday')}</button>
           <button class="filter-chip ${billFilter==='unpaid'?'active':''}" onclick="billFilter='unpaid';renderCurrentView();">${t('unPaidOnly')}</button>
@@ -1179,7 +1210,6 @@ window.renderCurrentView = function() {
     const orders = (data.orders || []).filter(o => o.status === 'completed');
     const payouts = data.platformPayouts || [];
 
-    // নির্দিষ্ট প্ল্যাটফর্ম ফিল্টার করা
     let displayedPlatforms = platforms;
     if (platformViewFilter !== 'All') {
       displayedPlatforms = platforms.filter(p => p.id === platformViewFilter);
@@ -1197,7 +1227,6 @@ window.renderCurrentView = function() {
       return { ...p, grossSales, commissionAmount, netReceivable, totalReceived, pendingDue, orderCount: pOrders.length };
     });
 
-    // ফিল্টার হওয়া অর্ডারের সাম্প্রতিক তালিকা (লাস্ট অর্ডার সবার উপরে)
     let filteredPlatformOrders = orders.filter(o => o.tableId && o.tableId.startsWith('platform_'));
     if (platformViewFilter !== 'All') {
       filteredPlatformOrders = filteredPlatformOrders.filter(o => o.tableId === 'platform_' + platformViewFilter);
@@ -1211,7 +1240,6 @@ window.renderCurrentView = function() {
           <button class="btn-sm-outline" onclick="openAddPlatformSheet()">${t('addPlatform')}</button>
         </div>
 
-        <!-- প্ল্যাটফর্ম ফিল্টার অপশন -->
         <label>${t('filterPlatform')}</label>
         <select style="margin-bottom:12px;" onchange="platformViewFilter=this.value;renderCurrentView();">
           <option value="All" ${platformViewFilter==='All'?'selected':''}>-- ${t('allPlatforms')} --</option>
@@ -1254,7 +1282,6 @@ window.renderCurrentView = function() {
         </div>
       </div>
 
-      <!-- নির্বাচিত প্ল্যাটফর্মের সাম্প্রতিক ডেলিভারি অর্ডার তালিকা -->
       <div class="tm-card">
         <div class="tm-card-title">📦 Online Delivered Orders (${filteredPlatformOrders.length})</div>
         <div class="table-responsive">
@@ -1280,7 +1307,6 @@ window.renderCurrentView = function() {
         </div>
       </div>
 
-      <!-- পেআউট ও সেটেলমেন্ট খাতা -->
       <div class="tm-card">
         <div class="tm-card-title">📜 Settlement & Payout Logs</div>
         <div class="table-responsive">
@@ -1949,7 +1975,7 @@ async function saveStaffMember() {
   const data = window.getData();
   const name = document.getElementById('stf-name').value.trim();
   const username = document.getElementById('stf-user').value.trim().toLowerCase().replace(/\s+/g, '');
-  const pass = document.getElementById('stf-pass').value.trim();
+  const pass = document.getElementById('stf-pass').value;
   const role = document.getElementById('stf-role').value;
   const btn = document.getElementById('btn-save-staff');
 
