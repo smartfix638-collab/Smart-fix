@@ -354,7 +354,7 @@ label { display: block; font-size: 11px; font-weight: 700; color: var(--text-mut
     </div>
     <form id="form-login" onsubmit="handleLogin(event)">
       <label>Email or Staff Username</label>
-      <input id="log-email" type="text" required placeholder="owner@cafe.com OR staff_user" autocomplete="username">
+      <input id="log-email" type="text" required placeholder="owner@cafe.com OR rohan" autocomplete="username">
       <label>Password</label>
       <input id="log-pass" type="password" required placeholder="••••••••" autocomplete="current-password">
       <button type="submit" class="btn-primary" style="margin-top:6px" id="btn-login-submit">Sign In →</button>
@@ -457,9 +457,7 @@ function initFirebaseApp() {
   }
 }
 
-initFirebaseApp();
-
-// ভারতীয় সময় (IST) অনুযায়ী রাত ১২:০০ টায় অটোমেটিক ডেট রোলওভার
+// ভারতীয় সময় (IST) অনুযায়ী রাত ১২:০০ টায় ডেট রোলওভার
 window.todayStr = function() {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Kolkata',
@@ -570,7 +568,11 @@ window.cloudSave = function() {
    AUTHENTICATION FLOW
    ========================================================================== */
 function checkAuth() {
-  if (!auth) return;
+  if (!auth) {
+    // স্ক্রিপ্ট লোড হতে দেরি হলে অপেক্ষা করবে
+    setTimeout(checkAuth, 500);
+    return;
+  }
 
   auth.onAuthStateChanged(async (user) => {
     if (user) {
@@ -581,23 +583,20 @@ function checkAuth() {
         const userDoc = await db.collection("users").doc(user.uid).get();
         if (userDoc.exists) {
           const userData = userDoc.data();
-          cafeId = userData.cafeId || ('cafe_' + user.uid);
-          userRole = userData.role || 'owner';
+          cafeId = userData.cafeId;
+          userRole = userData.role;
         }
-      } catch(e) { 
-        console.warn("Role fetching fallback to owner:", e); 
-      }
+      } catch(e) { console.warn("User role fetch warning:", e.message); }
 
       window.CURRENT_USER_ROLE = userRole;
       sessionStorage.setItem('tmpro_role_mode', userRole);
 
       const cached = localStorage.getItem('tmpro_cafe_cache_' + cafeId);
       if (cached) {
-        try {
-          window.RESTAURANT_DATA = JSON.parse(cached);
-        } catch(e){}
+        window.RESTAURANT_DATA = JSON.parse(cached);
+      } else {
+        window.RESTAURANT_DATA.cafeId = cafeId;
       }
-      window.RESTAURANT_DATA.cafeId = cafeId;
 
       document.getElementById('auth-screen').style.display = 'none';
       document.getElementById('app-container').style.display = 'block';
@@ -626,44 +625,32 @@ function switchAuthTab(tab) {
 
 async function handleLogin(e) {
   e.preventDefault();
-  if (!auth) { alert("⚠️ Firebase load error. Check internet connection."); return; }
+  if (!auth) { alert("⚠️ Firebase load error. Check internet."); return; }
 
-  let loginInput = document.getElementById('log-email').value.trim();
+  let loginInput = document.getElementById('log-email').value.trim().toLowerCase();
   const pass = document.getElementById('log-pass').value;
   const btn = document.getElementById('btn-login-submit');
-
-  if (!loginInput || !pass) {
-    alert("অনুগ্রহ করে ইমেইল/ইউজারনেম এবং পাসওয়ার্ড দিন।");
-    return;
-  }
 
   btn.disabled = true; btn.innerText = "Signing in...";
 
   let targetEmail = loginInput;
   if (!loginInput.includes('@')) {
-    targetEmail = loginInput.toLowerCase().replace(/\s+/g, '') + '@tablemaster.com';
-  } else {
-    targetEmail = loginInput.toLowerCase();
+    targetEmail = loginInput.replace(/\s+/g, '') + '@tablemaster.com';
   }
 
   try {
     await auth.signInWithEmailAndPassword(targetEmail, pass);
   } catch (err) {
-    console.warn("Primary login error:", err);
-    if (!loginInput.includes('@')) {
+    if (!loginInput.includes('@') && (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found')) {
       try {
-        const fallbackEmail = loginInput.toLowerCase().replace(/\s+/g, '') + '@tablemaster.local';
+        const fallbackEmail = loginInput.replace(/\s+/g, '') + '@tablemaster.local';
         await auth.signInWithEmailAndPassword(fallbackEmail, pass);
         return;
       } catch (fallbackErr) {
         alert("Login Failed: ইউজারনেম অথবা পাসওয়ার্ড সঠিক নয়।");
       }
     } else {
-      if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-        alert("লগইন ব্যর্থ হয়েছে: দেওয়া ইমেইল/ইউজারনেম অথবা পাসওয়ার্ডটি ভুল।");
-      } else {
-        alert("লগইন এরর: " + err.message);
-      }
+      alert("Login Failed: " + err.message);
     }
   } finally {
     btn.disabled = false; btn.innerText = "Sign In →";
@@ -677,15 +664,10 @@ async function handleRegister(e) {
   const name = document.getElementById('reg-name').value.trim();
   const owner = document.getElementById('reg-owner').value.trim();
   const phone = document.getElementById('reg-phone').value.trim();
-  const email = document.getElementById('reg-email').value.trim().toLowerCase();
-  const pass = document.getElementById('reg-pass').value;
+  const email = document.getElementById('reg-email').value.trim();
+  const pass = document.getElementById('reg-pass').value.trim();
   const pin = document.getElementById('reg-pin').value.trim();
   const btn = document.getElementById('btn-reg-submit');
-
-  if (pass.length < 6) {
-    alert("পাসওয়ার্ড নূন্যতম ৬ অক্ষরের হতে হবে।");
-    return;
-  }
 
   btn.disabled = true; btn.innerText = "Registering Cafe...";
 
@@ -698,23 +680,11 @@ async function handleRegister(e) {
     window.RESTAURANT_DATA = newCafe;
 
     await db.collection("cafes").doc(cafeId).set(newCafe);
-
-    await db.collection("users").doc(uid).set({
-      cafeId: cafeId,
-      role: 'owner',
-      name: owner,
-      email: email
-    });
-
     localStorage.setItem('tmpro_cafe_cache_' + cafeId, JSON.stringify(newCafe));
+
     alert(`✓ Registration Successful for "${name}"!`);
   } catch (err) {
-    console.error("Registration Error:", err);
-    if (err.code === 'auth/email-already-in-use') {
-      alert("এই ইমেইলটি ইতিমধ্যে নিবন্ধিত রয়েছে। অনুগ্রহ করে লগইন করুন।");
-    } else {
-      alert("Registration Error: " + err.message);
-    }
+    alert("Registration Error: " + err.message);
   } finally {
     btn.disabled = false; btn.innerText = "Register & Launch My Cafe →";
   }
@@ -763,13 +733,13 @@ const I18N = {
     navHome: "হোম", navPOS: "অর্ডার", navKitchen: "কিচেন", navBills: "বিলিং", navPlatforms: "অনলাইন পোর্টাল", navExpenses: "খরচের খাতা", navReports: "রিপোর্ট", navMenu: "মেনু",
     todaySales: "আজকের মোট বিক্রি (Today's Sales)", totalOrders: "আজকের মোট অর্ডার", activeKOT: "চলতি কিচেন KOT",
     newOrder: "নতুন অর্ডার (POS)", newOrderSub: "কাস্টমার অর্ডার এন্ট্রি", kitchenLive: "কিচেন লাইভ", kitchenLiveSub: "টি অর্ডার তৈরি হচ্ছে",
-    billsAndPrint: "বিল ও প্রিন্ট", billsAndPrintSub: "QR দিয়ে UPI পেমেন্ট", reportsAndProfit: "লাভ-ক্ষতি ও রিপোর্ট", reportsAndProfitSub: "বিক্রি ও খরচের হিসাব",
+    billsAndPrint: "বিল ও প্রিন্ট", billsAndPrintSub: "QR দিয়ে UPI পেমেন্ট", reportsAndProfit: "লাভ-ক্ষতি ও রিপোর্ট", reportsAndProfitSub: "বিক্রি ও খরচের হিসাব",
     dailyExpenses: "খরচের খাতা", dailyExpensesSub: "বাজার ও ভেন্ডর হিসাব", floorMap: "ইন্টারেক্টিভ টেবিল ম্যাপ (Floor Map)", addTable: "+ টেবিল যোগ", seater: "সিটার",
     searchPlaceholder: "🔍 খাবার বা মেনু সার্চ করুন...", selectDishWarning: "দয়া করে টেবিল অথবা অনলাইন চ্যানেল সিলেক্ট করুন!", selectedItems: "টি আইটেম সিলেক্টেড",
     confirmOrderKOT: "অর্ডার নিশ্চিত করুন (KOT) →", orderConfirmation: "অর্ডার ও পরিমাণের তালিকা", table: "চ্যানেল / টেবিল", subtotal: "সাবটোটাল",
-    tax: "ট্যাক্স / GST", serviceCharge: "সার্ভিস চার্জ", grandTotal: "সর্বমোট দেয় টাকা", sendToKitchen: "রান্নাঘরে অর্ডার পাঠান (Send KOT)",
+    tax: "ট্যাক্স / GST", serviceCharge: "সার্ভিস চার্জ", grandTotal: "সর্বমোট দেয় টাকা", sendToKitchen: "রান্নাঘরে অর্ডার পাঠান (Send KOT)",
     liveKitchenDisplay: "লাইভ কিচেন মনিটর (KOT)", runningOrders: "রানিং অর্ডার", noKOT: "কিচেনে কোনো পেন্ডিং অর্ডার নেই!", readyToServe: "খাবার প্রস্তুত (Ready) ✓",
-    markServed: "সার্ভ করা হয়েছে (Served) ✓", readyToServeHeader: "সার্ভ করার জন্য প্রস্তুত",
+    markServed: "সার্ভ করা হয়েছে (Served) ✓", readyToServeHeader: "সার্ভ করার জন্য প্রস্তুত",
     billingHistory: "বিলিং ও হিসেব খাতা", noBills: "নির্দিষ্ট ফিল্টারে কোনো বিল পাওয়া যায়নি", printUPIReceipt: "রসিদ / UPI QR",
     digitalMenuCard: "ডিজিটাল মেনু কার্ড", addNewDish: "+ নতুন খাবার যোগ", dishName: "খাবারের নাম", category: "ক্যাটাগরি", price: "মূল্য (টাকা)",
     save: "সংরক্ষণ করুন", delete: "মুছুন", confirmDelete: "আপনি কি এটি মুছে ফেলতে চান?", expenseTitle: "খরচ এন্ট্রি", expenseDesc: "খরচের বিবরণ",
@@ -778,11 +748,11 @@ const I18N = {
     uploadLogo: "রেস্তোরাঁর লোগো আপলোড", printThermalReceipt: "বিল প্রিন্ট করুন (Print Thermal)", scanToPay: "Scan to Pay (GPay / PhonePe / Paytm)",
     reviewPrompt: "গুগলে আপনার মূল্যবান রিভিউ দিন", thankYou: "আমাদের এখানে আসার জন্য ধন্যবাদ! আবার আসবেন।", netProfit: "নিট লাভ (Net Profit)", netLoss: "নিট ক্ষতি (Net Loss)",
     sales: "মোট বিক্রি", expenses: "মোট খরচ", filterToday: "আজকে", filterWeek: "এই সপ্তাহ", filterMonth: "এই মাস", filterCustom: "কাস্টম তারিখ",
-    filterAll: "সব সময়", topSelling: "সবচেয়ে বেশি বিক্রি হওয়া খাবার", dailyBreakdown: "দৈনিক লাভ-ক্ষতির তালিকা", exportCSV: "📥 CSV ডাউনলোড", date: "তারিখ", profit: "লাভ",
-    staffMgmt: "স্টাফ ও ভূমিকা পরিবর্তন", role: "দায়িত্ব / রোল", masterPinPrompt: "৪-ডিজিট মাস্টার পিন (Master PIN) দিন:",
+    filterAll: "সব সময়", topSelling: "সবচেয়ে বেশি বিক্রি হওয়া খাবার", dailyBreakdown: "দৈনিক লাভ-ক্ষতির তালিকা", exportCSV: "📥 CSV ডাউনলোড", date: "তারিখ", profit: "লাভ",
+    staffMgmt: "স্টাফ ও ভূমিকা পরিবর্তন", role: "দায়িত্ব / রোল", masterPinPrompt: "৪-ডিজিট মাস্টার পিন (Master PIN) দিন:",
     onlinePlatformsTitle: "অনলাইন পার্টনার খাতা ও লেজার", addPlatform: "+ পার্টনার যোগ",
     platformName: "প্ল্যাটফর্মের নাম", commission: "কমিশন %", recordPayout: "পেমেন্ট জমা নিন", totalGross: "মোট অর্ডার ভ্যালু",
-    netPayable: "কমিশন বাদে প্রাপ্য", received: "পেমেন্ট রিসিভড", pendingDue: "বকেয়া ব্যালেন্স", filterPlatform: "চ্যানেল ফিল্টার",
+    netPayable: "কমিশন বাদে প্রাপ্য", received: "পেমেন্ট রিসিভড", pendingDue: "বকেয়া ব্যালেন্স", filterPlatform: "চ্যানেল ফিল্টার",
     allPlatforms: "সব ডেলিভারি পার্টনার", unPaidOnly: "শুধু বাকি (Unpaid)"
   }
 };
@@ -831,14 +801,10 @@ let activeTab = 'dashboard';
 let posSearchQuery = '';
 let posCategoryFilter = 'All';
 
-// বিলিং ফিল্টার স্টেট
 let billFilter = 'today';
 let billCustomStart = window.todayStr();
 let billCustomEnd = window.todayStr();
-
-// অনলাইন পার্টনার ফিল্টার স্টেট
 let platformViewFilter = 'All';
-
 let reportFilter = 'today';
 let reportCustomStart = window.todayStr();
 let reportCustomEnd = window.todayStr();
@@ -922,7 +888,6 @@ window.renderCurrentView = function() {
     </div>
   `;
 
-  // ১. ড্যাশবোর্ড স্ক্রিন
   if (activeTab === 'dashboard') {
     const today = window.todayStr();
     const todayCompletedOrders = (data.orders || []).filter(o => o.status === 'completed' && (o.date === today));
@@ -984,7 +949,6 @@ window.renderCurrentView = function() {
     `;
   }
 
-  // ২. POS স্ক্রিন
   else if (activeTab === 'pos') {
     const cats = ['All', ...new Set((data.menu || []).map(m => m.category))];
     let dishes = posCategoryFilter === 'All' ? (data.menu || []) : (data.menu || []).filter(m => m.category === posCategoryFilter);
@@ -1056,7 +1020,6 @@ window.renderCurrentView = function() {
     `;
   }
 
-  // ৩. কিচেন লাইভ স্ক্রিন
   else if (activeTab === 'kitchen') {
     const liveKOT = (data.orders || []).filter(o => o.status === 'preparing');
     const readyKOT = (data.orders || []).filter(o => o.status === 'ready_to_serve');
@@ -1118,8 +1081,8 @@ window.renderCurrentView = function() {
                 </div>
                 <button class="btn-primary" style="background:#059669;padding:7px;font-size:11.5px;" onclick="markOrderServed('${o.id}')">${t('markServed')}</button>
               </div>
-            `;
-          }).join('')}
+            `).join('')}
+          </div>
         </div>
       ` : ''}
 
@@ -1127,15 +1090,12 @@ window.renderCurrentView = function() {
     `;
   }
 
-  // ৪. বিলিং হিস্ট্রি (সবার নতুন বিল সবার উপরে + কাস্টম ডেট ফিল্টার)
   else if (activeTab === 'bills') {
     const today = window.todayStr();
     let ordersList = [...(data.orders || [])];
 
-    // সর্টিং: নতুন বিল সবার উপরে
     ordersList.sort((a, b) => (b.kotNo || 0) - (a.kotNo || 0));
 
-    // ফিল্টারিং
     if (billFilter === 'today') {
       ordersList = ordersList.filter(o => o.date === today);
     } else if (billFilter === 'unpaid') {
@@ -1204,7 +1164,6 @@ window.renderCurrentView = function() {
     `;
   }
 
-  // ৫. অনলাইন ডেলিভারি পার্টনার খাতা ও ফিল্টার সিস্টেম
   else if (activeTab === 'platforms') {
     const platforms = data.platforms || [];
     const orders = (data.orders || []).filter(o => o.status === 'completed');
@@ -1331,7 +1290,6 @@ window.renderCurrentView = function() {
     `;
   }
 
-  // ৬. খরচের খাতা
   else if (activeTab === 'expenses') {
     const expenseCategories = ['All', 'Raw Materials', 'Utilities', 'Salaries', 'Rent', 'Marketing', 'Other'];
     let filteredExp = data.expenses || [];
@@ -1385,7 +1343,6 @@ window.renderCurrentView = function() {
     `;
   }
 
-  // ৭. লাভ-ক্ষতি ও পূর্ণাঙ্গ রিপোর্ট
   else if (activeTab === 'reports') {
     const today = window.todayStr();
     let filteredOrders = (data.orders || []).filter(o => o.status === 'completed');
@@ -1504,7 +1461,6 @@ window.renderCurrentView = function() {
     `;
   }
 
-  // ৮. ডিজিটাল মেনু
   else if (activeTab === 'menu') {
     container.innerHTML = `
       <div class="tm-card">
@@ -1975,7 +1931,7 @@ async function saveStaffMember() {
   const data = window.getData();
   const name = document.getElementById('stf-name').value.trim();
   const username = document.getElementById('stf-user').value.trim().toLowerCase().replace(/\s+/g, '');
-  const pass = document.getElementById('stf-pass').value;
+  const pass = document.getElementById('stf-pass').value.trim();
   const role = document.getElementById('stf-role').value;
   const btn = document.getElementById('btn-save-staff');
 
@@ -2135,7 +2091,22 @@ function saveSettings() {
   window.cloudSave(); closeSheet(); renderCurrentView();
 }
 
-window.addEventListener('DOMContentLoaded', () => { checkAuth(); });
+// Ensure the app initializes only after the DOM and Firebase SDK are fully ready
+window.addEventListener('DOMContentLoaded', () => {
+  const ready = initFirebaseApp();
+  if (ready) {
+    checkAuth();
+  } else {
+    // If Firebase SDK is slow to load, retry once
+    setTimeout(() => {
+      if (initFirebaseApp()) {
+        checkAuth();
+      } else {
+        document.getElementById('firebase-error-box').style.display = 'block';
+      }
+    }, 1000);
+  }
+});
 </script>
 </body>
 </html>
