@@ -1,8 +1,13 @@
 <!-- ============================================================
-     SMARTFIX ERP — Mobile Doctor Pro (v3.0.0 Cyber Dark Edition)
+     SMARTFIX ERP — Mobile Doctor Pro (v3.0.0 Standalone Fixed)
      File: modules/mobile-doctor-pro.html
-     Engine: WebUSB + ADB Daemon + Real-time Diagnostics Suite
      ============================================================ -->
+
+<!-- 1. PRE-LOAD ADB PACKAGES VIA BROWSER COMPATIBLE SCRIPTS -->
+<script src="https://cdn.jsdelivr.net/npm/@yume-chan/struct@2.2.1/dist/browser.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@yume-chan/adb@2.2.1/dist/browser.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@yume-chan/adb-daemon-webusb@2.1.1/dist/browser.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@yume-chan/adb-credential-web@2.1.1/dist/browser.js"></script>
 
 <div id="mobileDoctorModule" class="min-h-screen bg-[#030712] text-slate-100 font-sans p-2 md:p-4 select-none relative overflow-x-hidden">
 
@@ -12,10 +17,10 @@
 
   <!-- Browser / HTTPS Warnings -->
   <div id="mdBrowserWarning" style="display:none" class="mb-4 bg-rose-950/70 border border-rose-500/50 rounded-2xl p-4 text-xs text-rose-200">
-    ⚠️ <strong>WebUSB Browser Required:</strong> Chrome or Microsoft Edge on Desktop is required for hardware USB bridging. Mobile browsers are not supported.
+    ⚠️ <strong>WebUSB Browser Required:</strong> Chrome or Microsoft Edge on Desktop is required for hardware USB bridging.
   </div>
   <div id="mdHttpsWarning" style="display:none" class="mb-4 bg-amber-950/70 border border-amber-500/50 rounded-2xl p-4 text-xs text-amber-200">
-    ⚠️ <strong>HTTPS / Localhost Required:</strong> WebUSB permissions require a secure context (https:// or localhost / 127.0.0.1).
+    ⚠️ <strong>HTTPS / Localhost Required:</strong> WebUSB permissions require a secure context (https:// or localhost).
   </div>
 
   <!-- TOP APP HEADER -->
@@ -115,7 +120,7 @@
       <!-- ═════════ 1. OVERVIEW & CYBER DIAL ═════════ -->
       <div id="mdPanel-overview" class="md-panel space-y-4">
         
-        <!-- TOP ROW: PHONE 3D SHOWCASE + OVERALL HEALTH + QUICK SCAN -->
+        <!-- TOP ROW -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
           <!-- PHONE 3D SHOWCASE -->
@@ -285,7 +290,7 @@
           </div>
         </div>
 
-        <!-- ═════ BOTTOM SPLIT: ALERTS + ACTIONS + PDF ═════ -->
+        <!-- ═════ BOTTOM SPLIT ═════ -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
           <div class="lg:col-span-8 bg-[#0b1120]/80 border border-slate-800 rounded-2xl p-4">
             <div class="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-2 mb-3">
@@ -526,9 +531,9 @@
           <h3 class="text-sm font-black text-white mb-2">⚙️ Diagnostic Engine Configuration</h3>
           <p class="text-xs text-slate-400">SMARTFIX ERP Diagnostic Subsystem (v3.0.0 Cyber Dark)</p>
           <div class="mt-4 p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-slate-300">
-            • WebUSB Transport: Triple CDN Resilient Failover<br>
-            • RSA Credential Handshake: AdbWebCredentialStore<br>
-            • Diagnostic Engine: 24 Core Android HAL endpoints
+            • WebUSB Transport: Pre-bundled Standalone Engine<br>
+            • RSA Credential Handshake: AdbWebCredentialStore Active<br>
+            • Diagnostic Subsystem: 24 Core Android HAL endpoints
           </div>
         </div>
       </div>
@@ -545,7 +550,7 @@
   </div>
 </div>
 
-<!-- ═══ COMPREHENSIVE JAVASCRIPT CONTROLLER ═══ -->
+<!-- ═══ FIXED CONTROLLER SCRIPT ═══ -->
 <script>
 (function () {
   'use strict';
@@ -570,7 +575,6 @@
     currentPath: '/sdcard',
     logcatReader: null,
     logcatReading: false,
-    adbLib: null,
     screenTestColors: ['#dc2626', '#16a34a', '#2563eb', '#ffffff', '#000000', '#06b6d4'],
     screenTestIndex: 0,
     components: [
@@ -644,56 +648,36 @@
     return true;
   }
 
-  /* ═══ MULTI-CDN FAILOVER LOADER ═══ */
-  async function loadAdbLib() {
-    if (MD.adbLib) return MD.adbLib;
-
-    const sources = [
-      {
-        adb: 'https://esm.sh/@yume-chan/adb@2.2.1',
-        webusb: 'https://esm.sh/@yume-chan/adb-daemon-webusb@2.1.1',
-        cred: 'https://esm.sh/@yume-chan/adb-credential-web@2.1.1'
-      },
-      {
-        adb: 'https://cdn.jsdelivr.net/npm/@yume-chan/adb@2.2.1/+esm',
-        webusb: 'https://cdn.jsdelivr.net/npm/@yume-chan/adb-daemon-webusb@2.1.1/+esm',
-        cred: 'https://cdn.jsdelivr.net/npm/@yume-chan/adb-credential-web@2.1.1/+esm'
-      },
-      {
-        adb: 'https://unpkg.com/@yume-chan/adb@2.2.1?module',
-        webusb: 'https://unpkg.com/@yume-chan/adb-daemon-webusb@2.1.1?module',
-        cred: 'https://unpkg.com/@yume-chan/adb-credential-web@2.1.1?module'
-      }
-    ];
-
-    let lastError = null;
-    for (const src of sources) {
-      try {
-        const [adbMod, webusbMod, credMod] = await Promise.all([
-          import(/* webpackIgnore: true */ src.adb),
-          import(/* webpackIgnore: true */ src.webusb),
-          import(/* webpackIgnore: true */ src.cred).catch(() => null)
-        ]);
-
-        const Adb = adbMod.Adb || adbMod.default?.Adb || adbMod.default;
-        const AdbDaemonTransport = adbMod.AdbDaemonTransport || adbMod.default?.AdbDaemonTransport;
-        const AdbDaemonWebUsbDeviceManager = webusbMod.AdbDaemonWebUsbDeviceManager || webusbMod.AdbWebUsbBackendManager || webusbMod.default?.AdbDaemonWebUsbDeviceManager;
-        const AdbWebCredentialStore = credMod?.AdbWebCredentialStore || credMod?.default?.AdbWebCredentialStore;
-
-        if (Adb && AdbDaemonTransport && AdbDaemonWebUsbDeviceManager) {
-          MD.adbLib = { Adb, AdbDaemonTransport, AdbDaemonWebUsbDeviceManager, AdbWebCredentialStore };
-          return MD.adbLib;
-        }
-      } catch (err) {
-        lastError = err;
-        console.warn('CDN Source failed, trying alternate mirror...', err.message);
-      }
+  /* ═══ DIRECT RESOLVER: NO DYNAMIC IMPORT CORS ISSUES ═══ */
+  async function resolveAdbLibraries() {
+    // 1. Try global pre-loaded window objects first
+    if (window.Adb && window.AdbDaemonWebUsbDeviceManager) {
+      return {
+        Adb: window.Adb,
+        AdbDaemonTransport: window.AdbDaemonTransport,
+        AdbDaemonWebUsbDeviceManager: window.AdbDaemonWebUsbDeviceManager,
+        AdbWebCredentialStore: window.AdbWebCredentialStore
+      };
     }
 
-    throw new Error('All CDN mirrors failed to load ADB modules: ' + (lastError?.message || 'Check network / CORS'));
+    // 2. Fallback to bundled single unpkg browser bundle
+    try {
+      const bundle = await import('https://cdn.jsdelivr.net/npm/@yume-chan/adb@2.2.1/+esm');
+      const webusb = await import('https://cdn.jsdelivr.net/npm/@yume-chan/adb-daemon-webusb@2.1.1/+esm');
+      const cred = await import('https://cdn.jsdelivr.net/npm/@yume-chan/adb-credential-web@2.1.1/+esm').catch(() => null);
+
+      return {
+        Adb: bundle.Adb,
+        AdbDaemonTransport: bundle.AdbDaemonTransport,
+        AdbDaemonWebUsbDeviceManager: webusb.AdbDaemonWebUsbDeviceManager || webusb.AdbWebUsbBackendManager,
+        AdbWebCredentialStore: cred?.AdbWebCredentialStore
+      };
+    } catch (e) {
+      throw new Error('Please serve this file from a local server (e.g. VS Code Live Server / Localhost) over HTTPS/HTTP.');
+    }
   }
 
-  /* ═══ CONNECT ENGINE ═══ */
+  /* ═══ CONNECT ═══ */
   async function connect() {
     const btn = document.getElementById('mdConnectBtn');
     const btnText = document.getElementById('mdConnectBtnText');
@@ -703,9 +687,9 @@
     btnText.textContent = 'Connecting...';
 
     try {
-      const lib = await loadAdbLib();
+      const lib = await resolveAdbLibraries();
       const manager = lib.AdbDaemonWebUsbDeviceManager.BROWSER || new lib.AdbDaemonWebUsbDeviceManager(navigator.usb);
-      if (!manager) throw new Error('WebUSB device manager not available in this browser');
+      if (!manager) throw new Error('WebUSB manager not supported on this browser.');
 
       const device = await manager.requestDevice();
       if (!device) throw new Error('Device selection cancelled');
@@ -716,9 +700,7 @@
       if (lib.AdbWebCredentialStore) {
         try {
           credentialStore = new lib.AdbWebCredentialStore();
-        } catch (e) {
-          console.warn('Fallback: credential store warning', e);
-        }
+        } catch (e) {}
       }
 
       let transport;
@@ -749,7 +731,7 @@
       await runFullAutoScan();
 
     } catch (e) {
-      console.error('ADB Connect Failure:', e);
+      console.error(e);
       C.toast(e.message, 'error');
       btn.disabled = false;
       btnText.textContent = 'Connect Device';
