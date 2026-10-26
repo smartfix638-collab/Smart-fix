@@ -1,20 +1,21 @@
 <!-- ============================================================
-     SMARTFIX ERP — Mobile Doctor Pro (v3.0.0 Fixed Release)
+     SMARTFIX ERP — Mobile Doctor Pro (v3.0.0 Cyber Dark Edition)
      File: modules/mobile-doctor-pro.html
+     Engine: WebUSB + ADB Daemon + Real-time Diagnostics Suite
      ============================================================ -->
 
 <div id="mobileDoctorModule" class="min-h-screen bg-[#030712] text-slate-100 font-sans p-2 md:p-4 select-none relative overflow-x-hidden">
 
-  <!-- Glow Backgrounds -->
+  <!-- Ambient Glow Backgrounds -->
   <div class="fixed top-0 left-1/4 w-[500px] h-[300px] bg-cyan-600/10 blur-[130px] rounded-full pointer-events-none -z-10"></div>
   <div class="fixed bottom-0 right-1/4 w-[600px] h-[350px] bg-blue-600/10 blur-[150px] rounded-full pointer-events-none -z-10"></div>
 
-  <!-- Browser / HTTPS Alerts -->
+  <!-- Browser / HTTPS Warnings -->
   <div id="mdBrowserWarning" style="display:none" class="mb-4 bg-rose-950/70 border border-rose-500/50 rounded-2xl p-4 text-xs text-rose-200">
-    ⚠️ <strong>WebUSB Browser Required:</strong> Chrome or Microsoft Edge on Desktop is required for hardware USB bridging.
+    ⚠️ <strong>WebUSB Browser Required:</strong> Chrome or Microsoft Edge on Desktop is required for hardware USB bridging. Mobile browsers are not supported.
   </div>
   <div id="mdHttpsWarning" style="display:none" class="mb-4 bg-amber-950/70 border border-amber-500/50 rounded-2xl p-4 text-xs text-amber-200">
-    ⚠️ <strong>HTTPS / Localhost Required:</strong> WebUSB permissions require a secure context.
+    ⚠️ <strong>HTTPS / Localhost Required:</strong> WebUSB permissions require a secure context (https:// or localhost / 127.0.0.1).
   </div>
 
   <!-- TOP APP HEADER -->
@@ -102,7 +103,6 @@
         <span>🛠️</span><span>Settings</span>
       </button>
 
-      <!-- Mini Hardware Indicator Badge -->
       <div class="mt-6 p-3 rounded-xl bg-[#070b14] border border-cyan-900/30 text-center">
         <div class="text-[9px] uppercase tracking-wider text-slate-500 font-mono font-bold mb-1">Bridge Connection</div>
         <div id="mdSidebarStatusText" class="text-[11px] font-mono text-rose-400 font-bold">Disconnected</div>
@@ -112,16 +112,15 @@
     <!-- ═══ MAIN WORKSPACE PANELS ═══ -->
     <main class="lg:col-span-10 space-y-4">
 
-      <!-- ═════════ 1. OVERVIEW (MATCHING SCREENSHOT) ═════════ -->
+      <!-- ═════════ 1. OVERVIEW & CYBER DIAL ═════════ -->
       <div id="mdPanel-overview" class="md-panel space-y-4">
         
-        <!-- TOP ROW: PHONE 3D PEDESTAL + HEALTH SCORE + QUICK SCANNER -->
+        <!-- TOP ROW: PHONE 3D SHOWCASE + OVERALL HEALTH + QUICK SCAN -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
           <!-- PHONE 3D SHOWCASE -->
           <div class="lg:col-span-3 bg-gradient-to-b from-[#0e172a]/80 to-[#070c18]/90 border border-cyan-900/40 rounded-2xl p-4 flex flex-col items-center justify-center relative overflow-hidden shadow-[0_0_20px_rgba(6,182,212,0.08)]">
             <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(6,182,212,0.15)_0%,transparent_70%)] pointer-events-none"></div>
-            <!-- Neon Pedestal -->
             <div class="w-32 h-52 md:w-36 md:h-56 rounded-2xl bg-gradient-to-b from-cyan-400/20 via-blue-900/40 to-slate-950 border-2 border-cyan-400/40 p-2 shadow-[0_0_30px_rgba(6,182,212,0.3)] flex flex-col justify-between items-center relative">
               <div class="w-12 h-2.5 bg-black/80 rounded-full"></div>
               <div class="text-center">
@@ -134,7 +133,7 @@
             <div class="w-40 h-3 bg-cyan-500/20 rounded-full blur-md -mt-1"></div>
           </div>
 
-          <!-- OVERALL HEALTH CIRCLE SCORE -->
+          <!-- OVERALL HEALTH SCORE -->
           <div class="lg:col-span-5 bg-[#0b1120]/80 border border-cyan-900/40 rounded-2xl p-4 flex flex-col justify-between shadow-[0_0_20px_rgba(6,182,212,0.05)]">
             <div class="flex items-center justify-between">
               <h2 class="text-xs font-black uppercase tracking-wider text-cyan-300">Overall Health Score</h2>
@@ -142,7 +141,6 @@
             </div>
 
             <div class="flex items-center justify-around my-2">
-              <!-- Radial Dial Visual -->
               <div class="relative w-32 h-32 flex items-center justify-center">
                 <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                   <circle cx="50" cy="50" r="40" stroke="#1e293b" stroke-width="8" fill="transparent"/>
@@ -161,7 +159,6 @@
                 </div>
               </div>
 
-              <!-- Pass/Fail breakdown stats -->
               <div class="space-y-1.5 text-xs font-mono">
                 <div class="flex items-center justify-between gap-4">
                   <span class="flex items-center gap-1.5 text-slate-300"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> Passed</span>
@@ -204,7 +201,6 @@
               <span class="text-base">▶</span><span>Start Full Diagnostic Scan</span>
             </button>
 
-            <!-- Quick list steps -->
             <div id="mdQuickScanList" class="space-y-1.5 text-[11px] font-mono">
               <div class="flex justify-between text-slate-300"><span>• SIM & Network</span><span id="qs_sim" class="text-slate-500">Ready</span></div>
               <div class="flex justify-between text-slate-300"><span>• Battery & Temp</span><span id="qs_battery" class="text-slate-500">Ready</span></div>
@@ -218,7 +214,6 @@
 
         <!-- ═════ METRIC CARDS ═════ -->
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-
           <div class="bg-[#0b1120]/90 border border-emerald-600/40 rounded-xl p-3 shadow-[0_0_15px_rgba(16,185,129,0.08)]">
             <div class="flex items-center justify-between text-emerald-400">
               <span class="text-sm">🔋</span>
@@ -272,7 +267,6 @@
             <div id="mdCardSecVal" class="text-xl font-black text-white font-mono mt-1">Official</div>
             <div id="mdCardSecSub" class="text-[9px] text-teal-300 font-mono mt-0.5 truncate">Knox: 0x0 • Verified</div>
           </div>
-
         </div>
 
         <!-- ═════ 24 COMPONENT TILES GRID ═════ -->
@@ -291,9 +285,8 @@
           </div>
         </div>
 
-        <!-- ═════ BOTTOM SPLIT: ALERTS + QUICK ACTIONS + PDF ═════ -->
+        <!-- ═════ BOTTOM SPLIT: ALERTS + ACTIONS + PDF ═════ -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-
           <div class="lg:col-span-8 bg-[#0b1120]/80 border border-slate-800 rounded-2xl p-4">
             <div class="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-2 mb-3">
               <span>⚠️</span> Recent Diagnostics & Recommendations
@@ -349,7 +342,6 @@
               </button>
             </div>
           </div>
-
         </div>
 
       </div>
@@ -534,9 +526,9 @@
           <h3 class="text-sm font-black text-white mb-2">⚙️ Diagnostic Engine Configuration</h3>
           <p class="text-xs text-slate-400">SMARTFIX ERP Diagnostic Subsystem (v3.0.0 Cyber Dark)</p>
           <div class="mt-4 p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-slate-300">
-            • WebUSB Engine: Connected directly to Browser Device Access Layer<br>
-            • Diagnostic Subsystem: 24 Core Android HAL endpoints<br>
-            • Print System: Native Window Print Direct Renderer
+            • WebUSB Transport: Triple CDN Resilient Failover<br>
+            • RSA Credential Handshake: AdbWebCredentialStore<br>
+            • Diagnostic Engine: 24 Core Android HAL endpoints
           </div>
         </div>
       </div>
@@ -553,7 +545,7 @@
   </div>
 </div>
 
-<!-- ═══ FIXED JAVASCRIPT CONTROLLER ═══ -->
+<!-- ═══ COMPREHENSIVE JAVASCRIPT CONTROLLER ═══ -->
 <script>
 (function () {
   'use strict';
@@ -566,7 +558,7 @@
         (type === 'error' ? 'bg-rose-950 border border-rose-500 text-white' : (type === 'success' ? 'bg-cyan-950 border border-cyan-400 text-cyan-200' : 'bg-slate-900 border border-slate-700 text-white'));
       t.innerHTML = `<span>⚡</span><span>${msg}</span>`;
       document.body.appendChild(t);
-      setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
+      setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3500);
     }
   };
 
@@ -646,28 +638,62 @@
       }
       return false;
     }
-    if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
       if (httpsWarn) httpsWarn.style.display = 'block';
     }
     return true;
   }
 
+  /* ═══ MULTI-CDN FAILOVER LOADER ═══ */
   async function loadAdbLib() {
     if (MD.adbLib) return MD.adbLib;
-    try {
-      const adbMod = await import('https://esm.sh/@yume-chan/adb@2.2.1');
-      const webusbMod = await import('https://esm.sh/@yume-chan/adb-daemon-webusb@2.1.1');
-      MD.adbLib = {
-        Adb: adbMod.Adb,
-        AdbDaemonTransport: adbMod.AdbDaemonTransport,
-        AdbDaemonWebUsbDeviceManager: webusbMod.AdbDaemonWebUsbDeviceManager
-      };
-      return MD.adbLib;
-    } catch (e) {
-      throw new Error('ADB library CDN error');
+
+    const sources = [
+      {
+        adb: 'https://esm.sh/@yume-chan/adb@2.2.1',
+        webusb: 'https://esm.sh/@yume-chan/adb-daemon-webusb@2.1.1',
+        cred: 'https://esm.sh/@yume-chan/adb-credential-web@2.1.1'
+      },
+      {
+        adb: 'https://cdn.jsdelivr.net/npm/@yume-chan/adb@2.2.1/+esm',
+        webusb: 'https://cdn.jsdelivr.net/npm/@yume-chan/adb-daemon-webusb@2.1.1/+esm',
+        cred: 'https://cdn.jsdelivr.net/npm/@yume-chan/adb-credential-web@2.1.1/+esm'
+      },
+      {
+        adb: 'https://unpkg.com/@yume-chan/adb@2.2.1?module',
+        webusb: 'https://unpkg.com/@yume-chan/adb-daemon-webusb@2.1.1?module',
+        cred: 'https://unpkg.com/@yume-chan/adb-credential-web@2.1.1?module'
+      }
+    ];
+
+    let lastError = null;
+    for (const src of sources) {
+      try {
+        const [adbMod, webusbMod, credMod] = await Promise.all([
+          import(/* webpackIgnore: true */ src.adb),
+          import(/* webpackIgnore: true */ src.webusb),
+          import(/* webpackIgnore: true */ src.cred).catch(() => null)
+        ]);
+
+        const Adb = adbMod.Adb || adbMod.default?.Adb || adbMod.default;
+        const AdbDaemonTransport = adbMod.AdbDaemonTransport || adbMod.default?.AdbDaemonTransport;
+        const AdbDaemonWebUsbDeviceManager = webusbMod.AdbDaemonWebUsbDeviceManager || webusbMod.AdbWebUsbBackendManager || webusbMod.default?.AdbDaemonWebUsbDeviceManager;
+        const AdbWebCredentialStore = credMod?.AdbWebCredentialStore || credMod?.default?.AdbWebCredentialStore;
+
+        if (Adb && AdbDaemonTransport && AdbDaemonWebUsbDeviceManager) {
+          MD.adbLib = { Adb, AdbDaemonTransport, AdbDaemonWebUsbDeviceManager, AdbWebCredentialStore };
+          return MD.adbLib;
+        }
+      } catch (err) {
+        lastError = err;
+        console.warn('CDN Source failed, trying alternate mirror...', err.message);
+      }
     }
+
+    throw new Error('All CDN mirrors failed to load ADB modules: ' + (lastError?.message || 'Check network / CORS'));
   }
 
+  /* ═══ CONNECT ENGINE ═══ */
   async function connect() {
     const btn = document.getElementById('mdConnectBtn');
     const btnText = document.getElementById('mdConnectBtnText');
@@ -678,21 +704,31 @@
 
     try {
       const lib = await loadAdbLib();
-      const manager = lib.AdbDaemonWebUsbDeviceManager.BROWSER;
-      if (!manager) throw new Error('WebUSB not available on this browser');
+      const manager = lib.AdbDaemonWebUsbDeviceManager.BROWSER || new lib.AdbDaemonWebUsbDeviceManager(navigator.usb);
+      if (!manager) throw new Error('WebUSB device manager not available in this browser');
+
       const device = await manager.requestDevice();
       if (!device) throw new Error('Device selection cancelled');
+
       const connection = await device.connect();
 
-      // Bug Fix: safe authentication fallback
+      let credentialStore = undefined;
+      if (lib.AdbWebCredentialStore) {
+        try {
+          credentialStore = new lib.AdbWebCredentialStore();
+        } catch (e) {
+          console.warn('Fallback: credential store warning', e);
+        }
+      }
+
       let transport;
-      try {
+      if (lib.AdbDaemonTransport.authenticate) {
         transport = await lib.AdbDaemonTransport.authenticate({
           serial: device.serial,
           connection,
-          credentialStore: undefined
+          credentialStore
         });
-      } catch (authErr) {
+      } else {
         transport = new lib.AdbDaemonTransport(device.serial, connection);
       }
 
@@ -708,13 +744,13 @@
       btnText.textContent = 'Disconnect';
       btn.disabled = false;
 
-      C.toast('Device connected via WebUSB!', 'success');
+      C.toast('Device connected successfully via WebUSB!', 'success');
       await loadDeviceInfo();
       await runFullAutoScan();
 
     } catch (e) {
-      console.error(e);
-      C.toast('Connection failed: ' + e.message, 'error');
+      console.error('ADB Connect Failure:', e);
+      C.toast(e.message, 'error');
       btn.disabled = false;
       btnText.textContent = 'Connect Device';
       btn.className = 'bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 text-white font-extrabold px-5 py-2.5 rounded-xl text-xs transition flex items-center gap-2 cursor-pointer';
@@ -758,7 +794,7 @@
 
   async function loadDeviceInfo() {
     try {
-      const model = await shell('getprop ro.product.model') || 'Android Phone';
+      const model = await shell('getprop ro.product.model') || 'Android Device';
       const brand = await shell('getprop ro.product.brand') || 'OEM';
       const androidVer = await shell('getprop ro.build.version.release') || '14';
       const serial = await shell('getprop ro.serialno') || 'Authorized';
@@ -829,7 +865,7 @@
         el.textContent = 'Passed';
         el.className = 'text-emerald-400 font-bold';
       }
-      logBox.innerHTML += `<div class="text-emerald-400 font-mono">  ↳ [PASS] response valid.</div>`;
+      logBox.innerHTML += `<div class="text-emerald-400 font-mono">  ↳ [PASS] response verified.</div>`;
     }
 
     logBox.scrollTop = logBox.scrollHeight;
