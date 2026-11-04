@@ -1,7 +1,8 @@
 <!-- ============================================================
      SMARTFIX ERP — Books Module (Cash/Bank/TB/GST)
      File: modules/books.html
-     Version: 4.0.0
+     Version: 4.7.0
+     Fixed: Trial Balance includes Service Revenue, GST Summary separates IGST
      ============================================================ -->
 
 <section id="booksModule" class="space-y-4">
@@ -464,6 +465,27 @@
       });
     });
 
+    /* Repairs (Assumed Cash-in-Hand) */
+    if (accountName === 'Cash-in-Hand') {
+      let rawRepairs = [];
+      try {
+        const raw = localStorage.getItem('sfp_repairs');
+        if (raw) rawRepairs = JSON.parse(raw);
+      } catch (e) {}
+      
+      rawRepairs.forEach((rep) => {
+        if (rep.status !== 'DELIVERED' || !inRange(rep.date)) return;
+        entries.push({
+          date: rep.date,
+          desc: 'Repair — ' + (rep.customerName || 'Cash Customer'),
+          ref:  rep.jobNo,
+          dr:   rep.finalCost || 0,
+          cr:   0,
+          type: 'REPAIR'
+        });
+      });
+    }
+
     /* Returns (credit notes) — cash refunded */
     if (accountName === 'Cash-in-Hand') {
       (S.creditNotes || []).forEach((crn) => {
@@ -717,6 +739,7 @@
       'Sundry Debtors':         { dr: 0, cr: 0 },
       'Sundry Creditors':       { dr: 0, cr: 0 },
       'Sales':                  { dr: 0, cr: 0 },
+      'Service Revenue':        { dr: 0, cr: 0 }, // ⭐ Added
       'Sales Return':           { dr: 0, cr: 0 },
       'Purchases':              { dr: 0, cr: 0 },
       'Expenses':               { dr: 0, cr: 0 },
@@ -738,6 +761,18 @@
       accounts['GST Output'].cr += (inv.totalCGST || 0) + (inv.totalSGST || 0) + (inv.totalIGST || 0);
     });
 
+    /* Repairs (Service Revenue) */
+    let rawRepairs = [];
+    try {
+      const raw = localStorage.getItem('sfp_repairs');
+      if (raw) rawRepairs = JSON.parse(raw);
+    } catch (e) {}
+    rawRepairs.forEach((rep) => {
+      if (rep.status !== 'DELIVERED' || !inRange(rep.date)) return;
+      accounts['Cash-in-Hand'].dr += rep.finalCost || 0;
+      accounts['Service Revenue'].cr += rep.finalCost || 0;
+    });
+
     /* Credit notes */
     (S.creditNotes || []).forEach((crn) => {
       if (!inRange(crn.date)) return;
@@ -753,7 +788,13 @@
     (S.purchases || []).forEach((p) => {
       if (!inRange(p.date)) return;
       accounts['Purchases'].dr += p.totalTaxable || 0;
-      accounts['GST Input'].dr  += p.totalGST || 0;
+      
+      // Proper GST Split
+      if ((p.taxType || 'INTRA') === 'INTRA') {
+        accounts['GST Input'].dr += (p.totalCGST || 0) + (p.totalSGST || 0);
+      } else {
+        accounts['GST Input'].dr += p.totalIGST || 0;
+      }
 
       if (p.ledger === 'Cash-in-Hand') accounts['Cash-in-Hand'].cr += p.totalCost || 0;
       else if (p.ledger === 'Bank / UPI') accounts['Bank / UPI'].cr += p.totalCost || 0;
@@ -870,10 +911,14 @@
     (S.purchases || []).forEach((p) => {
       if (!inRange(p.date)) return;
       inTaxable += p.totalTaxable || 0;
-      /* Split input GST: assume equal CGST/SGST for intra-state */
-      const gst = p.totalGST || 0;
-      inCGST += gst / 2;
-      inSGST += gst / 2;
+      
+      // Proper GST Split
+      if ((p.taxType || 'INTRA') === 'INTRA') {
+        inCGST += p.totalCGST || 0;
+        inSGST += p.totalSGST || 0;
+      } else {
+        inIGST += p.totalIGST || 0;
+      }
     });
 
     const outTotal = outCGST + outSGST + outIGST;
