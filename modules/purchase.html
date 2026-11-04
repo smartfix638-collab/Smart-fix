@@ -1,6 +1,7 @@
 <!-- ============================================================
-     SMARTFIX ERP — Purchase (v4.4.0)
-     GST + Non-GST support
+     SMARTFIX ERP — Purchase (v4.6.0 Fixed)
+     File: modules/purchase.html
+     Fixed: Inter-state GST selection
      ============================================================ -->
 
 <section id="purchaseModule" class="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -55,6 +56,14 @@
           <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">GSTIN</label>
           <input type="text" id="purGSTIN" maxlength="15" placeholder="Optional" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-mono uppercase">
         </div>
+      </div>
+      <!-- ⭐ INTER/INTRA STATE OPTION -->
+      <div id="purTaxTypeWrap">
+        <label class="block text-[10px] font-bold uppercase mb-1 text-sky-400">GST Type</label>
+        <select id="purTaxType" class="w-full bg-slate-950 border border-sky-700/60 rounded-lg px-2.5 py-1.5 text-xs text-sky-200 font-semibold">
+          <option value="INTRA">Intra-State (CGST + SGST)</option>
+          <option value="INTER">Inter-State (IGST)</option>
+        </select>
       </div>
     </div>
 
@@ -200,6 +209,7 @@
     const gstinWrap = document.getElementById('purGSTINWrap');
     const gstWrap = document.getElementById('purGSTWrap');
     const gstRow = document.getElementById('purTotalGSTRow');
+    const taxTypeWrap = document.getElementById('purTaxTypeWrap');
 
     if (billType === 'GST') {
       if (gstBtn) gstBtn.className = 'py-2.5 rounded-lg text-xs font-bold transition bg-emerald-600 text-white';
@@ -208,6 +218,7 @@
       if (gstinWrap) gstinWrap.style.display = '';
       if (gstWrap) gstWrap.style.display = '';
       if (gstRow) gstRow.style.display = '';
+      if (taxTypeWrap) taxTypeWrap.style.display = '';
     } else {
       if (gstBtn) gstBtn.className = 'py-2.5 rounded-lg text-xs font-bold transition bg-slate-950 border border-slate-700 text-slate-400';
       if (nonBtn) nonBtn.className = 'py-2.5 rounded-lg text-xs font-bold transition bg-violet-600 text-white';
@@ -215,13 +226,14 @@
       if (gstinWrap) gstinWrap.style.display = 'none';
       if (gstWrap) gstWrap.style.display = 'none';
       if (gstRow) gstRow.style.display = 'none';
+      if (taxTypeWrap) taxTypeWrap.style.display = 'none';
     }
     renderLines();
   }
 
 
   function init_purchaseModule() {
-    console.log('%c🛒 Purchase module initialized (v4.4.0)', 'color:#f59e0b;font-weight:bold');
+    console.log('%c🛒 Purchase module initialized (v4.6.0)', 'color:#f59e0b;font-weight:bold');
 
     P.batch = [];
     P.lines = [];
@@ -450,6 +462,7 @@
     const phone = (document.getElementById('purPhone')?.value || '').trim();
     const gstin = billType === 'GST' ? (document.getElementById('purGSTIN')?.value || '').trim().toUpperCase() : '';
     const ledger = document.getElementById('purLedger')?.value || 'Cash-in-Hand';
+    const taxType = billType === 'GST' ? (document.getElementById('purTaxType')?.value || 'INTRA') : 'NONE';
 
     if (!supplier) { C.toast('Enter supplier name', 'warning'); return; }
 
@@ -460,7 +473,8 @@
     } catch (e) {}
     if (!purNo) purNo = 'PUR-' + C.getFY(new Date(date)).short + '-TMP' + Date.now().toString().slice(-4);
 
-    let totalCost = 0, totalTaxable = 0, totalGST = 0;
+    let totalCost = 0, totalTaxable = 0, totalGST = 0, totalCGST = 0, totalSGST = 0, totalIGST = 0;
+
     P.lines.forEach((l) => {
       const lineTotal = l.cost * l.qty;
       totalCost += lineTotal;
@@ -468,8 +482,11 @@
         totalTaxable += lineTotal;
       } else {
         const lineTaxable = lineTotal / (1 + l.gst / 100);
+        const lineTax = lineTotal - lineTaxable;
         totalTaxable += lineTaxable;
-        totalGST += (lineTotal - lineTaxable);
+        totalGST += lineTax;
+        if (taxType === 'INTRA') { totalCGST += lineTax / 2; totalSGST += lineTax / 2; }
+        else { totalIGST += lineTax; }
       }
     });
 
@@ -487,7 +504,7 @@
 
     const record = {
       id: purNo, purchaseNo: purNo, billNo: billNo || purNo,
-      billType,
+      billType, taxType,
       date,
       supplierId: party.id,
       supplierName: supplier,
@@ -497,6 +514,9 @@
       lines: JSON.parse(JSON.stringify(P.lines)),
       totalTaxable: +totalTaxable.toFixed(2),
       totalGST: +totalGST.toFixed(2),
+      totalCGST: +totalCGST.toFixed(2),
+      totalSGST: +totalSGST.toFixed(2),
+      totalIGST: +totalIGST.toFixed(2),
       totalCost: +totalCost.toFixed(2),
       createdAt: new Date().toISOString()
     };
@@ -513,7 +533,7 @@
         purchaseCost: l.cost, cost: l.sell, gst: billType === 'GST' ? l.gst : 0,
         status: 'Available', supplierName: supplier,
         purchaseBillNo: record.billNo, purchaseNo: purNo,
-        billType,
+        billType, taxType,
         addedAt: new Date().toISOString()
       });
     });
@@ -587,7 +607,7 @@
           <td class="p-2.5 border-b border-slate-800/60">
             ${isNonGst
               ? '<span class="text-[9px] bg-violet-950/60 text-violet-300 border border-violet-800/60 px-1.5 py-0.5 rounded font-bold">NON-GST</span>'
-              : '<span class="text-[9px] bg-emerald-950/60 text-emerald-300 border border-emerald-800/60 px-1.5 py-0.5 rounded font-bold">GST</span>'}
+              : `<span class="text-[9px] ${p.taxType === 'INTER' ? 'bg-amber-950/60 text-amber-300 border-amber-800/60' : 'bg-emerald-950/60 text-emerald-300 border-emerald-800/60'} border px-1.5 py-0.5 rounded font-bold">${p.taxType === 'INTER' ? 'IGST' : 'CGST+SGST'}</span>`}
           </td>
           <td class="p-2.5 border-b border-slate-800/60 text-right font-mono font-bold text-sky-400 text-[11px]">${C.money(p.totalCost || 0)}</td>
           <td class="p-2.5 border-b border-slate-800/60 text-center">
@@ -608,7 +628,7 @@
     const lines = (p.lines || []).map((l, i) => `${i + 1}. [${l.category}] ${l.model}${l.imei ? ' | IMEI: ' + l.imei : ''} | ₹${l.cost} × ${l.qty}${p.billType === 'GST' ? ' | GST ' + l.gst + '%' : ''}`).join('\n');
     alert(
       `PURCHASE: ${p.purchaseNo}\n` +
-      `Type: ${p.billType === 'NON_GST' ? 'NON-GST' : 'GST'}\n` +
+      `Type: ${p.billType === 'NON_GST' ? 'NON-GST' : 'GST (' + p.taxType + ')'}\n` +
       `Bill: ${p.billNo}\n` +
       `Date: ${p.date}\n` +
       `Supplier: ${p.supplierName}\n` +
@@ -617,7 +637,7 @@
       `Ledger: ${p.ledger}\n\n` +
       `Items:\n${lines}\n\n` +
       `Taxable: ₹${(p.totalTaxable || 0).toFixed(2)}\n` +
-      `${p.billType === 'GST' ? 'GST: ₹' + (p.totalGST || 0).toFixed(2) + '\n' : ''}` +
+      `${p.billType === 'GST' ? (p.taxType === 'INTER' ? 'IGST: ₹' + (p.totalIGST || 0).toFixed(2) + '\n' : 'CGST: ₹' + (p.totalCGST || 0).toFixed(2) + ' | SGST: ₹' + (p.totalSGST || 0).toFixed(2) + '\n') : ''}` +
       `Total: ₹${(p.totalCost || 0).toFixed(2)}`
     );
   }
