@@ -63,6 +63,11 @@
         <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Address</label>
         <input type="text" id="billCustAddr" oninput="SF.billing.renderPreview()" placeholder="City, State" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs">
       </div>
+      <div>
+        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Customer State (GST State Code)</label>
+        <select id="billCustState" onchange="SF.billing.onCustomerStateChange()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-100"></select>
+        <div class="text-[10px] text-slate-500 mt-1">GST State Code: <strong id="billCustStateCode">19</strong></div>
+      </div>
       <div class="grid grid-cols-2 gap-2">
         <div id="billGSTINWrap">
           <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">GSTIN</label>
@@ -184,6 +189,8 @@
 
   if (!S || !C) { console.error('Billing module: SF globals not ready'); return; }
 
+  const GST_STATES = {"Jammu and Kashmir": "01", "Himachal Pradesh": "02", "Punjab": "03", "Chandigarh": "04", "Uttarakhand": "05", "Haryana": "06", "Delhi": "07", "Rajasthan": "08", "Uttar Pradesh": "09", "Bihar": "10", "Sikkim": "11", "Arunachal Pradesh": "12", "Nagaland": "13", "Manipur": "14", "Mizoram": "15", "Tripura": "16", "Meghalaya": "17", "Assam": "18", "West Bengal": "19", "Jharkhand": "20", "Odisha": "21", "Chhattisgarh": "22", "Madhya Pradesh": "23", "Gujarat": "24", "Dadra and Nagar Haveli and Daman and Diu": "26", "Maharashtra": "27", "Andhra Pradesh (旧)": "28", "Karnataka": "29", "Goa": "30", "Lakshadweep": "31", "Kerala": "32", "Tamil Nadu": "33", "Puducherry": "34", "Andaman and Nicobar Islands": "35", "Telangana": "36", "Andhra Pradesh": "37", "Ladakh": "38", "Other Territory": "97", "Other Country": "96"};
+
   let billType = 'GST';
   let printSize = 'A4';
 
@@ -259,6 +266,25 @@
   /* ============================================================
      RENDER PREVIEW
      ============================================================ */
+  function populateCustomerStates() {
+    const el = document.getElementById('billCustState');
+    if (!el || el.options.length) return;
+    el.innerHTML = Object.entries(GST_STATES).map(([name, code]) => `<option value="${C.escapeHTML(name)}">${C.escapeHTML(name)} — ${code}</option>`).join('');
+    el.value = S.profile?.state || 'West Bengal';
+    updateCustomerStateCode();
+  }
+  function updateCustomerStateCode() {
+    const state = document.getElementById('billCustState')?.value || 'West Bengal';
+    const code = GST_STATES[state] || '19';
+    const out = document.getElementById('billCustStateCode');
+    if (out) out.textContent = code;
+    const home = S.profile?.state || 'West Bengal';
+    const type = document.getElementById('billGstType');
+    if (type) type.value = state === home ? 'INTRA' : 'INTER';
+    renderPreview();
+  }
+  function onCustomerStateChange() { updateCustomerStateCode(); }
+
   function renderPreview() {
     const el = document.getElementById('billInvoicePreview');
     if (!el) return;
@@ -269,6 +295,10 @@
     const custPhone  = (document.getElementById('billCustPhone')?.value || '').trim();
     const custAddr   = (document.getElementById('billCustAddr')?.value || '').trim();
     const custGSTIN  = (document.getElementById('billCustGSTIN')?.value || '').trim();
+    const custState = document.getElementById('billCustState')?.value || 'West Bengal';
+    const custStateCode = GST_STATES[custState] || '19';
+    const storeState = S.profile?.state || 'West Bengal';
+    const storeStateCode = S.profile?.stateCode || GST_STATES[storeState] || '19';
     const taxType    = document.getElementById('billGstType')?.value || 'INTRA';
     const discount   = parseFloat(document.getElementById('billDiscount')?.value) || 0;
 
@@ -284,11 +314,11 @@
       if (billType === 'NON_GST') {
         el.innerHTML = renderA4NonGst({ invNo, datePretty, custName, custPhone, custAddr, discount, p, items, baseUrl });
       } else {
-        el.innerHTML = renderA4Gst({ invNo, datePretty, custName, custPhone, custAddr, custGSTIN, taxType, discount, p, items, baseUrl });
+        el.innerHTML = renderA4Gst({ invNo, datePretty, custName, custPhone, custAddr, custGSTIN, custState, custStateCode, storeState, storeStateCode, taxType, discount, p, items, baseUrl });
       }
     } else {
       // Thermal Layout (58mm / 80mm)
-      el.innerHTML = renderThermal({ invNo, datePretty, custName, custPhone, custGSTIN, taxType, discount, p, shopCode, items, portalQrUrl, isNonGst: billType === 'NON_GST' });
+      el.innerHTML = renderThermal({ invNo, datePretty, custName, custPhone, custGSTIN, custState, custStateCode, storeState, storeStateCode, taxType, discount, p, shopCode, items, portalQrUrl, isNonGst: billType === 'NON_GST' });
     }
   }
 
@@ -296,7 +326,7 @@
   /* ============================================================
      A4 GRID LAYOUT (Traditional Indian Tax Invoice)
      ============================================================ */
-  function renderA4Gst({ invNo, datePretty, custName, custPhone, custAddr, custGSTIN, taxType, discount, p, items, baseUrl }) {
+  function renderA4Gst({ invNo, datePretty, custName, custPhone, custAddr, custGSTIN, custState, custStateCode, storeState, storeStateCode, taxType, discount, p, items, baseUrl }) {
     let totalTaxable = 0, totalTax = 0, totalGross = 0, totalQty = 0;
     let totalCGST = 0, totalSGST = 0, totalIGST = 0;
     const isIntra = taxType === 'INTRA';
@@ -397,7 +427,7 @@
                     <div>${C.escapeHTML(p.address || '')}</div>
                     <div>Help Line: ${C.escapeHTML(p.phone || '—')}</div>
                     <div>GSTIN/UIN: <strong>${C.escapeHTML(p.gstin || '—')}</strong></div>
-                    <div>State Name: West Bengal, Code: 19</div>
+                    <div>State Name: ${C.escapeHTML(storeState)}, Code: ${C.escapeHTML(storeStateCode)}</div>
                   </div>
                 </div>
               </td>
@@ -425,7 +455,7 @@
                 <!-- Added Phone Number here -->
                 <div><strong>Phone:</strong> ${C.escapeHTML(custPhone || '—')}</div>
                 <div>GSTIN/UIN : ${C.escapeHTML(custGSTIN || '—')}</div>
-                <div>State Name : West Bengal, Code : 19</div>
+                <div>State Name : ${C.escapeHTML(custState)}, Code : ${C.escapeHTML(custStateCode)}</div>
               </td>
             </tr>
           </table>
@@ -594,7 +624,7 @@
   /* ============================================================
      THERMAL LAYOUT (58mm / 80mm)
      ============================================================ */
-  function renderThermal({ invNo, datePretty, custName, custPhone, custGSTIN, taxType, discount, p, shopCode, items, portalQrUrl, isNonGst }) {
+  function renderThermal({ invNo, datePretty, custName, custPhone, custGSTIN, custState, custStateCode, storeState, storeStateCode, taxType, discount, p, shopCode, items, portalQrUrl, isNonGst }) {
     let totalGross = 0;
     let totalTaxable = 0;
     let totalTax = 0;
@@ -636,7 +666,7 @@
           <div style="font-size: 1.2em; font-weight: 900;">${C.escapeHTML(p.name || 'My Store')}</div>
           ${p.address ? `<div style="font-size: 0.8em;">${C.escapeHTML(p.address)}</div>` : ''}
           ${p.phone ? `<div style="font-size: 0.8em;">☎ ${C.escapeHTML(p.phone)}</div>` : ''}
-          ${!isNonGst ? `<div style="font-size: 0.8em;">GSTIN: ${C.escapeHTML(p.gstin || '—')}</div>` : ''}
+          ${!isNonGst ? `<div style="font-size: 0.8em;">GSTIN: ${C.escapeHTML(p.gstin || '—')}</div><div style="font-size:0.8em;">State: ${C.escapeHTML(storeState)} (${C.escapeHTML(storeStateCode)})</div>` : ''}
         </div>
 
         <hr style="border: none; border-top: 1px dashed #000; margin: 4px 0;">
@@ -649,7 +679,7 @@
         </div>
         <div style="font-size: 0.85em;">Name: ${C.escapeHTML(custName)}</div>
         ${custPhone !== '—' ? `<div style="font-size: 0.85em;">Phone: ${C.escapeHTML(custPhone)}</div>` : ''}
-        ${!isNonGst && custGSTIN !== '—' ? `<div style="font-size: 0.85em;">GSTIN: ${C.escapeHTML(custGSTIN)}</div>` : ''}
+        ${!isNonGst ? `${custGSTIN ? `<div style="font-size:0.85em;">GSTIN: ${C.escapeHTML(custGSTIN)}</div>` : ''}<div style="font-size:0.85em;">State: ${C.escapeHTML(custState)} (${C.escapeHTML(custStateCode)})</div>` : ''}
         
         <hr style="border: none; border-top: 1px dashed #000; margin: 4px 0;">
         
@@ -955,6 +985,8 @@
       financialYear: C.getFY(new Date(invDate)).label,
       customerName: custName, customerPhone: custPhone,
       customerAddress: custAddr, customerGSTIN: custGSTIN,
+      customerState: document.getElementById('billCustState')?.value || 'West Bengal',
+      customerStateCode: GST_STATES[document.getElementById('billCustState')?.value || 'West Bengal'] || '19',
       taxType, ledger, discount,
       items: JSON.parse(JSON.stringify(items)),
       totalTaxable: +fTaxable.toFixed(2),
@@ -1059,6 +1091,7 @@
      INIT
      ============================================================ */
   async function init_billingModule() {
+    populateCustomerStates();
     console.log('%c🧾 Billing module initialized (v5.0.1)', 'color:#0ea5e9;font-weight:bold');
 
     if (!window.SF?.perms?.can?.('billing.view')) {
@@ -1106,7 +1139,7 @@
 
   window.SF = window.SF || {};
   window.SF.billing = {
-    renderPreview, renderCart, addManualItem, removeItem,
+    renderPreview, onCustomerStateChange, renderCart, addManualItem, removeItem,
     handleBarcodeKey, handleScannedCode, lookupIMEI,
     onDateChange, toggleScanner, finalize, refreshInvoiceNo,
     printInvoice, setBillType, onPrintSizeChange, init: init_billingModule
