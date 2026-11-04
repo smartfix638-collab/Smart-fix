@@ -1,8 +1,8 @@
 <!-- ============================================================
-     SMARTFIX ERP — Mobile Repair / Job Card Module (v4.7.0)
+     SMARTFIX ERP — Mobile Repair / Job Card Module (v4.9.5)
      File: modules/repair.html
-     Note: Repair services are completely OUTSIDE GST (No GST calculated).
-     Fixed: Due Amount logic, Voucher sync, Print/UI cleaned of GST.
+     Fixed: Due Amount logic (auto 0 on delivery), Thermal Logo scaling, 
+            Voucher sync, No GST, Solid borders for thermal printing.
      ============================================================ -->
 
 <section id="repairModule" class="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -435,7 +435,7 @@
 
   /* ============ INIT ============ */
   async function init_repairModule() {
-    console.log('%c🔧 Repair module initialized (v4.7.0 - NO GST)', 'color:#8b5cf6;font-weight:bold');
+    console.log('%c🔧 Repair module initialized (v4.9.5)', 'color:#8b5cf6;font-weight:bold');
 
     if (!window.SF?.perms?.can?.('repair.view')) {
       const c = document.getElementById('moduleContainer');
@@ -856,13 +856,11 @@
     if (job.status === newStatus) return;
 
     if (newStatus === 'DELIVERED') {
-      // ১. ফাইনাল কস্ট ইনপুট (GST ছাড়া)
       const finalInput = prompt('Final repair cost (₹):', (job.finalCost || job.estimatedCost || 0).toFixed(2));
       if (finalInput === null) return;
       const finalCost = parseFloat(finalInput);
       if (isNaN(finalCost) || finalCost < 0) { C.toast('Invalid amount', 'warning'); return; }
 
-      // ২. কত টাকা বাকি আছে তা বের করা (GST ছাড়া)
       const remaining = finalCost - (job.advancePaid || 0);
 
       if (remaining > 0) {
@@ -873,7 +871,6 @@
           false
         );
         if (collect) {
-          // ভাউচার তৈরি (ক্যাশ ড্রয়ারে টাকা ঢোকার জন্য)
           const voucher = {
             id: 'vch-rep-' + Date.now(),
             type: 'RECEIPT', date: C.fmtDate(new Date()), amount: remaining,
@@ -892,17 +889,14 @@
             if (fb) await fb.setDoc(fb.doc(fb.db, 'stores', getStoreId(), 'vouchers', voucher.id), voucher, { merge: true });
           } catch (e) {}
 
-          // ⭐ গুরুত্বপূর্ণ ফিক্স: ডেলিভারির পর Due যাতে 0 হয়ে যায়
-          // যেহেতু টাকা কালেক্ট করা হয়েছে, তাই advancePaid-কে finalCost-এর সমান করে দিচ্ছি
+          // ⭐ ফিক্স: পেমেন্ট কালেক্ট করলে advancePaid আপডেট হবে, যাতে Due = 0 হয়ে যায়
           job.advancePaid = finalCost; 
         }
       } else {
-         // যদি অ্যাডভান্স ফাইনাল কস্টের চেয়ে বেশি হয়, তবে সেটাও হ্যান্ডেল করা (যদিও সাধারণত হয় না)
          job.advancePaid = finalCost;
       }
 
       job.finalCost = +finalCost.toFixed(2);
-      // balanceDue হিসাব করা হচ্ছে: যদি টাকা কালেক্ট না করে থাকে, তবে বাকি থাকবে, নাহলে 0
       job.balanceDue = Math.max(0, finalCost - (job.advancePaid || 0));
       job.deliveredAt = new Date().toISOString();
     }
@@ -977,7 +971,7 @@
   }
 
 
-  /* ============ PRINT SLIP (NO GST) ============ */
+  /* ============ PRINT SLIP (FIXED THERMAL & LOGO) ============ */
   function printSlip() {
     const job = RM.currentJob;
     if (!job) return;
@@ -991,7 +985,7 @@
     const isA4 = printSize === 'A4';
     
     const paperWidth = isA4 ? '148mm' : printSize;
-    const fontBase = isA4 ? '13px' : '12px'; 
+    const fontBase = isA4 ? '12px' : '11px'; 
     const padding = isA4 ? '10mm' : '2mm';
     const qrSize = isA4 ? 120 : 80;
 
@@ -1000,7 +994,10 @@
 
     const html = `
       <div class="receipt">
-        <div class="center bold big">${C.escapeHTML(prof.name || 'Store')}</div>
+        <!-- Logo (Fixed size for thermal) -->
+        ${prof.logo ? `<img src="${prof.logo}" class="logo" alt="Logo">` : ''}
+        
+        <div class="center bold big mt4">${C.escapeHTML(prof.name || 'Store')}</div>
         ${prof.address ? `<div class="center small">${C.escapeHTML(prof.address)}</div>` : ''}
         ${prof.phone   ? `<div class="center small">☎ ${C.escapeHTML(prof.phone)}</div>` : ''}
         <div class="center small">Shop Code: <b>${C.escapeHTML(shopCode)}</b></div>
@@ -1064,11 +1061,18 @@
       * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
       html, body { margin: 0; padding: 0; background: #fff; color: #000; font-family: Arial, Helvetica, sans-serif; font-size: ${fontBase}; font-weight: 600; line-height: 1.4; width: ${paperWidth}; max-width: 100vw; }
       .receipt { width: 100%; padding: ${padding}; margin: 0 auto; }
+      
+      /* Logo Fixed Size for Thermal */
+      .logo { max-height: 40px; max-width: 100%; display: block; margin: 0 auto 4px auto; object-fit: contain; }
+      
       .center { text-align: center; } .bold { font-weight: 900; } .big { font-size: 1.15em; } .small { font-size: 0.85em; } .mono { font-family: 'Courier New', monospace; font-weight: 900; }
       .mt2 { margin-top: 2px; } .mt4 { margin-top: 6px; } .mt8 { margin-top: 10px; }
       .tbl { width: 100%; border-collapse: collapse; } .tbl td { padding: 2px 0; vertical-align: top; word-break: break-word; } .tbl td:first-child { width: 35%; font-weight: bold; } .tbl td.right { text-align: right; }
+      
+      /* Solid Line for Thermal Printers (Dashed might not print) */
       hr { border: none; border-top: 1px solid #000; margin: 4px 0; }
-      .qr { width: ${qrSize}px; height: ${qrSize}px; filter: grayscale(100%) contrast(300%); }
+      
+      .qr { width: ${qrSize}px; height: ${qrSize}px; filter: grayscale(100%) contrast(300%); display: block; margin: 0 auto; }
       .sig-line { border-top: 1px solid #000; display: inline-block; padding-top: 2px; min-width: 100px; font-size: 0.9em; }
     `;
 
