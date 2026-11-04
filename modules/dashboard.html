@@ -1,7 +1,7 @@
 <!-- ============================================================
-     SMARTFIX ERP — Admin Dashboard (Command Center)
+     SMARTFIX ERP — Admin Dashboard (Command Center) v4.7.0
      File: modules/dashboard.html
-     Version: 4.5.0
+     Fixed: Includes Repair Revenue in Sales/Profit calculations.
      ============================================================ -->
 
 <section id="dashboardModule" class="space-y-4">
@@ -322,7 +322,7 @@
      INIT
      ============================================================ */
   async function init_dashboardModule() {
-    console.log('%c📊 Dashboard initialized (v4.5.0)', 'color:#10b981;font-weight:bold');
+    console.log('%c📊 Dashboard initialized (v4.7.0)', 'color:#10b981;font-weight:bold');
 
     if (!window.SF?.perms?.can?.('dashboard.view')) {
       const c = document.getElementById('moduleContainer');
@@ -411,13 +411,13 @@
 
 
   /* ============================================================
-     KPIs
+     KPIs (Includes Repair Revenue)
      ============================================================ */
   function computeKPIs(invoices, repairs, inventory, parties) {
     const now = new Date();
     const todayStr = C.fmtDate(now);
 
-    /* Today's sales */
+    /* Today's sales (Invoices) */
     let todaySales = 0, todayCount = 0;
     invoices.forEach((inv) => {
       if (isToday(inv.date)) {
@@ -426,13 +426,21 @@
       }
     });
 
-    /* Month sales */
+    /* Month sales (Invoices) */
     let monthSales = 0, monthCount = 0;
     let monthPurchaseCost = 0, monthExpense = 0, monthReturn = 0;
     invoices.forEach((inv) => {
       if (inMonth(inv.date, DB.month, DB.year)) {
         monthSales += inv.totalGross || 0;
         monthPurchaseCost += inv.totalPurchaseCost || 0;
+        monthCount++;
+      }
+    });
+
+    /* Add Repair Revenue to Month Sales */
+    repairs.forEach(rep => {
+      if (rep.status === 'DELIVERED' && inMonth(rep.date, DB.month, DB.year)) {
+        monthSales += (rep.finalCost || 0); // GST is outside, so just finalCost
         monthCount++;
       }
     });
@@ -476,7 +484,7 @@
     setText('kpiTodaySales', '₹' + fmtShort(todaySales));
     setText('kpiTodayCount', todayCount + ' invoice' + (todayCount !== 1 ? 's' : ''));
     setText('kpiMonthSales', '₹' + fmtShort(monthSales));
-    setText('kpiMonthCount', monthCount + ' invoice' + (monthCount !== 1 ? 's' : ''));
+    setText('kpiMonthCount', monthCount + ' bills & services');
     setText('kpiProfit', '₹' + fmtShort(profit));
     setText('kpiProfitMargin', margin.toFixed(1) + '% margin');
     setText('kpiDues', '₹' + fmtShort(duesTotal));
@@ -541,14 +549,14 @@
     Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
     Chart.defaults.font.size = 11;
 
-    renderDailySalesChart(invoices);
-    renderPaymentSplitChart(invoices);
+    renderDailySalesChart(invoices, repairs);
+    renderPaymentSplitChart(invoices, repairs);
     renderTopProductsChart(invoices);
     renderRepairStatusChart(repairs);
-    renderMonthlyComparisonChart(invoices);
+    renderMonthlyComparisonChart(invoices, repairs);
   }
 
-  function renderDailySalesChart(invoices) {
+  function renderDailySalesChart(invoices, repairs) {
     const ctx = document.getElementById('chartDailySales');
     if (!ctx) return;
 
@@ -562,6 +570,11 @@
         if (!inMonth(inv.date, DB.month, DB.year)) return;
         const day = parseInt((inv.date || '').split('-')[2], 10);
         if (day === d) total += inv.totalGross || 0;
+      });
+      repairs.forEach((rep) => {
+        if (rep.status !== 'DELIVERED' || !inMonth(rep.date, DB.month, DB.year)) return;
+        const day = parseInt((rep.date || '').split('-')[2], 10);
+        if (day === d) total += (rep.finalCost || 0);
       });
       data.push(total);
     }
@@ -626,7 +639,7 @@
     });
   }
 
-  function renderPaymentSplitChart(invoices) {
+  function renderPaymentSplitChart(invoices, repairs) {
     const ctx = document.getElementById('chartPaymentSplit');
     if (!ctx) return;
 
@@ -643,6 +656,15 @@
       const l = inv.ledger || 'Cash-in-Hand';
       if (byLedger[l] !== undefined) byLedger[l] += inv.totalGross || 0;
     });
+
+    // Repairs are assumed Cash-in-Hand
+    let repairCash = 0;
+    repairs.forEach(rep => {
+      if (rep.status === 'DELIVERED' && inMonth(rep.date, DB.month, DB.year)) {
+        repairCash += (rep.finalCost || 0);
+      }
+    });
+    byLedger['Cash-in-Hand'] += repairCash;
 
     const labels = [];
     const data = [];
@@ -877,7 +899,7 @@
     });
   }
 
-  function renderMonthlyComparisonChart(invoices) {
+  function renderMonthlyComparisonChart(invoices, repairs) {
     const ctx = document.getElementById('chartMonthly');
     if (!ctx) return;
 
@@ -894,11 +916,16 @@
       const y = d.getFullYear();
       labels.push(monthNames[m - 1] + ' ' + String(y).slice(-2));
 
-      let sales = 0, purchase = 0, expense = 0, returns = 0;
+      let sales = 0, purchase = 0, expense = 0, returns = 0, repairRevenue = 0;
       invoices.forEach((inv) => {
         if (inMonth(inv.date, m, y)) {
           sales += inv.totalGross || 0;
           purchase += inv.totalPurchaseCost || 0;
+        }
+      });
+      repairs.forEach(rep => {
+        if (rep.status === 'DELIVERED' && inMonth(rep.date, m, y)) {
+          repairRevenue += (rep.finalCost || 0);
         }
       });
       (S.creditNotes || []).forEach((c) => {
@@ -908,8 +935,8 @@
         if (inMonth(v.date, m, y) && v.type === 'EXPENSE') expense += v.amount || 0;
       });
 
-      salesData.push(sales);
-      profitData.push(sales - returns - purchase - expense);
+      salesData.push(sales + repairRevenue);
+      profitData.push(sales + repairRevenue - returns - purchase - expense);
     }
 
     if (DB.charts.monthly) DB.charts.monthly.destroy();
