@@ -1,7 +1,8 @@
 <!-- ============================================================
-     SMARTFIX ERP — GST Returns Module (v4.6.0 Fixed)
+     SMARTFIX ERP — GST Returns Module (v4.8.0)
      File: modules/gst-returns.html
-     Fixed: Inter-state ITC, Repair Revenue inclusion, Discount calculation
+     Purpose: CA-ready GST data — GSTR-1, GSTR-3B, HSN, ITC
+     Fixed: Completely excludes Repairs, correctly splits Inter/Intra state tax.
      ============================================================ -->
 
 <section id="gstReturnsModule" class="space-y-4">
@@ -66,9 +67,9 @@
        ═══════════════════════════════════════════════════════ -->
   <div class="grid grid-cols-2 lg:grid-cols-3 gap-3">
     <div class="bg-gradient-to-br from-emerald-900 to-emerald-950 border border-emerald-700/60 rounded-xl p-4">
-      <div class="text-[10px] uppercase font-bold text-emerald-300">Total Sales + Service</div>
+      <div class="text-[10px] uppercase font-bold text-emerald-300">Total Sales</div>
       <div id="gstTotalSales" class="text-xl font-black text-white mt-1 font-mono">₹0</div>
-      <div id="gstSalesCount" class="text-[10px] text-emerald-300/70 mt-1">0 invoices + 0 repairs</div>
+      <div id="gstSalesCount" class="text-[10px] text-emerald-300/70 mt-1">0 invoices</div>
     </div>
     <div class="bg-gradient-to-br from-blue-900 to-blue-950 border border-blue-700/60 rounded-xl p-4">
       <div class="text-[10px] uppercase font-bold text-blue-300">B2B Sales</div>
@@ -76,7 +77,7 @@
       <div id="gstB2BCount" class="text-[10px] text-blue-300/70 mt-1">with GSTIN</div>
     </div>
     <div class="bg-gradient-to-br from-violet-900 to-violet-950 border border-violet-700/60 rounded-xl p-4">
-      <div class="text-[10px] uppercase font-bold text-violet-300">B2C Sales + Service</div>
+      <div class="text-[10px] uppercase font-bold text-violet-300">B2C Sales</div>
       <div id="gstB2CSales" class="text-xl font-black text-white mt-1 font-mono">₹0</div>
       <div id="gstB2CCount" class="text-[10px] text-violet-300/70 mt-1">without GSTIN</div>
     </div>
@@ -674,13 +675,12 @@
     invoices: [],
     creditNotes: [],
     purchases: [],
-    repairs: [],
     dateRange: { from: '', to: '' }
   };
 
   /* ═══ INIT ═══ */
   function init_gstReturnsModule() {
-    console.log('%c📊 GST Returns module initialized (v4.6.0)', 'color:#10b981;font-weight:bold');
+    console.log('%c📊 GST Returns module initialized (v4.8.0)', 'color:#10b981;font-weight:bold');
 
     if (!window.SF?.perms?.can?.('accounting.view')) {
       const c = document.getElementById('moduleContainer');
@@ -748,19 +748,11 @@
       };
     }
 
-    /* Filter data */
+    /* Filter data (STRICTLY INVOICES & PURCHASES - NO REPAIRS) */
     const inRange = (d) => d && d >= G.dateRange.from && d <= G.dateRange.to;
     G.invoices = (S.invoices || []).filter(i => inRange(i.date) && (i.billType || 'GST') === 'GST');
     G.creditNotes = (S.creditNotes || []).filter(c => inRange(c.date));
     G.purchases = (S.purchases || []).filter(p => inRange(p.date) && (p.billType || 'GST') === 'GST');
-    
-    // ⭐ Repairs Load (from localStorage)
-    let rawRepairs = [];
-    try {
-      const raw = localStorage.getItem('sfp_repairs');
-      if (raw) rawRepairs = JSON.parse(raw);
-    } catch (e) {}
-    G.repairs = rawRepairs.filter(r => inRange(r.date) && r.status === 'DELIVERED');
 
     /* Period info */
     const months = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -777,8 +769,6 @@
         <strong class="text-slate-200">Invoices:</strong> ${G.invoices.length}
         <span class="mx-2">•</span>
         <strong class="text-slate-200">Purchases:</strong> ${G.purchases.length}
-        <span class="mx-2">•</span>
-        <strong class="text-slate-200">Repairs:</strong> ${G.repairs.length}
       `;
     }
 
@@ -859,18 +849,6 @@
       }
     });
 
-    // ⭐ Add Repairs to Sales (Service Revenue)
-    G.repairs.forEach(rep => {
-      const taxable = rep.finalCost || 0;
-      const tax = rep.gstAmount || 0;
-      totalSales += (taxable + tax);
-      b2cSales += (taxable + tax);
-      b2cCount++;
-      totalTaxable += taxable;
-      totalCGST += tax / 2;
-      totalSGST += tax / 2;
-    });
-
     /* Subtract returns */
     let returnCGST = 0, returnSGST = 0, returnIGST = 0, returnTotal = 0;
     G.creditNotes.forEach(crn => {
@@ -895,7 +873,7 @@
 
     /* Update cards */
     setText('gstTotalSales', fmt0(totalSales - returnTotal));
-    setText('gstSalesCount', G.invoices.length + ' inv + ' + G.repairs.length + ' rep');
+    setText('gstSalesCount', G.invoices.length + ' invoices');
     setText('gstB2BSales', fmt0(b2bSales));
     setText('gstB2BCount', b2bCount + ' with GSTIN');
     setText('gstB2CSales', fmt0(b2cSales));
@@ -935,7 +913,7 @@
     if (el) el.textContent = t;
   }
 
-  /* ═══ RATE SUMMARY (FIXED DISCOUNT) ═══ */
+  /* ═══ RATE SUMMARY ═══ */
   function renderRateSummary() {
     const byRate = {};
     G.invoices.forEach(inv => {
@@ -956,19 +934,6 @@
         if (taxType === 'INTRA') { byRate[rate].cgst += lineTax / 2; byRate[rate].sgst += lineTax / 2; }
         else { byRate[rate].igst += lineTax; }
       });
-    });
-
-    // Add Repairs
-    G.repairs.forEach(rep => {
-      const rate = 18;
-      if (!byRate[rate]) byRate[rate] = { count: 0, taxable: 0, cgst: 0, sgst: 0, igst: 0, total: 0 };
-      const taxable = rep.finalCost || 0;
-      const tax = rep.gstAmount || 0;
-      byRate[rate].count++;
-      byRate[rate].taxable += taxable;
-      byRate[rate].total += (taxable + tax);
-      byRate[rate].cgst += tax / 2;
-      byRate[rate].sgst += tax / 2;
     });
 
     /* Subtract returns */
@@ -1055,19 +1020,6 @@
           else { b2cs[key].cgst += lineTax / 2; b2cs[key].sgst += lineTax / 2; }
         });
       }
-    });
-
-    // Add Repairs to B2C Small
-    G.repairs.forEach(rep => {
-      const pos = getHomeStateCode();
-      const rate = 18;
-      const key = `INTRA_${pos}_${rate}`;
-      if (!b2cs[key]) b2cs[key] = { sply: 'INTRA', pos, rate, taxable: 0, cgst: 0, sgst: 0, igst: 0 };
-      const taxable = rep.finalCost || 0;
-      const tax = rep.gstAmount || 0;
-      b2cs[key].taxable += taxable;
-      b2cs[key].cgst += tax / 2;
-      b2cs[key].sgst += tax / 2;
     });
 
     /* Credit notes */
@@ -1185,13 +1137,6 @@
       }
     });
 
-    // ⭐ Add Repairs (Service)
-    G.repairs.forEach(rep => {
-      taxable += rep.finalCost || 0;
-      cgst += (rep.gstAmount || 0) / 2;
-      sgst += (rep.gstAmount || 0) / 2;
-    });
-
     /* Subtract returns */
     let rTaxable = 0, rCGST = 0, rSGST = 0, rIGST = 0;
     G.creditNotes.forEach(crn => {
@@ -1271,17 +1216,6 @@
         if ((inv.taxType || 'INTRA') === 'INTRA') { byHSN[hsn].cgst += lineTax / 2; byHSN[hsn].sgst += lineTax / 2; }
         else { byHSN[hsn].igst += lineTax; }
       });
-    });
-
-    // Add Repairs (SAC 998713)
-    const sac = '998713';
-    if (!byHSN[sac]) byHSN[sac] = { hsn: sac, desc: 'Mobile Repair Services', uqc: 'OTH', qty: 0, taxable: 0, cgst: 0, sgst: 0, igst: 0, total: 0 };
-    G.repairs.forEach(rep => {
-      byHSN[sac].qty += 1;
-      byHSN[sac].taxable += rep.finalCost || 0;
-      byHSN[sac].cgst += (rep.gstAmount || 0) / 2;
-      byHSN[sac].sgst += (rep.gstAmount || 0) / 2;
-      byHSN[sac].total += (rep.finalCost || 0) + (rep.gstAmount || 0);
     });
 
     const body = document.getElementById('gstHSNBody');
@@ -1364,7 +1298,6 @@
   function renderRecon() {
     let booksSales = 0;
     G.invoices.forEach(inv => booksSales += inv.totalGross || 0);
-    G.repairs.forEach(rep => booksSales += (rep.finalCost || 0) + (rep.gstAmount || 0));
     setText('reconSalesBooks', money(booksSales));
     setText('reconSalesGSTR1', money(booksSales));
     setText('reconSalesDiff', money(0));
@@ -1384,7 +1317,7 @@
     checks.push({
       label: 'All invoices have valid dates',
       ok: G.invoices.every(i => i.date),
-      detail: `${G.invoices.length} invoices + ${G.repairs.length} repairs`
+      detail: `${G.invoices.length} invoices`
     });
     checks.push({
       label: 'B2B invoices have valid GSTIN',
@@ -1460,12 +1393,6 @@
       salesIGST += inv.totalIGST || 0;
       salesTotal += inv.totalGross || 0;
     });
-    G.repairs.forEach(rep => {
-      salesTaxable += rep.finalCost || 0;
-      salesCGST += (rep.gstAmount || 0) / 2;
-      salesSGST += (rep.gstAmount || 0) / 2;
-      salesTotal += (rep.finalCost || 0) + (rep.gstAmount || 0);
-    });
 
     let retTaxable = 0, retCGST = 0, retSGST = 0, retIGST = 0, retTotal = 0;
     G.creditNotes.forEach(crn => {
@@ -1530,32 +1457,12 @@
       'Type': inv.customerGSTIN && inv.customerGSTIN.length >= 15 ? 'B2B' : 'B2C',
       'Items': (inv.items || []).map(i => i.model).join(' | '),
       'IMEIs': (inv.items || []).map(i => i.imei || '').filter(Boolean).join(' | '),
-      'Ledger': inv.ledger,
       'Taxable': inv.totalTaxable || 0,
       'CGST': inv.totalCGST || 0,
       'SGST': inv.totalSGST || 0,
       'IGST': inv.totalIGST || 0,
       'Total': inv.totalGross || 0
     }));
-    // Add Repairs
-    G.repairs.forEach(rep => {
-      salesReg.push({
-        'Date': rep.date,
-        'Invoice No': rep.jobNo,
-        'Customer': rep.customerName || '',
-        'Phone': rep.customerPhone || '',
-        'GSTIN': 'B2C',
-        'Type': 'Service',
-        'Items': 'Repair Service',
-        'IMEIs': rep.deviceIMEI || '',
-        'Ledger': 'Cash-in-Hand',
-        'Taxable': rep.finalCost || 0,
-        'CGST': (rep.gstAmount || 0) / 2,
-        'SGST': (rep.gstAmount || 0) / 2,
-        'IGST': 0,
-        'Total': (rep.finalCost || 0) + (rep.gstAmount || 0)
-      });
-    });
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(salesReg.length ? salesReg : [{ Note: 'No sales' }]), 'Sales_Register');
 
     /* Sheet 3: B2B Invoices */
@@ -1566,7 +1473,6 @@
       'Invoice Date': inv.date,
       'Invoice Value': inv.totalGross || 0,
       'Place of Supply': inv.customerGSTIN.substring(0, 2),
-      'Reverse Charge': 'N',
       'Taxable Value': inv.totalTaxable || 0,
       'CGST': inv.totalCGST || 0,
       'SGST': inv.totalSGST || 0,
@@ -1595,7 +1501,6 @@
       'Against Invoice': crn.origInvoiceNo,
       'Customer': crn.customerName,
       'Item': crn.itemModel,
-      'IMEI': crn.imei || '',
       'Reason': crn.reason,
       'Taxable': crn.refundTaxable || 0,
       'GST': crn.refundTax || 0,
@@ -1610,13 +1515,12 @@
       'Purchase No': p.purchaseNo,
       'Supplier': p.supplierName,
       'GSTIN': p.supplierGSTIN || '',
-      'Phone': p.supplierPhone || '',
+      'Tax Type': p.taxType || 'INTRA',
       'Items': (p.lines || []).map(l => l.model).join(' | '),
       'Taxable': p.totalTaxable || 0,
       'GST': p.totalGST || 0,
       'Total': p.totalCost || 0,
-      'Ledger': p.ledger,
-      'Tax Type': p.taxType || 'INTRA'
+      'Ledger': p.ledger
     }));
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(purRows.length ? purRows : [{ Note: 'No purchases' }]), 'Purchase_Register');
 
@@ -1652,16 +1556,6 @@
         else hsnMap[hsn].igst += lineTax;
       });
     });
-    // Add Repairs SAC
-    const sac = '998713';
-    if (!hsnMap[sac]) hsnMap[sac] = { hsn: sac, desc: 'Repair Services', uqc: 'OTH', qty: 0, taxable: 0, cgst: 0, sgst: 0, igst: 0, total: 0 };
-    G.repairs.forEach(rep => {
-      hsnMap[sac].qty += 1;
-      hsnMap[sac].taxable += rep.finalCost || 0;
-      hsnMap[sac].cgst += (rep.gstAmount || 0) / 2;
-      hsnMap[sac].sgst += (rep.gstAmount || 0) / 2;
-      hsnMap[sac].total += (rep.finalCost || 0) + (rep.gstAmount || 0);
-    });
 
     const hsnRows = Object.values(hsnMap).filter(h => h.taxable > 0).map(h => ({
       'HSN': h.hsn,
@@ -1693,14 +1587,6 @@
         else rateMap[rate].igst += lineTax;
       });
     });
-    // Add Repairs
-    if (!rateMap[18]) rateMap[18] = { rate: 18, taxable: 0, cgst: 0, sgst: 0, igst: 0, total: 0 };
-    G.repairs.forEach(rep => {
-      rateMap[18].taxable += rep.finalCost || 0;
-      rateMap[18].cgst += (rep.gstAmount || 0) / 2;
-      rateMap[18].sgst += (rep.gstAmount || 0) / 2;
-      rateMap[18].total += (rep.finalCost || 0) + (rep.gstAmount || 0);
-    });
 
     const rateRows = Object.values(rateMap).map(r => ({
       'Tax Rate': r.rate + '%',
@@ -1720,43 +1606,13 @@
     ];
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(gstr3bRows), 'GSTR3B_Summary');
 
-    /* Sheet 11: Monthly Trend (last 12 months) */
-    const trend = [];
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const allInvoices = S.invoices || [];
-    for (let i = 11; i >= 0; i--) {
-      const d = new Date(G.year, G.month - 1 - i, 1);
-      const m = d.getMonth() + 1;
-      const y = d.getFullYear();
-      const prefix = `${y}-${String(m).padStart(2, '0')}`;
-      const monthInvoices = allInvoices.filter(inv => inv.date && inv.date.startsWith(prefix));
-      let mTaxable = 0, mCGST = 0, mSGST = 0, mIGST = 0, mTotal = 0;
-      monthInvoices.forEach(inv => {
-        mTaxable += inv.totalTaxable || 0;
-        mCGST += inv.totalCGST || 0;
-        mSGST += inv.totalSGST || 0;
-        mIGST += inv.totalIGST || 0;
-        mTotal += inv.totalGross || 0;
-      });
-      trend.push({
-        'Month': months[m - 1] + ' ' + y,
-        'Invoices': monthInvoices.length,
-        'Taxable': mTaxable,
-        'CGST': mCGST,
-        'SGST': mSGST,
-        'IGST': mIGST,
-        'Total': mTotal
-      });
-    }
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(trend), 'Monthly_Trend');
-
-    /* Sheet 12: Info */
+    /* Sheet 11: Info */
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([{
       'Generated': new Date().toLocaleString('en-IN'),
       'Store': S.profile?.name || '',
       'GSTIN': S.profile?.gstin || '',
       'Period': periodLabel,
-      'Software': 'SmartFix ERP v4.6.0',
+      'Software': 'SmartFix ERP v4.8.0',
       'Developer': 'Debapriya Sarkar'
     }]), 'Info');
 
@@ -1781,10 +1637,13 @@
       const pos = ctin.substring(0, 2);
 
       const rateMap = {};
+      const rawSubtotal = (inv.items || []).reduce((a, x) => a + (x.rate || 0) * (x.qty || 1), 0);
+      const discountRatio = rawSubtotal > 0 ? (inv.totalGross || 0) / rawSubtotal : 1;
+
       (inv.items || []).forEach(it => {
         const rate = it.gst || 0;
         if (!rateMap[rate]) rateMap[rate] = { txval: 0, camt: 0, samt: 0, iamt: 0, csamt: 0 };
-        const lineTotal = (it.rate || 0) * (it.qty || 1);
+        const lineTotal = ((it.rate || 0) * (it.qty || 1)) * discountRatio;
         const lineTaxable = lineTotal / (1 + rate / 100);
         const lineTax = lineTotal - lineTaxable;
         rateMap[rate].txval += lineTaxable;
@@ -1820,10 +1679,13 @@
     G.invoices.filter(i => !i.customerGSTIN || i.customerGSTIN.length < 15).forEach(inv => {
       if (isInterState(inv.customerGSTIN, inv.customerAddress) && (inv.totalGross || 0) > 250000) {
         const rateMap = {};
+        const rawSubtotal = (inv.items || []).reduce((a, x) => a + (x.rate || 0) * (x.qty || 1), 0);
+        const discountRatio = rawSubtotal > 0 ? (inv.totalGross || 0) / rawSubtotal : 1;
+
         (inv.items || []).forEach(it => {
           const rate = it.gst || 0;
           if (!rateMap[rate]) rateMap[rate] = { txval: 0, iamt: 0 };
-          const lineTotal = (it.rate || 0) * (it.qty || 1);
+          const lineTotal = ((it.rate || 0) * (it.qty || 1)) * discountRatio;
           const lineTaxable = lineTotal / (1 + rate / 100);
           rateMap[rate].txval += lineTaxable;
           rateMap[rate].iamt += lineTotal - lineTaxable;
@@ -1851,11 +1713,14 @@
       const sply = isInterState(inv.customerGSTIN, inv.customerAddress) ? 'INTER' : 'INTRA';
       const pos = sply === 'INTER' ? homeState : homeState;
 
+      const rawSubtotal = (inv.items || []).reduce((a, x) => a + (x.rate || 0) * (x.qty || 1), 0);
+      const discountRatio = rawSubtotal > 0 ? (inv.totalGross || 0) / rawSubtotal : 1;
+
       (inv.items || []).forEach(it => {
         const rate = it.gst || 0;
         const key = `${sply}_${pos}_${rate}`;
         if (!b2csMap[key]) b2csMap[key] = { sply_ty: sply, pos, typ: 'OE', rt: rate, txval: 0, camt: 0, samt: 0, iamt: 0, csamt: 0 };
-        const lineTotal = (it.rate || 0) * (it.qty || 1);
+        const lineTotal = ((it.rate || 0) * (it.qty || 1)) * discountRatio;
         const lineTaxable = lineTotal / (1 + rate / 100);
         const lineTax = lineTotal - lineTaxable;
         b2csMap[key].txval += lineTaxable;
@@ -1864,25 +1729,16 @@
       });
     });
 
-    // Add Repairs to B2CS
-    G.repairs.forEach(rep => {
-      const rate = 18;
-      const key = `INTRA_${homeState}_${rate}`;
-      if (!b2csMap[key]) b2csMap[key] = { sply_ty: 'INTRA', pos: homeState, typ: 'OE', rt: rate, txval: 0, camt: 0, samt: 0, iamt: 0, csamt: 0 };
-      const taxable = rep.finalCost || 0;
-      const tax = rep.gstAmount || 0;
-      b2csMap[key].txval += taxable;
-      b2csMap[key].camt += tax / 2;
-      b2csMap[key].samt += tax / 2;
-    });
-
     /* HSN */
     const hsnMap = {};
     G.invoices.forEach(inv => {
+      const rawSubtotal = (inv.items || []).reduce((a, x) => a + (x.rate || 0) * (x.qty || 1), 0);
+      const discountRatio = rawSubtotal > 0 ? (inv.totalGross || 0) / rawSubtotal : 1;
+
       (inv.items || []).forEach(it => {
         const hsn = it.hsn || '8517';
         if (!hsnMap[hsn]) hsnMap[hsn] = { hsn_sc: hsn, desc: HSN_DESC[hsn] || '', uqc: 'NOS', qty: 0, val: 0, txval: 0, camt: 0, samt: 0, iamt: 0, csamt: 0 };
-        const lineTotal = (it.rate || 0) * (it.qty || 1);
+        const lineTotal = ((it.rate || 0) * (it.qty || 1)) * discountRatio;
         const lineTaxable = lineTotal / (1 + (it.gst || 0) / 100);
         const lineTax = lineTotal - lineTaxable;
         hsnMap[hsn].qty += (it.qty || 1);
@@ -1891,17 +1747,6 @@
         if ((inv.taxType || 'INTRA') === 'INTRA') { hsnMap[hsn].camt += lineTax / 2; hsnMap[hsn].samt += lineTax / 2; }
         else hsnMap[hsn].iamt += lineTax;
       });
-    });
-    
-    // Add Repairs HSN
-    const sac = '998713';
-    if (!hsnMap[sac]) hsnMap[sac] = { hsn_sc: sac, desc: 'Repair Services', uqc: 'OTH', qty: 0, val: 0, txval: 0, camt: 0, samt: 0, iamt: 0, csamt: 0 };
-    G.repairs.forEach(rep => {
-      hsnMap[sac].qty += 1;
-      hsnMap[sac].val += (rep.finalCost || 0) + (rep.gstAmount || 0);
-      hsnMap[sac].txval += rep.finalCost || 0;
-      hsnMap[sac].camt += (rep.gstAmount || 0) / 2;
-      hsnMap[sac].samt += (rep.gstAmount || 0) / 2;
     });
 
     const hsnData = Object.values(hsnMap).filter(h => h.txval > 0).map((h, idx) => ({
@@ -2003,12 +1848,6 @@
       salesSGST += inv.totalSGST || 0;
       salesIGST += inv.totalIGST || 0;
     });
-    
-    G.repairs.forEach(rep => {
-      salesTaxable += rep.finalCost || 0;
-      salesCGST += (rep.gstAmount || 0) / 2;
-      salesSGST += (rep.gstAmount || 0) / 2;
-    });
 
     let purCGST = 0, purSGST = 0, purIGST = 0;
     G.purchases.forEach(p => {
@@ -2050,12 +1889,6 @@
       salesIGST += inv.totalIGST || 0;
       salesTotal += inv.totalGross || 0;
     });
-    G.repairs.forEach(rep => {
-      salesTaxable += rep.finalCost || 0;
-      salesCGST += (rep.gstAmount || 0) / 2;
-      salesSGST += (rep.gstAmount || 0) / 2;
-      salesTotal += (rep.finalCost || 0) + (rep.gstAmount || 0);
-    });
 
     let purCGST = 0, purSGST = 0, purIGST = 0, purTotal = 0;
     G.purchases.forEach(p => {
@@ -2090,12 +1923,11 @@
       Generated: ${new Date().toLocaleString('en-IN')}
     </p>
 
-    <h2>📤 Outward Supplies (Sales + Service)</h2>
+    <h2>📤 Outward Supplies (Sales)</h2>
     <table>
       <thead><tr><th>Description</th><th class="right">Amount</th></tr></thead>
       <tbody>
         <tr><td>Total Invoices</td><td class="right">${G.invoices.length}</td></tr>
-        <tr><td>Repair Services</td><td class="right">${G.repairs.length}</td></tr>
         <tr><td>Taxable Value</td><td class="right">₹${salesTaxable.toFixed(2)}</td></tr>
         <tr><td>CGST Output</td><td class="right">₹${salesCGST.toFixed(2)}</td></tr>
         <tr><td>SGST Output</td><td class="right">₹${salesSGST.toFixed(2)}</td></tr>
