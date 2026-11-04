@@ -796,16 +796,41 @@
     if (!gstin || gstin.length < 2) return '';
     return gstin.substring(0, 2);
   }
+  /* GST state helpers — use the store's selected state and the customer's
+     saved state from the invoice. GSTIN state code takes precedence when present. */
+  const GST_STATE_CODES = {
+    'Jammu and Kashmir':'01','Himachal Pradesh':'02','Punjab':'03','Chandigarh':'04',
+    'Uttarakhand':'05','Haryana':'06','Delhi':'07','Rajasthan':'08','Uttar Pradesh':'09',
+    'Bihar':'10','Sikkim':'11','Arunachal Pradesh':'12','Nagaland':'13','Manipur':'14',
+    'Mizoram':'15','Tripura':'16','Meghalaya':'17','Assam':'18','West Bengal':'19',
+    'Jharkhand':'20','Odisha':'21','Chhattisgarh':'22','Madhya Pradesh':'23','Gujarat':'24',
+    'Dadra and Nagar Haveli and Daman and Diu':'26','Maharashtra':'27','Andhra Pradesh':'37',
+    'Karnataka':'29','Goa':'30','Lakshadweep':'31','Kerala':'32','Tamil Nadu':'33',
+    'Puducherry':'34','Andaman and Nicobar Islands':'35','Telangana':'36','Ladakh':'38',
+    'Other Territory':'97','Other Country':'96'
+  };
   function getHomeStateCode() {
     const gstin = S.profile?.gstin || '';
-    return getStateCode(gstin) || '19';
+    const selectedCode = String(S.profile?.stateCode || '').trim();
+    const selectedName = String(S.profile?.state || '').trim();
+    return getStateCode(gstin) || selectedCode || GST_STATE_CODES[selectedName] || '';
   }
-  function isInterState(customerGSTIN, customerAddr) {
+  function getCustomerStateCode(invoice) {
+    const gstinCode = getStateCode(invoice?.customerGSTIN || '');
+    if (gstinCode) return gstinCode;
+    const savedCode = String(invoice?.customerStateCode || '').trim();
+    if (savedCode) return savedCode;
+    const stateName = String(invoice?.customerState || '').trim();
+    return GST_STATE_CODES[stateName] || '';
+  }
+  function isInterState(customerGSTIN, customerAddr, invoice) {
     const homeState = getHomeStateCode();
-    if (customerGSTIN && customerGSTIN.length >= 2) {
-      return customerGSTIN.substring(0, 2) !== homeState;
-    }
-    return false;
+    const customerState = getCustomerStateCode({
+      customerGSTIN,
+      customerStateCode: invoice?.customerStateCode,
+      customerState: invoice?.customerState
+    });
+    return !!(homeState && customerState && customerState !== homeState);
   }
 
   /* HSN description lookup */
@@ -994,7 +1019,7 @@
 
     G.invoices.forEach(inv => {
       const hasGSTIN = inv.customerGSTIN && inv.customerGSTIN.length >= 15;
-      const isInter = isInterState(inv.customerGSTIN, inv.customerAddress);
+      const isInter = isInterState(inv.customerGSTIN, inv.customerAddress, inv);
       const total = inv.totalGross || 0;
 
       if (hasGSTIN) {
@@ -1002,7 +1027,7 @@
       } else if (isInter && total > 250000) {
         b2cl.push(inv);
       } else {
-        const pos = isInter ? (inv.customerGSTIN ? inv.customerGSTIN.substring(0, 2) : getHomeStateCode()) : getHomeStateCode();
+        const pos = getCustomerStateCode(inv) || getHomeStateCode();
         const sply = isInter ? 'INTER' : 'INTRA';
         
         const rawSubtotal = (inv.items || []).reduce((a, x) => a + (x.rate || 0) * (x.qty || 1), 0);
@@ -1033,7 +1058,7 @@
         b2bBody.innerHTML = '<tr><td colspan="8" class="text-center py-6 text-slate-500 text-xs">No B2B invoices</td></tr>';
       } else {
         b2bBody.innerHTML = b2b.map(inv => {
-          const pos = inv.customerGSTIN ? inv.customerGSTIN.substring(0, 2) : getHomeStateCode();
+          const pos = getCustomerStateCode(inv) || getHomeStateCode();
           const tax = (inv.totalCGST || 0) + (inv.totalSGST || 0) + (inv.totalIGST || 0);
           return `
             <tr class="hover:bg-slate-800/30">
@@ -1059,7 +1084,7 @@
         b2clBody.innerHTML = '<tr><td colspan="7" class="text-center py-6 text-slate-500 text-xs">No B2C Large invoices</td></tr>';
       } else {
         b2clBody.innerHTML = b2cl.map(inv => {
-          const pos = inv.customerGSTIN ? inv.customerGSTIN.substring(0, 2) : getHomeStateCode();
+          const pos = getCustomerStateCode(inv) || getHomeStateCode();
           return `
             <tr class="hover:bg-slate-800/30">
               <td class="p-2.5 font-mono text-sky-300 text-[11px]">${escapeHTML(inv.invoiceNo)}</td>
@@ -1677,7 +1702,7 @@
     /* B2C Large */
     const b2cl = [];
     G.invoices.filter(i => !i.customerGSTIN || i.customerGSTIN.length < 15).forEach(inv => {
-      if (isInterState(inv.customerGSTIN, inv.customerAddress) && (inv.totalGross || 0) > 250000) {
+      if (isInterState(inv.customerGSTIN, inv.customerAddress, inv) && (inv.totalGross || 0) > 250000) {
         const rateMap = {};
         const rawSubtotal = (inv.items || []).reduce((a, x) => a + (x.rate || 0) * (x.qty || 1), 0);
         const discountRatio = rawSubtotal > 0 ? (inv.totalGross || 0) / rawSubtotal : 1;
@@ -1695,7 +1720,7 @@
           itm_det: { txval: +rateMap[rate].txval.toFixed(2), rt: parseFloat(rate), iamt: +rateMap[rate].iamt.toFixed(2), csamt: 0 }
         }));
         b2cl.push({
-          pos: homeState,
+          pos: getCustomerStateCode(inv) || homeState,
           inv: [{
             inum: inv.invoiceNo,
             idt: formatDateDDMMYYYY(inv.date),
@@ -1709,9 +1734,9 @@
     /* B2C Small */
     const b2csMap = {};
     G.invoices.filter(i => !i.customerGSTIN || i.customerGSTIN.length < 15).forEach(inv => {
-      if (isInterState(inv.customerGSTIN, inv.customerAddress) && (inv.totalGross || 0) > 250000) return;
-      const sply = isInterState(inv.customerGSTIN, inv.customerAddress) ? 'INTER' : 'INTRA';
-      const pos = sply === 'INTER' ? homeState : homeState;
+      if (isInterState(inv.customerGSTIN, inv.customerAddress, inv) && (inv.totalGross || 0) > 250000) return;
+      const sply = isInterState(inv.customerGSTIN, inv.customerAddress, inv) ? 'INTER' : 'INTRA';
+      const pos = getCustomerStateCode(inv) || homeState;
 
       const rawSubtotal = (inv.items || []).reduce((a, x) => a + (x.rate || 0) * (x.qty || 1), 0);
       const discountRatio = rawSubtotal > 0 ? (inv.totalGross || 0) / rawSubtotal : 1;
