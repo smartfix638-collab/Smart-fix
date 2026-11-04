@@ -1024,7 +1024,7 @@
 
       if (hasGSTIN) {
         b2b.push(inv);
-      } else if (isInter && total > 250000) {
+      } else if (isInter && total > 100000) {
         b2cl.push(inv);
       } else {
         const pos = getCustomerStateCode(inv) || getHomeStateCode();
@@ -1702,7 +1702,7 @@
     /* B2C Large */
     const b2cl = [];
     G.invoices.filter(i => !i.customerGSTIN || i.customerGSTIN.length < 15).forEach(inv => {
-      if (isInterState(inv.customerGSTIN, inv.customerAddress, inv) && (inv.totalGross || 0) > 250000) {
+      if (isInterState(inv.customerGSTIN, inv.customerAddress, inv) && (inv.totalGross || 0) > 100000) {
         const rateMap = {};
         const rawSubtotal = (inv.items || []).reduce((a, x) => a + (x.rate || 0) * (x.qty || 1), 0);
         const discountRatio = rawSubtotal > 0 ? (inv.totalGross || 0) / rawSubtotal : 1;
@@ -1734,7 +1734,7 @@
     /* B2C Small */
     const b2csMap = {};
     G.invoices.filter(i => !i.customerGSTIN || i.customerGSTIN.length < 15).forEach(inv => {
-      if (isInterState(inv.customerGSTIN, inv.customerAddress, inv) && (inv.totalGross || 0) > 250000) return;
+      if (isInterState(inv.customerGSTIN, inv.customerAddress, inv) && (inv.totalGross || 0) > 100000) return;
       const sply = isInterState(inv.customerGSTIN, inv.customerAddress, inv) ? 'INTER' : 'INTRA';
       const pos = getCustomerStateCode(inv) || homeState;
 
