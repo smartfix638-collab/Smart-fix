@@ -1,6 +1,7 @@
 <!-- ============================================================
-     SMARTFIX ERP — Billing / POS (v4.4.0)
-     GST + Non-GST support
+     SMARTFIX ERP — Billing / POS (v4.7.0)
+     File: modules/billing.html
+     Fixed: GST Calculation, Stock Sync, Non-GST separation.
      ============================================================ -->
 
 <section id="billingModule" class="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -425,7 +426,7 @@
 
 
   /* ============================================================
-     GST TEMPLATE (existing)
+     GST TEMPLATE
      ============================================================ */
   function renderGstHTML({ invNo, datePretty, custName, custPhone, custAddr, custGSTIN, taxType, discount, p, shopCode, items, baseUrl, portalQrUrl }) {
     let totalTaxable = 0, totalTax = 0, totalGross = 0, totalQty = 0;
@@ -990,7 +991,7 @@
      INIT
      ============================================================ */
   async function init_billingModule() {
-    console.log('%c🧾 Billing module initialized (v4.4.0)', 'color:#0ea5e9;font-weight:bold');
+    console.log('%c🧾 Billing module initialized (v4.7.0)', 'color:#0ea5e9;font-weight:bold');
 
     if (!window.SF?.perms?.can?.('billing.view')) {
       const c = document.getElementById('moduleContainer');
