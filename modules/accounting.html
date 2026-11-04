@@ -1,7 +1,8 @@
 <!-- ============================================================
      SMARTFIX ERP — Accounting / P&L / Audit Module
      File: modules/accounting.html
-     Version: 4.0.0
+     Version: 4.7.0
+     Fixed: Added Repair Revenue, Inter-state GST in Excel
      ============================================================ -->
 
 <section id="accountingModule" class="space-y-4">
@@ -102,7 +103,7 @@
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
 
     <div class="bg-gradient-to-br from-indigo-900 to-slate-900 border border-indigo-800/60 rounded-2xl p-4">
-      <div class="text-[10px] uppercase font-bold text-indigo-300 tracking-wider">Net Sales</div>
+      <div class="text-[10px] uppercase font-bold text-indigo-300 tracking-wider">Net Sales + Service</div>
       <div id="accStatNetTurnover" class="text-xl sm:text-2xl font-black mt-1 text-white">₹0</div>
       <div id="accStatGrossVsReturn" class="text-[10px] text-indigo-300/70 mt-1">
         Gross: ₹0 | Returns: ₹0
@@ -160,7 +161,7 @@
     <div>
       <div class="font-bold text-sm text-white">📊 CA Multi-Sheet Excel Export</div>
       <div class="text-[11px] text-emerald-300/80 mt-0.5">
-        Sales + Returns + Purchases + Daybook + Parties + Staff + Stock — ৭টা sheet
+        Sales + Service + Purchases + Daybook + Parties + Stock — ৮টি sheet
       </div>
     </div>
     <button type="button" onclick="SF.accounting.exportCAExcel()"
@@ -484,14 +485,31 @@
       return d >= fromDate && d <= toDate;
     });
 
+    /* -------- Load Repairs -------- */
+    let rawRepairs = [];
+    try {
+      const raw = localStorage.getItem('sfp_repairs');
+      if (raw) rawRepairs = JSON.parse(raw);
+    } catch (e) {}
+    const fRep = rawRepairs.filter((r) => {
+      if (r.status !== 'DELIVERED') return false;
+      const d = new Date((r.date || '') + 'T12:00:00');
+      return d >= fromDate && d <= toDate;
+    });
+
     /* ============================================================
-       CALCULATE STATS
+       CALCULATE STATS (INCLUDING REPAIRS)
        ============================================================ */
     let gSales = 0, sTax = 0, tPC = 0;
     fInv.forEach((i) => {
       gSales += i.totalGross || 0;
       sTax += ((i.totalCGST || 0) + (i.totalSGST || 0) + (i.totalIGST || 0));
       tPC  += (i.totalPurchaseCost || 0);
+    });
+
+    let repairRevenue = 0;
+    fRep.forEach(r => {
+      repairRevenue += (r.finalCost || 0);
     });
 
     let tReturns = 0, rTax = 0;
@@ -509,8 +527,12 @@
       pTax += p.totalGST || 0;
     });
 
-    const netTurnover = gSales - tReturns;
+    // ⭐ Net Turnover = (Sales - Returns) + Repair Revenue
+    const netTurnover = (gSales - tReturns) + repairRevenue;
+    
+    // ⭐ GST calculation (Repair is outside GST, so only Sales)
     const netGST = sTax - rTax - pTax;
+    
     const netProfit = netTurnover - tPC - tExpense;
 
     /* Credit sales + receipts */
@@ -522,7 +544,7 @@
 
     /* Update cards */
     setText('accStatNetTurnover', C.money(netTurnover).replace(/\.\d+$/, ''));
-    setText('accStatGrossVsReturn', 'Gross: ₹' + fmt0(gSales) + ' | Returns: ₹' + fmt0(tReturns));
+    setText('accStatGrossVsReturn', 'Sales: ₹' + fmt0(gSales) + ' + Service: ₹' + fmt0(repairRevenue) + ' | Returns: ₹' + fmt0(tReturns));
     setText('accStatNetGST', C.money(netGST).replace(/\.\d+$/, ''));
     setText('accStatTotalExpense', C.money(tExpense).replace(/\.\d+$/, ''));
     setText('accStatNetProfit', C.money(netProfit).replace(/\.\d+$/, ''));
@@ -538,7 +560,7 @@
     }
 
     /* ============================================================
-       BUILD COMBINED REGISTER
+       BUILD COMBINED REGISTER (Sales + Service + Returns)
        ============================================================ */
     const combined = [];
 
@@ -559,6 +581,24 @@
         tax: (inv.totalCGST || 0) + (inv.totalSGST || 0) + (inv.totalIGST || 0),
         total: inv.totalGross || 0,
         raw: inv
+      });
+    });
+
+    /* Repairs */
+    fRep.forEach((rep) => {
+      combined.push({
+        date: rep.date,
+        docType: 'SERVICE',
+        docNo: rep.jobNo,
+        customer: rep.customerName || 'Cash Customer',
+        phone: rep.customerPhone || '',
+        itemDesc: 'Repair: ' + (rep.deviceBrand || '') + ' ' + (rep.deviceModel || ''),
+        imeiDesc: rep.deviceIMEI || '',
+        ledger: 'Cash-in-Hand', // Repairs are assumed cash
+        taxable: rep.finalCost || 0,
+        tax: 0, // No GST on repairs
+        total: rep.finalCost || 0,
+        raw: rep
       });
     });
 
@@ -627,15 +667,19 @@
 
     body.innerHTML = rows.map((r) => {
       const isCRN = r.docType === 'CRN';
-      const typeColor = isCRN
-        ? 'text-rose-400 bg-rose-950/40 border-rose-800/60'
-        : 'text-indigo-400 bg-indigo-950/40 border-indigo-800/60';
+      const isService = r.docType === 'SERVICE';
+      
+      let typeColor = 'text-indigo-400 bg-indigo-950/40 border-indigo-800/60';
+      if (isCRN) typeColor = 'text-rose-400 bg-rose-950/40 border-rose-800/60';
+      if (isService) typeColor = 'text-violet-400 bg-violet-950/40 border-violet-800/60';
 
-      const totalColor = isCRN ? 'text-rose-400' : 'text-slate-100';
+      const totalColor = isCRN ? 'text-rose-400' : (isService ? 'text-violet-300' : 'text-slate-100');
 
       const actionsHtml = isCRN
         ? '<span class="text-slate-700 text-[10px]">—</span>'
-        : `
+        : (isService 
+            ? `<div class="inline-flex gap-1"><button type="button" onclick="SF.repair.openDetail('${r.raw.id}')" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-sky-300 font-bold px-2 py-1 rounded">👁 View</button></div>`
+            : `
             <div class="inline-flex gap-1">
               <button type="button" onclick="SF.accounting.viewInvoice('${C.escapeHTML(r.docNo)}')"
                       title="View" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-sky-300 font-bold px-2 py-1 rounded">👁</button>
@@ -644,10 +688,10 @@
               <button type="button" onclick="SF.accounting.deleteInvoice('${C.escapeHTML(r.docNo)}')"
                       title="Delete" class="text-[10px] bg-rose-950/60 hover:bg-rose-900/60 text-rose-400 font-bold px-2 py-1 rounded">🗑</button>
             </div>
-          `;
+          `);
 
       return `
-        <tr class="hover:bg-slate-800/30 transition ${isCRN ? 'bg-rose-950/10' : ''}">
+        <tr class="hover:bg-slate-800/30 transition ${isCRN ? 'bg-rose-950/10' : (isService ? 'bg-violet-950/10' : '')}">
           <td class="p-3 border-b border-slate-800/60 font-mono text-slate-400 text-[11px] whitespace-nowrap">
             ${C.escapeHTML(r.date)}
           </td>
@@ -709,7 +753,6 @@
     const inv = (S.invoices || []).find((i) => i.invoiceNo === invNo);
     if (!inv) { C.toast('Invoice not found', 'error'); return; }
 
-    /* Fill billing module state for reprint */
     try {
       const dateEl = document.getElementById('billInvDate');
       const invEl  = document.getElementById('billInvNo');
@@ -720,7 +763,6 @@
       const taxEl  = document.getElementById('billGstType');
       const discEl = document.getElementById('billDiscount');
 
-      /* If billing not loaded, navigate first */
       if (!document.getElementById('billingModule')) {
         if (window.SF?.router) {
           window.SF.router.go('billing');
@@ -738,11 +780,9 @@
       if (taxEl)  taxEl.value  = inv.taxType || 'INTRA';
       if (discEl) discEl.value = inv.discount || 0;
 
-      /* Set cart */
       S.activeCart = JSON.parse(JSON.stringify(inv.items || []));
       C.safeSave('sfp_active_cart', S.activeCart);
 
-      /* Render */
       try { window.SF.billing.renderCart(); } catch (e) {}
       try { window.SF.billing.renderPreview(); } catch (e) {}
 
@@ -784,7 +824,6 @@
     inv.ledger = newLedger.trim() || inv.ledger;
     inv.discount = Math.max(0, parseFloat(newDiscount) || 0);
 
-    /* Recalc totals if discount changed */
     const items = inv.items || [];
     let tGross = 0, tTaxable = 0, tTax = 0, tCGST = 0, tSGST = 0, tIGST = 0, tPC = 0;
     items.forEach((it) => {
@@ -810,8 +849,6 @@
     inv.totalPurchaseCost = +tPC.toFixed(2);
 
     C.safeSave('sfp_invoices', S.invoices);
-
-    /* Cloud push */
     try { await Cl.pushOne('invoices', inv); } catch (e) {}
 
     try {
@@ -843,7 +880,6 @@
     );
     if (!ok) return;
 
-    /* Restore stock */
     (inv.items || []).forEach((it) => {
       let stk = null;
       if (it.stockId) stk = S.inventory.find((x) => x.id === it.stockId);
@@ -859,14 +895,11 @@
     });
     C.safeSave('sfp_stock', S.inventory);
 
-    /* Remove from state */
     S.invoices = S.invoices.filter((i) => i.invoiceNo !== invNo);
     C.safeSave('sfp_invoices', S.invoices);
 
-    /* Cloud delete */
     try {
       await Cl.deleteOne('invoices', invNo);
-      /* Also update cloud stock for restored items */
       for (const it of (inv.items || [])) {
         if (it.stockId) {
           const stk = S.inventory.find((x) => x.id === it.stockId);
@@ -959,10 +992,9 @@
 
 
   /* ============================================================
-     9. CA EXCEL EXPORT
+     9. CA EXCEL EXPORT (FIXED GST & SERVICE REVENUE)
      ============================================================ */
   async function exportCAExcel() {
-    /* Load XLSX dynamically if not present */
     if (typeof XLSX === 'undefined') {
       try {
         await new Promise((resolve, reject) => {
@@ -993,24 +1025,48 @@
 
     const wb = XLSX.utils.book_new();
 
+    /* Load Repairs */
+    let rawRepairs = [];
+    try {
+      const raw = localStorage.getItem('sfp_repairs');
+      if (raw) rawRepairs = JSON.parse(raw);
+    } catch (e) {}
+    const repairs = rawRepairs.filter(r => r.status === 'DELIVERED' && inRange(r.date));
+
     /* Sheet 1: Sales */
     const salesRows = (S.invoices || []).filter((i) => inRange(i.date)).map((inv) => ({
       'Date': inv.date,
-      'FY': inv.financialYear || '',
       'Invoice No': inv.invoiceNo,
+      'Type': 'SALES',
       'Customer': inv.customerName,
       'Phone': inv.customerPhone,
       'GSTIN': inv.customerGSTIN || 'B2C',
-      'Tax Type': inv.taxType || 'INTRA',
-      'Ledger': inv.ledger || '',
       'Items': (inv.items || []).map((x) => x.model).join(' | '),
-      'IMEIs': (inv.items || []).map((x) => x.imei || '').filter(Boolean).join(' | '),
       'Taxable': inv.totalTaxable || 0,
       'CGST': inv.totalCGST || 0,
       'SGST': inv.totalSGST || 0,
       'IGST': inv.totalIGST || 0,
       'Total': inv.totalGross || 0
     }));
+    
+    // Add Repairs
+    repairs.forEach(rep => {
+      salesRows.push({
+        'Date': rep.date,
+        'Invoice No': rep.jobNo,
+        'Type': 'SERVICE (No GST)',
+        'Customer': rep.customerName,
+        'Phone': rep.customerPhone,
+        'GSTIN': 'B2C',
+        'Items': 'Repair: ' + (rep.deviceBrand||'') + ' ' + (rep.deviceModel||''),
+        'Taxable': rep.finalCost || 0,
+        'CGST': 0,
+        'SGST': 0,
+        'IGST': 0,
+        'Total': rep.finalCost || 0
+      });
+    });
+
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(salesRows.length ? salesRows : [{ Note: 'No sales in period' }]), 'Sales');
 
     /* Sheet 2: Credit Notes */
@@ -1019,11 +1075,7 @@
       'Date': c.date,
       'Original Invoice': c.origInvoiceNo,
       'Customer': c.customerName,
-      'Phone': c.customerPhone || '',
-      'Item': c.itemModel || '',
-      'IMEI': c.imei || '',
       'Reason': c.reason || '',
-      'Refund Mode': c.refundMode || '',
       'Taxable': c.refundTaxable || 0,
       'GST': c.refundTax || 0,
       'Total Refund': c.refundTotal || 0
@@ -1032,17 +1084,16 @@
 
     /* Sheet 3: Purchases */
     const purRows = (S.purchases || []).filter((p) => inRange(p.date)).map((p) => ({
-      'Purchase No': p.purchaseNo,
-      'Bill No': p.billNo,
       'Date': p.date,
+      'Bill No': p.billNo,
+      'Purchase No': p.purchaseNo,
       'Supplier': p.supplierName,
-      'Phone': p.supplierPhone || '',
       'GSTIN': p.supplierGSTIN || '',
-      'Ledger': p.ledger || '',
-      'Items': (p.lines || []).map((l) => '[' + l.category + '] ' + l.model).join(' | '),
-      'IMEIs': (p.lines || []).map((l) => l.imei || '').filter(Boolean).join(' | '),
+      'Tax Type': p.taxType || 'INTRA',
       'Taxable': p.totalTaxable || 0,
-      'GST': p.totalGST || 0,
+      'CGST': p.totalCGST || 0,
+      'SGST': p.totalSGST || 0,
+      'IGST': p.totalIGST || 0,
       'Total': p.totalCost || 0
     }));
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(purRows.length ? purRows : [{ Note: 'No purchases in period' }]), 'Purchases');
@@ -1053,10 +1104,6 @@
       'Type': v.type,
       'Category': v.category || '',
       'Account': v.account || v.fromAccount || v.drAccount || '',
-      'From': v.fromAccount || '',
-      'To': v.toAccount || '',
-      'Dr Account': v.drAccount || '',
-      'Cr Account': v.crAccount || '',
       'Amount': v.amount,
       'Narration': v.narration || ''
     }));
@@ -1068,7 +1115,6 @@
       'Name': p.name,
       'Phone': p.phone || '',
       'GSTIN': p.gstin || '',
-      'Address': p.address || '',
       'Opening': p.opening || 0,
       'Dr/Cr': p.drCr || ''
     }));
@@ -1081,19 +1127,16 @@
       'IMEI': it.imei || '',
       'Purchase Cost': it.purchaseCost || 0,
       'Selling Price': it.cost || 0,
-      'GST %': it.gst || 18,
       'Status': it.status || 'Available',
-      'Supplier': it.supplierName || '',
-      'Purchase Bill': it.purchaseBillNo || '',
-      'Sold Invoice': it.soldInvoice || '',
-      'Sold Date': it.soldDate || ''
+      'Sold Invoice': it.soldInvoice || ''
     }));
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(stockRows.length ? stockRows : [{ Note: 'No stock' }]), 'Stock');
 
-    /* Sheet 7: GST Summary */
+    /* Sheet 7: GST Summary (Properly Split) */
     let outTaxable = 0, outCGST = 0, outSGST = 0, outIGST = 0;
+    let serviceRevenue = 0;
     let retTaxable = 0, retTax = 0;
-    let inTaxable = 0, inTax = 0;
+    let inTaxable = 0, inCGST = 0, inSGST = 0, inIGST = 0;
 
     (S.invoices || []).filter((i) => inRange(i.date)).forEach((i) => {
       outTaxable += i.totalTaxable || 0;
@@ -1101,21 +1144,33 @@
       outSGST += i.totalSGST || 0;
       outIGST += i.totalIGST || 0;
     });
+    
+    repairs.forEach(rep => {
+      serviceRevenue += rep.finalCost || 0;
+    });
+
     (S.creditNotes || []).filter((c) => inRange(c.date)).forEach((c) => {
       retTaxable += c.refundTaxable || 0;
       retTax += c.refundTax || 0;
     });
+    
     (S.purchases || []).filter((p) => inRange(p.date)).forEach((p) => {
       inTaxable += p.totalTaxable || 0;
-      inTax += p.totalGST || 0;
+      if ((p.taxType || 'INTRA') === 'INTRA') {
+        inCGST += p.totalCGST || 0;
+        inSGST += p.totalSGST || 0;
+      } else {
+        inIGST += p.totalIGST || 0;
+      }
     });
 
     const gstRows = [
-      { 'Particulars': 'Output GST (Sales)', 'Taxable': outTaxable, 'CGST': outCGST, 'SGST': outSGST, 'IGST': outIGST, 'Total': outCGST + outSGST + outIGST },
+      { 'Particulars': 'Output GST (Sales)', 'Taxable': outTaxable, 'CGST': outCGST, 'SGST': outSGST, 'IGST': outIGST },
+      { 'Particulars': 'Service Revenue (No GST)', 'Taxable': serviceRevenue, 'CGST': 0, 'SGST': 0, 'IGST': 0 },
       { 'Particulars': 'Less: Sales Returns', 'Taxable': -retTaxable, 'CGST': 0, 'SGST': 0, 'IGST': 0, 'Total': -retTax },
-      { 'Particulars': 'Net Output', 'Taxable': outTaxable - retTaxable, 'CGST': 0, 'SGST': 0, 'IGST': 0, 'Total': (outCGST + outSGST + outIGST) - retTax },
-      { 'Particulars': 'Input GST (Purchases)', 'Taxable': inTaxable, 'CGST': 0, 'SGST': 0, 'IGST': 0, 'Total': inTax },
-      { 'Particulars': 'Net GST Payable', 'Taxable': 0, 'CGST': 0, 'SGST': 0, 'IGST': 0, 'Total': ((outCGST + outSGST + outIGST) - retTax) - inTax }
+      { 'Particulars': 'Net Output', 'Taxable': outTaxable - retTaxable + serviceRevenue, 'CGST': outCGST, 'SGST': outSGST, 'IGST': outIGST },
+      { 'Particulars': 'Input GST (Purchases)', 'Taxable': inTaxable, 'CGST': inCGST, 'SGST': inSGST, 'IGST': inIGST },
+      { 'Particulars': 'Net GST Payable', 'Taxable': 0, 'CGST': Math.max(0, outCGST - inCGST), 'SGST': Math.max(0, outSGST - inSGST), 'IGST': Math.max(0, outIGST - inIGST) }
     ];
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(gstRows), 'GST_Summary');
 
