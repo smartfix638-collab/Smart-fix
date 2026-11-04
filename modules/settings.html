@@ -94,6 +94,11 @@
         <div><label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Contact Phone</label><input type="tel" id="stgStorePhone" maxlength="10" placeholder="10-digit" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-100"></div>
       </div>
       <div>
+        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Registered State (GST State Code)</label>
+        <select id="stgStoreState" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100"></select>
+        <p class="text-[10px] text-slate-500 mt-1">State code is selected automatically and used on invoices.</p>
+      </div>
+      <div>
         <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Store Address</label>
         <textarea id="stgStoreAddress" rows="2" placeholder="Full address" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs resize-none text-slate-100"></textarea>
       </div>
@@ -221,6 +226,8 @@
   if (!S || !C) { console.error('Settings: SF globals not ready'); return; }
 
   const isOwner = window.SF?.perms?.isOwner?.() ?? true;
+  const GST_STATES = {"Jammu and Kashmir": "01", "Himachal Pradesh": "02", "Punjab": "03", "Chandigarh": "04", "Uttarakhand": "05", "Haryana": "06", "Delhi": "07", "Rajasthan": "08", "Uttar Pradesh": "09", "Bihar": "10", "Sikkim": "11", "Arunachal Pradesh": "12", "Nagaland": "13", "Manipur": "14", "Mizoram": "15", "Tripura": "16", "Meghalaya": "17", "Assam": "18", "West Bengal": "19", "Jharkhand": "20", "Odisha": "21", "Chhattisgarh": "22", "Madhya Pradesh": "23", "Gujarat": "24", "Dadra and Nagar Haveli and Daman and Diu": "26", "Maharashtra": "27", "Andhra Pradesh (旧)": "28", "Karnataka": "29", "Goa": "30", "Lakshadweep": "31", "Kerala": "32", "Tamil Nadu": "33", "Puducherry": "34", "Andaman and Nicobar Islands": "35", "Telangana": "36", "Andhra Pradesh": "37", "Ladakh": "38", "Other Territory": "97", "Other Country": "96"};
+
 
   const SET = {
     logoData: null,
@@ -247,6 +254,7 @@
       return { onUnload: () => {} };
     }
 
+    populateStoreStates();
     loadProfileIntoForm();
     const codeEl = document.querySelector('#settingsModule [data-shop-code]');
     if (codeEl && S.store?.shopCode) codeEl.textContent = S.store.shopCode;
@@ -268,11 +276,19 @@
   /* ============================================================
      PROFILE
      ============================================================ */
+  function populateStoreStates() {
+    const el = document.getElementById('stgStoreState');
+    if (!el) return;
+    el.innerHTML = Object.entries(GST_STATES).map(([name, code]) => `<option value="${C.escapeHTML(name)}">${C.escapeHTML(name)} — ${code}</option>`).join('');
+  }
+
   function loadProfileIntoForm() {
     const p = S.profile || {};
     const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v ?? ''; };
     setVal('stgStoreName',    p.name || '');
     setVal('stgStoreGST',     p.gstin || '');
+    const stateEl = document.getElementById('stgStoreState');
+    if (stateEl) stateEl.value = p.state || 'West Bengal';
     setVal('stgStorePhone',   (p.phone || '').replace(/^Ph:\s*/i, ''));
     setVal('stgStoreAddress', p.address || '');
     setVal('stgBankName',     p.bankName || '');
@@ -327,6 +343,9 @@
     if (!name || name.length < 2) { C.toast('Enter store name (min 2 chars)', 'warning'); return; }
     const gstin = (document.getElementById('stgStoreGST')?.value || '').trim().toUpperCase();
     if (gstin && gstin.length !== 15) { C.toast('GSTIN must be 15 chars', 'warning'); return; }
+    const selectedState = document.getElementById('stgStoreState')?.value || 'West Bengal';
+    const selectedStateCode = GST_STATES[selectedState] || '19';
+    if (gstin && gstin.substring(0, 2) !== selectedStateCode) { C.toast('GSTIN state code does not match selected store state (' + selectedStateCode + ')', 'warning'); return; }
     const phone = (document.getElementById('stgStorePhone')?.value || '').trim();
     if (phone && !/^\d{10}$/.test(phone)) { C.toast('Phone must be 10 digits', 'warning'); return; }
     const ifsc = (document.getElementById('stgBankIFSC')?.value || '').trim().toUpperCase();
@@ -336,6 +355,8 @@
 
     const profile = {
       ...S.profile, name, gstin,
+      state: selectedState,
+      stateCode: selectedStateCode,
       phone: phone ? `Ph: ${phone}` : '',
       address: (document.getElementById('stgStoreAddress')?.value || '').trim(),
       logo: SET.logoData || '',
