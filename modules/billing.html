@@ -1,185 +1,259 @@
 <!-- ============================================================
-     SMARTFIX ERP — Billing / POS (v5.0.2 - Cooldown, QR & Credit Sync)
+     SMARTFIX ERP — Billing / POS (v5.1.0 - Full 3-Column Layout)
      File: modules/billing.html
-     Fixed: Scanner cooldown & duplicate prevention, 
-            A4 Consignee row with customer portal QR box, 
-            Auto-party creation/link on Credit sales.
+     Features: Exact 3-column UI match, 2.5s scanner cooldown,
+               Complete Thermal 58mm/80mm & A4 SVG templates,
+               Full Credit/Debtors auto-sync, Ctrl+P Print Trigger.
      ============================================================ -->
 
-<section id="billingModule" class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+<section id="billingModule" class="grid grid-cols-1 xl:grid-cols-12 gap-4">
 
-  <div class="lg:col-span-5 space-y-3">
+  <!-- ============================================================
+       CENTER COLUMN: FORM, ADD PRODUCT & CART TABLE (xl:col-span-8)
+       ============================================================ -->
+  <div class="xl:col-span-8 space-y-3">
 
-    <!-- ============ BILL TYPE TOGGLE ============ -->
-    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-3">
-      <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">🧾 Bill Type</div>
-      <div class="grid grid-cols-2 gap-2">
+    <!-- Header & Bill Type Toggle -->
+    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-3 flex flex-wrap justify-between items-center gap-3">
+      <div class="flex items-center gap-2">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">🧾 Bill Type:</span>
         <button type="button" id="billTypeGST" onclick="SF.billing.setBillType('GST')"
-                class="py-2.5 rounded-lg text-xs font-bold transition bg-emerald-600 text-white">
+                class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-emerald-600 text-white shadow-md shadow-emerald-700/20">
           ✅ GST Bill
         </button>
         <button type="button" id="billTypeNonGST" onclick="SF.billing.setBillType('NON_GST')"
-                class="py-2.5 rounded-lg text-xs font-bold transition bg-slate-950 border border-slate-700 text-slate-400">
+                class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-slate-950 border border-slate-700 text-slate-400 hover:text-slate-200">
           ⚪ Non-GST Bill
         </button>
       </div>
-      <div class="text-[10px] text-slate-500 mt-2">
-        <span id="billTypeHint">GST invoice with tax breakup (CGST/SGST/IGST)</span>
+
+      <div class="flex items-center gap-2">
+        <span class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Format:</span>
+        <select id="billPrintSize" onchange="SF.billing.onPrintSizeChange()" 
+                class="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-sky-300 font-mono font-bold focus:outline-none focus:border-sky-500">
+          <option value="A4">A4 Tax Invoice</option>
+          <option value="80mm">80mm Thermal</option>
+          <option value="58mm">58mm Thermal</option>
+        </select>
+        <span id="billFyBadge" class="text-[10px] bg-sky-950 text-sky-300 font-mono font-bold px-2 py-1 rounded border border-sky-800">FY</span>
       </div>
     </div>
 
-    <!-- ============ INVOICE HEADER ============ -->
+    <!-- 👤 Customer Details Card -->
     <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
       <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-        <h2 class="font-bold text-xs uppercase tracking-wider text-white">📄 Invoice Details</h2>
-        <span id="billFyBadge" class="text-[10px] bg-sky-950 text-sky-300 font-mono font-bold px-2 py-0.5 rounded border border-sky-800">FY</span>
-      </div>
-      <div class="grid grid-cols-2 gap-2">
-        <div>
-          <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Invoice No</label>
-          <input type="text" id="billInvNo" readonly class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-sky-300">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-sky-400 flex items-center gap-1.5">
+          <span>👤</span> Customer Details
+        </h3>
+        <div class="flex items-center gap-4 text-xs">
+          <div class="flex items-center gap-1">
+            <span class="text-slate-400 font-bold uppercase text-[10px]">Invoice No:</span>
+            <input type="text" id="billInvNo" readonly class="w-36 bg-slate-950 border border-slate-700 rounded px-2 py-0.5 text-xs font-mono font-bold text-sky-300 focus:outline-none">
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="text-slate-400 font-bold uppercase text-[10px]">Date:</span>
+            <input type="date" id="billInvDate" onchange="SF.billing.onDateChange()" class="bg-slate-950 border border-slate-700 rounded px-2 py-0.5 text-xs text-slate-200 focus:outline-none">
+          </div>
         </div>
-        <div>
-          <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Date</label>
-          <input type="date" id="billInvDate" onchange="SF.billing.onDateChange()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-100">
-        </div>
       </div>
-    </div>
 
-    <!-- ============ CUSTOMER ============ -->
-    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
-      <h3 class="text-[11px] font-bold uppercase tracking-wider text-sky-400 border-b border-slate-800 pb-2">👤 Customer Details</h3>
-      <div class="grid grid-cols-2 gap-2">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Name</label>
-          <input type="text" id="billCustName" list="billCustomerList" oninput="SF.billing.renderPreview()" placeholder="Cash Customer" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs">
+          <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Customer Name</label>
+          <input type="text" id="billCustName" list="billCustomerList" oninput="SF.billing.renderPreview()" placeholder="Cash Customer" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-600 focus:border-sky-500 focus:outline-none">
           <datalist id="billCustomerList"></datalist>
         </div>
         <div>
           <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Phone</label>
-          <input type="tel" id="billCustPhone" oninput="SF.billing.renderPreview()" placeholder="10-digit" maxlength="10" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-mono">
+          <input type="tel" id="billCustPhone" oninput="SF.billing.renderPreview()" placeholder="10-digit mobile" maxlength="10" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs font-mono text-white placeholder-slate-600 focus:border-sky-500 focus:outline-none">
         </div>
       </div>
-      <div>
-        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Address</label>
-        <input type="text" id="billCustAddr" oninput="SF.billing.renderPreview()" placeholder="City, State" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs">
-      </div>
-      <div>
-        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Customer State (GST State Code)</label>
-        <select id="billCustState" onchange="SF.billing.onCustomerStateChange()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-100"></select>
-        <div class="text-[10px] text-slate-500 mt-1">GST State Code: <strong id="billCustStateCode">19</strong></div>
-      </div>
-      <div class="grid grid-cols-2 gap-2">
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-2 pt-1">
+        <div>
+          <label class="block text-[10px] font-bold uppercase mb-0.5 text-slate-400">Address</label>
+          <input type="text" id="billCustAddr" oninput="SF.billing.renderPreview()" placeholder="City, State" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold uppercase mb-0.5 text-slate-400">Customer State (Code: <b id="billCustStateCode" class="text-sky-300">19</b>)</label>
+          <select id="billCustState" onchange="SF.billing.onCustomerStateChange()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none"></select>
+        </div>
         <div id="billGSTINWrap">
-          <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">GSTIN</label>
-          <input type="text" id="billCustGSTIN" oninput="SF.billing.renderPreview()" placeholder="Optional" maxlength="15" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-mono uppercase">
+          <label class="block text-[10px] font-bold uppercase mb-0.5 text-slate-400">GSTIN (Optional)</label>
+          <input type="text" id="billCustGSTIN" oninput="SF.billing.renderPreview()" placeholder="15-digit GSTIN" maxlength="15" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-mono uppercase text-slate-200 focus:outline-none">
         </div>
-        <div id="billGSTTypeWrap">
-          <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">GST Type</label>
-          <select id="billGstType" onchange="SF.billing.renderPreview()" class="w-full bg-slate-950 border border-sky-700/60 rounded-lg px-2.5 py-1.5 text-xs text-sky-200 font-semibold">
-            <option value="INTRA">Intra (CGST+SGST)</option>
-            <option value="INTER">Inter (IGST)</option>
-          </select>
-        </div>
-      </div>
-      <div>
-        <label class="block text-[10px] font-bold uppercase mb-1 text-slate-400">Payment Mode</label>
-        <select id="billLedger" onchange="SF.billing.renderPreview()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs">
-          <option value="Cash-in-Hand">Cash</option>
-          <option value="Bank / UPI">UPI / QR</option>
-          <option value="Card Payment">Card</option>
-          <option value="Bajaj / EMI Finance">Bajaj EMI</option>
-          <option value="Credit / Sundry Debtors">Udhar (Credit)</option>
-        </select>
       </div>
     </div>
 
-    <!-- ============ ADD PRODUCT ============ -->
+    <!-- 📦 Add Product Card -->
     <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
-      <div class="flex justify-between items-center">
-        <h3 class="text-[11px] font-bold uppercase tracking-wider text-sky-400">📦 Add Product</h3>
-        <button type="button" onclick="SF.billing.toggleScanner()" id="billScannerBtn" class="text-[10px] bg-sky-600 hover:bg-sky-700 text-white font-bold px-2.5 py-1 rounded-lg transition">📷 Scan</button>
+      <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-sky-400 flex items-center gap-1.5">
+          <span>📦</span> Add Product
+        </h3>
+        <button type="button" onclick="SF.billing.toggleScanner()" id="billScannerBtn" class="text-[10px] bg-sky-600 hover:bg-sky-500 text-white font-bold px-3 py-1 rounded-lg transition">📷 Camera Scan</button>
       </div>
+
       <div id="billScannerWrap" class="overflow-hidden rounded-lg border border-sky-700" style="display:none"><div id="billReader" style="width:100%"></div></div>
+
       <div class="relative">
-        <input type="text" id="billBarcodeInput" onkeydown="SF.billing.handleBarcodeKey(event)" placeholder="⚡ Scan barcode or IMEI + Enter" class="w-full bg-sky-950/50 border border-sky-700 rounded-lg px-3 py-2 text-xs font-mono font-bold text-sky-100 placeholder-sky-400/60">
-        <span class="absolute right-2 top-2 text-[9px] text-sky-400 font-bold uppercase">Auto-add</span>
+        <input type="text" id="billBarcodeInput" onkeydown="SF.billing.handleBarcodeKey(event)" placeholder="🔍 Search Item / Scan Barcode (F2) + Press Enter" class="w-full bg-sky-950/40 border-2 border-sky-700/80 rounded-xl px-3.5 py-2.5 text-xs font-mono font-bold text-sky-100 placeholder-sky-400/60 focus:outline-none focus:border-sky-400">
+        <span class="absolute right-3 top-2.5 text-[9px] text-sky-400 font-bold uppercase tracking-wider bg-sky-900/80 px-2 py-1 rounded">Auto-Add</span>
       </div>
-      <div class="grid grid-cols-2 gap-2">
-        <div>
-          <label class="block text-[9px] font-bold uppercase mb-0.5 text-slate-500">IMEI / Serial</label>
-          <input type="text" id="billItemIMEI" oninput="SF.billing.lookupIMEI(this.value)" placeholder="Type IMEI..." class="w-full bg-yellow-950/40 border border-yellow-800/60 rounded-lg px-2 py-1.5 text-xs font-mono text-yellow-100">
+
+      <div class="grid grid-cols-2 md:grid-cols-6 gap-2">
+        <div class="md:col-span-2">
+          <label class="block text-[9px] font-bold uppercase mb-0.5 text-slate-400">Model Name</label>
+          <input type="text" id="billItemModel" placeholder="e.g. iPhone 13 / Display Combo" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
         </div>
         <div>
-          <label class="block text-[9px] font-bold uppercase mb-0.5 text-slate-500">Model</label>
-          <input type="text" id="billItemModel" placeholder="Model name" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs">
+          <label class="block text-[9px] font-bold uppercase mb-0.5 text-slate-400">IMEI / Serial</label>
+          <input type="text" id="billItemIMEI" oninput="SF.billing.lookupIMEI(this.value)" placeholder="IMEI number" class="w-full bg-yellow-950/30 border border-yellow-800/60 rounded-lg px-2 py-1.5 text-xs font-mono text-yellow-200">
+        </div>
+        <div id="billItemHSNWrap">
+          <label class="block text-[9px] font-bold uppercase mb-0.5 text-slate-400">HSN Code</label>
+          <input type="text" id="billItemHSN" value="8517" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-1.5 py-1.5 text-xs font-mono text-center text-slate-200">
+        </div>
+        <div>
+          <label class="block text-[9px] font-bold uppercase mb-0.5 text-slate-400">Qty</label>
+          <input type="number" id="billItemQty" value="1" min="1" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-1.5 py-1.5 text-xs text-center font-bold text-white">
+        </div>
+        <div>
+          <label class="block text-[9px] font-bold uppercase mb-0.5 text-slate-400">Rate ₹</label>
+          <input type="number" id="billItemRate" placeholder="0" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs font-bold text-emerald-400">
         </div>
       </div>
-      <div id="billItemMetaRow" class="grid grid-cols-4 gap-1.5">
-        <div id="billItemHSNWrap"><label class="block text-[9px] font-bold uppercase mb-0.5 text-slate-500">HSN</label><input type="text" id="billItemHSN" value="8517" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-1.5 py-1.5 text-xs font-mono text-center"></div>
-        <div id="billItemGSTWrap"><label class="block text-[9px] font-bold uppercase mb-0.5 text-slate-500">GST%</label>
-          <select id="billItemGST" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-1 py-1.5 text-xs">
-            <option value="18">18</option><option value="12">12</option><option value="28">28</option><option value="0">0</option>
+
+      <div class="flex gap-2">
+        <div id="billItemGSTWrap" class="w-36">
+          <select id="billItemGST" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-xs text-slate-200">
+            <option value="18">GST 18%</option>
+            <option value="12">GST 12%</option>
+            <option value="28">GST 28%</option>
+            <option value="0">GST 0%</option>
           </select>
         </div>
-        <div><label class="block text-[9px] font-bold uppercase mb-0.5 text-slate-500">Qty</label><input type="number" id="billItemQty" value="1" min="1" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-1.5 py-1.5 text-xs text-center font-bold"></div>
-        <div><label class="block text-[9px] font-bold uppercase mb-0.5 text-slate-500">Rate ₹</label><input type="number" id="billItemRate" placeholder="0" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-1.5 py-1.5 text-xs font-bold text-emerald-300"></div>
-      </div>
-      <button type="button" onclick="SF.billing.addManualItem()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 rounded-lg text-xs transition">+ Add to Invoice</button>
-    </div>
-
-    <!-- ============ DISCOUNT ============ -->
-    <div class="bg-amber-950/40 border border-amber-800/60 rounded-2xl p-4">
-      <div class="flex items-center justify-between gap-3">
-        <div class="flex-1">
-          <label class="block text-[10px] font-bold uppercase text-amber-200">Special Discount (₹)</label>
-          <span id="billDiscountPct" class="text-[9px] text-amber-400">0% of subtotal</span>
-        </div>
-        <input type="number" id="billDiscount" value="0" min="0" oninput="SF.billing.renderPreview()" class="w-32 bg-slate-950 border border-amber-700 rounded-lg px-2.5 py-1.5 text-xs font-bold text-right text-rose-300">
+        <button type="button" onclick="SF.billing.addManualItem()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-lg text-xs transition shadow-md shadow-emerald-700/20">
+          + Add to Invoice
+        </button>
       </div>
     </div>
 
-    <!-- ============ CART ============ -->
-    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4">
-      <div class="flex justify-between items-center mb-2">
-        <h3 class="text-[11px] font-bold uppercase tracking-wider text-sky-400">🛒 Cart</h3>
-        <span id="billCartCount" class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full font-bold">0 items</span>
+    <!-- 🛒 Cart / Added Items Table -->
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden">
+      <div class="p-3 border-b border-slate-800 flex justify-between items-center bg-slate-950/40">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-sky-400 flex items-center gap-1.5">
+          <span>🛒</span> Cart / Added Items
+        </h3>
+        <span id="billCartCount" class="text-[10px] bg-slate-800 text-slate-300 px-2.5 py-0.5 rounded-full font-bold">0 items</span>
       </div>
-      <div id="billCartItems" class="space-y-1.5 max-h-56 overflow-y-auto">
-        <div class="text-center text-slate-500 text-xs py-4">No items yet.</div>
+
+      <div class="overflow-x-auto max-h-72">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead class="bg-slate-950/80 text-slate-400 uppercase text-[9px] sticky top-0">
+            <tr>
+              <th class="p-2.5 border-b border-slate-800">Model</th>
+              <th class="p-2.5 border-b border-slate-800">IMEI / Serial</th>
+              <th class="p-2.5 border-b border-slate-800 text-center">Qty</th>
+              <th class="p-2.5 border-b border-slate-800 text-right">Rate</th>
+              <th class="p-2.5 border-b border-slate-800 text-right">Tax%</th>
+              <th class="p-2.5 border-b border-slate-800 text-right">Total</th>
+              <th class="p-2.5 border-b border-slate-800 text-center w-12">Action</th>
+            </tr>
+          </thead>
+          <tbody id="billCartTableBody" class="divide-y divide-slate-800/60">
+            <tr>
+              <td colspan="7" class="text-center py-10 text-slate-500 text-xs">No items added yet.</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
-
-    <button type="button" onclick="SF.billing.finalize()" class="w-full bg-gradient-to-r from-sky-600 to-sky-700 hover:from-sky-500 hover:to-sky-600 text-white font-black py-3.5 rounded-2xl text-sm shadow-lg shadow-sky-600/30 transition flex items-center justify-center gap-2">
-      <span>🖨️</span><span>Save & Print Invoice</span>
-    </button>
 
   </div>
 
-  <!-- RIGHT: PREVIEW -->
-  <div class="lg:col-span-7">
-    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 overflow-x-auto">
-      <div class="flex flex-wrap justify-between items-center mb-3 gap-2">
-        <span id="billPreviewTitle" class="text-[10px] font-bold uppercase tracking-wider text-slate-400">📄 Live Invoice Preview</span>
-        
-        <div class="flex items-center gap-2">
-          <!-- Print Size Selector -->
-          <select id="billPrintSize" onchange="SF.billing.onPrintSizeChange()" class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-[10px] text-slate-200">
-            <option value="A4">A4 Size</option>
-            <option value="80mm">80mm Thermal</option>
-            <option value="58mm">58mm Thermal</option>
-          </select>
-          
-          <button type="button" onclick="SF.billing.finalize()" class="text-[10px] bg-sky-600 hover:bg-sky-700 text-white font-bold px-3 py-1.5 rounded-lg">Quick Print</button>
+
+  <!-- ============================================================
+       RIGHT COLUMN: BILLING SUMMARY & PREVIEW (xl:col-span-4)
+       ============================================================ -->
+  <div class="xl:col-span-4 space-y-3">
+
+    <!-- 💳 Billing Summary Card -->
+    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 space-y-3">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+          <span>💳</span> Billing Summary
+        </h3>
+        <select id="billGstType" onchange="SF.billing.renderPreview()" class="bg-slate-950 border border-slate-700 rounded px-2 py-0.5 text-[10px] text-sky-300 font-bold">
+          <option value="INTRA">Intra (CGST+SGST)</option>
+          <option value="INTER">Inter (IGST)</option>
+        </select>
+      </div>
+
+      <div class="space-y-2.5 text-xs">
+        <div class="flex justify-between text-slate-300">
+          <span>Sub Total (Taxable)</span>
+          <span id="sumSubTotal" class="font-mono font-bold text-white">₹0.00</span>
+        </div>
+        <div class="flex justify-between text-slate-300" id="sumGstRow">
+          <span>GST (CGST + SGST)</span>
+          <span id="sumTax" class="font-mono font-bold text-sky-400">₹0.00</span>
+        </div>
+        <div class="flex justify-between items-center text-slate-300">
+          <div>
+            <span>Special Discount (₹)</span>
+            <span id="billDiscountPct" class="block text-[9px] text-amber-400 font-mono">0%</span>
+          </div>
+          <input type="number" id="billDiscount" value="0" min="0" oninput="SF.billing.renderPreview()" class="w-28 bg-slate-950 border border-amber-700/80 rounded-lg px-2 py-1 text-xs text-right text-rose-300 font-bold font-mono">
+        </div>
+        <div class="border-t border-slate-800 pt-2 flex justify-between items-center text-sm font-black">
+          <span class="text-white uppercase tracking-wider">GRAND TOTAL:</span>
+          <span id="sumGrandTotal" class="text-xl text-emerald-400 font-mono">₹0.00</span>
         </div>
       </div>
-      <div id="billInvoicePreview" class="bg-white text-slate-900 shadow-2xl mx-auto transition-all" style="width:100%;max-width:202mm;min-height:282mm;padding:4mm 5mm;box-sizing:border-box;font-size:10px;"></div>
+
+      <!-- Payment Mode Pill Buttons -->
+      <div class="pt-2 border-t border-slate-800/80">
+        <label class="block text-[10px] font-bold uppercase mb-1.5 text-slate-400">Payment Mode</label>
+        <div class="grid grid-cols-4 gap-1.5">
+          <button type="button" onclick="SF.billing.setLedger('Cash-in-Hand')" id="pmCash" class="pm-btn py-2 rounded-lg text-xs font-bold bg-sky-600 text-white">Cash</button>
+          <button type="button" onclick="SF.billing.setLedger('Bank / UPI')" id="pmUPI" class="pm-btn py-2 rounded-lg text-xs font-bold bg-slate-950 border border-slate-700 text-slate-400">UPI</button>
+          <button type="button" onclick="SF.billing.setLedger('Card Payment')" id="pmCard" class="pm-btn py-2 rounded-lg text-xs font-bold bg-slate-950 border border-slate-700 text-slate-400">Card</button>
+          <button type="button" onclick="SF.billing.setLedger('Credit / Sundry Debtors')" id="pmDue" class="pm-btn py-2 rounded-lg text-xs font-bold bg-slate-950 border border-slate-700 text-rose-400">Due</button>
+        </div>
+        <input type="hidden" id="billLedger" value="Cash-in-Hand">
+      </div>
     </div>
+
+    <!-- 📄 Live Thumbnail Preview Box -->
+    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-3">
+      <div class="flex justify-between items-center mb-2">
+        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">📄 Tax Invoice Preview</span>
+        <button type="button" onclick="SF.billing.printInvoice()" class="text-[9px] bg-slate-800 hover:bg-slate-700 text-sky-400 px-2 py-0.5 rounded font-mono font-bold transition">View Full</button>
+      </div>
+
+      <!-- Scaled Container for Crisp Thumbnail Preview -->
+      <div class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 flex justify-center items-start overflow-hidden" style="max-height: 290px;">
+        <div id="billInvoicePreview" class="bg-white text-slate-900 shadow-2xl transition-all origin-top" 
+             style="width: 202mm; min-height: 282mm; padding: 4mm 5mm; transform: scale(0.38); transform-origin: top center; margin-bottom: -170mm; box-sizing: border-box; font-size: 10px;">
+        </div>
+      </div>
+    </div>
+
+    <!-- 🖨️ Big Save & Print Button -->
+    <button type="button" onclick="SF.billing.finalize()" class="w-full bg-gradient-to-r from-sky-600 to-sky-700 hover:from-sky-500 hover:to-sky-600 text-white font-black py-3.5 rounded-2xl text-sm shadow-lg shadow-sky-600/30 transition flex items-center justify-center gap-2">
+      <span>🖨️</span>
+      <span>Save & Print Invoice (Ctrl+P)</span>
+    </button>
+
   </div>
 
 </section>
 
 
+<!-- ============================================================
+     MODULE LOGIC & ENGINE
+     ============================================================ -->
 <script>
 (function () {
   'use strict';
@@ -194,8 +268,6 @@
 
   let billType = 'GST';
   let printSize = 'A4';
-
-  // Scanner Cooldown State
   let lastScannedCode = '';
   let lastScannedTime = 0;
 
@@ -207,68 +279,58 @@
     return true;
   }
 
-  /* ============================================================
-     BILL TYPE TOGGLE
-     ============================================================ */
+  /* Payment Mode Selection */
+  function setLedger(mode) {
+    const ledEl = document.getElementById('billLedger');
+    if (ledEl) ledEl.value = mode;
+
+    document.querySelectorAll('.pm-btn').forEach(b => {
+      b.className = 'pm-btn py-2 rounded-lg text-xs font-bold bg-slate-950 border border-slate-700 text-slate-400';
+    });
+
+    if (mode === 'Cash-in-Hand') document.getElementById('pmCash').className = 'pm-btn py-2 rounded-lg text-xs font-bold bg-sky-600 text-white';
+    else if (mode === 'Bank / UPI') document.getElementById('pmUPI').className = 'pm-btn py-2 rounded-lg text-xs font-bold bg-sky-600 text-white';
+    else if (mode === 'Card Payment') document.getElementById('pmCard').className = 'pm-btn py-2 rounded-lg text-xs font-bold bg-sky-600 text-white';
+    else if (mode === 'Credit / Sundry Debtors') document.getElementById('pmDue').className = 'pm-btn py-2 rounded-lg text-xs font-bold bg-rose-600 text-white';
+
+    renderPreview();
+  }
+
+  /* Bill Type Toggle */
   function setBillType(type) {
     billType = type === 'NON_GST' ? 'NON_GST' : 'GST';
 
     const gstBtn = document.getElementById('billTypeGST');
     const nonGstBtn = document.getElementById('billTypeNonGST');
-    const hint = document.getElementById('billTypeHint');
     const gstinWrap = document.getElementById('billGSTINWrap');
-    const gstTypeWrap = document.getElementById('billGSTTypeWrap');
     const hsnWrap = document.getElementById('billItemHSNWrap');
     const gstRateWrap = document.getElementById('billItemGSTWrap');
+    const gstRow = document.getElementById('sumGstRow');
 
     if (billType === 'GST') {
-      if (gstBtn) gstBtn.className = 'py-2.5 rounded-lg text-xs font-bold transition bg-emerald-600 text-white';
-      if (nonGstBtn) nonGstBtn.className = 'py-2.5 rounded-lg text-xs font-bold transition bg-slate-950 border border-slate-700 text-slate-400';
-      if (hint) hint.textContent = 'GST invoice with tax breakup (CGST/SGST/IGST)';
+      if (gstBtn) gstBtn.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-emerald-600 text-white shadow-md shadow-emerald-700/20';
+      if (nonGstBtn) nonGstBtn.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-slate-950 border border-slate-700 text-slate-400 hover:text-slate-200';
       if (gstinWrap) gstinWrap.style.display = '';
-      if (gstTypeWrap) gstTypeWrap.style.display = '';
       if (hsnWrap) hsnWrap.style.display = '';
       if (gstRateWrap) gstRateWrap.style.display = '';
+      if (gstRow) gstRow.style.display = 'flex';
     } else {
-      if (gstBtn) gstBtn.className = 'py-2.5 rounded-lg text-xs font-bold transition bg-slate-950 border border-slate-700 text-slate-400';
-      if (nonGstBtn) nonGstBtn.className = 'py-2.5 rounded-lg text-xs font-bold transition bg-violet-600 text-white';
-      if (hint) hint.textContent = 'Simple bill — no GST, no tax breakup (for unregistered sales)';
+      if (gstBtn) gstBtn.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-slate-950 border border-slate-700 text-slate-400 hover:text-slate-200';
+      if (nonGstBtn) nonGstBtn.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-violet-600 text-white shadow-md shadow-violet-700/20';
       if (gstinWrap) gstinWrap.style.display = 'none';
-      if (gstTypeWrap) gstTypeWrap.style.display = 'none';
       if (hsnWrap) hsnWrap.style.display = 'none';
       if (gstRateWrap) gstRateWrap.style.display = 'none';
+      if (gstRow) gstRow.style.display = 'none';
     }
 
     renderPreview();
   }
 
-  /* ============================================================
-     PRINT SIZE CHANGE
-     ============================================================ */
   function onPrintSizeChange() {
     printSize = document.getElementById('billPrintSize')?.value || 'A4';
-    const el = document.getElementById('billInvoicePreview');
-    
-    if (printSize === 'A4') {
-      el.style.maxWidth = '202mm';
-      el.style.minHeight = '282mm';
-      el.style.padding = '4mm 5mm';
-    } else if (printSize === '80mm') {
-      el.style.maxWidth = '80mm';
-      el.style.minHeight = 'auto';
-      el.style.padding = '3mm';
-    } else {
-      el.style.maxWidth = '58mm';
-      el.style.minHeight = 'auto';
-      el.style.padding = '2mm';
-    }
-    
     renderPreview();
   }
 
-  /* ============================================================
-     RENDER PREVIEW
-     ============================================================ */
   function populateCustomerStates() {
     const el = document.getElementById('billCustState');
     if (!el || el.options.length) return;
@@ -290,6 +352,9 @@
 
   function onCustomerStateChange() { updateCustomerStateCode(); }
 
+  /* ============================================================
+     RENDER LIVE PREVIEW & SIDEBAR TOTALS
+     ============================================================ */
   function renderPreview() {
     const el = document.getElementById('billInvoicePreview');
     if (!el) return;
@@ -315,20 +380,48 @@
     const baseUrl = window.location.origin + window.location.pathname.replace(/\/app\.html.*$/, '/').replace(/\/index\.html.*$/, '/');
     const portalQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${encodeURIComponent(baseUrl + 'index.html#customer')}`;
 
+    // Summary calculation
+    let totalGross = 0, totalTaxable = 0, totalTax = 0;
+    items.forEach(it => {
+      const lineTotal = (it.rate || 0) * (it.qty || 1);
+      const lineTaxable = billType === 'GST' ? (lineTotal / (1 + (it.gst || 0) / 100)) : lineTotal;
+      totalGross += lineTotal;
+      totalTaxable += lineTaxable;
+      totalTax += (lineTotal - lineTaxable);
+    });
+
+    const finalPayable = Math.max(0, totalGross - discount);
+    const discountPct = totalGross > 0 ? ((discount / totalGross) * 100).toFixed(1) : 0;
+    const discPctEl = document.getElementById('billDiscountPct');
+    if (discPctEl) discPctEl.textContent = discountPct + '% of total';
+
+    // Update Sidebar numbers
+    const subEl = document.getElementById('sumSubTotal');
+    const taxEl = document.getElementById('sumTax');
+    const grEl  = document.getElementById('sumGrandTotal');
+    if (subEl) subEl.textContent = '₹' + totalTaxable.toFixed(2);
+    if (taxEl) taxEl.textContent = '₹' + totalTax.toFixed(2);
+    if (grEl)  grEl.textContent  = '₹' + finalPayable.toFixed(2);
+
     if (printSize === 'A4') {
+      el.style.maxWidth = '202mm';
+      el.style.transform = 'scale(0.38)';
+      el.style.marginBottom = '-170mm';
       if (billType === 'NON_GST') {
         el.innerHTML = renderA4NonGst({ invNo, datePretty, custName, custPhone, custAddr, discount, p, shopCode, items, baseUrl });
       } else {
         el.innerHTML = renderA4Gst({ invNo, datePretty, custName, custPhone, custAddr, custGSTIN, custState, custStateCode, storeState, storeStateCode, taxType, discount, p, shopCode, items, baseUrl });
       }
     } else {
-      // Thermal Layout (58mm / 80mm)
+      el.style.maxWidth = printSize === '80mm' ? '80mm' : '58mm';
+      el.style.transform = 'scale(0.85)';
+      el.style.marginBottom = '0';
       el.innerHTML = renderThermal({ invNo, datePretty, custName, custPhone, custGSTIN, custState, custStateCode, storeState, storeStateCode, taxType, discount, p, shopCode, items, portalQrUrl, isNonGst: billType === 'NON_GST' });
     }
   }
 
   /* ============================================================
-     A4 GRID LAYOUT (GST Tax Invoice)
+     A4 TEMPLATE (Complete GST & SVG Footer)
      ============================================================ */
   function renderA4Gst({ invNo, datePretty, custName, custPhone, custAddr, custGSTIN, custState, custStateCode, storeState, storeStateCode, taxType, discount, p, shopCode, items, baseUrl }) {
     let totalTaxable = 0, totalTax = 0, totalGross = 0, totalQty = 0;
@@ -387,12 +480,8 @@
       const lineTax = lineTotal - lineTaxable;
       
       rateMap[r].taxable += lineTaxable;
-      if (isIntra) {
-        rateMap[r].camt += lineTax / 2;
-        rateMap[r].samt += lineTax / 2;
-      } else {
-        rateMap[r].iamt += lineTax;
-      }
+      if (isIntra) { rateMap[r].camt += lineTax / 2; rateMap[r].samt += lineTax / 2; }
+      else { rateMap[r].iamt += lineTax; }
     });
 
     const taxSummaryRows = Object.keys(rateMap).map(r => {
@@ -450,8 +539,6 @@
                 </table>
               </td>
             </tr>
-            
-            <!-- ⭐ Consignee & Customer Portal QR Section ⭐ -->
             <tr>
               <td style="width: 60%; border: 1px solid #000; padding: 5px; vertical-align: top;">
                 <div style="font-weight: bold; margin-bottom: 3px;">Consignee (Ship to)</div>
@@ -462,13 +549,10 @@
                 <div>State Name : ${C.escapeHTML(custState)}, Code : ${C.escapeHTML(custStateCode)}</div>
               </td>
               <td style="width: 40%; border: 1px solid #000; padding: 5px; text-align: center; vertical-align: middle; background: #fafafa;">
-                <div style="font-size: 9px; font-weight: bold; color: #0c4a6e; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px;">
-                  Customer Login Portal
-                </div>
+                <div style="font-size: 9px; font-weight: bold; color: #0c4a6e; margin-bottom: 3px; text-transform: uppercase;">Customer Portal</div>
                 <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(baseUrl + 'index.html#customer')}" style="height: 60px; width: 60px; margin: 0 auto; display: block; border: 1px solid #cbd5e1; padding: 2px; background: #fff;">
                 <div style="font-size: 8px; margin-top: 4px; line-height: 1.3; color: #334155;">
-                  Scan QR or visit customer portal<br>
-                  Verify Bill, Warranty & Service History<br>
+                  Scan QR to verify bill<br>
                   Shop Code: <b style="color: #0c4a6e; font-family: monospace;">${C.escapeHTML(shopCode)}</b>
                 </div>
               </td>
@@ -516,8 +600,6 @@
               </tr>
             </tfoot>
           </table>
-          
-          <div style="text-align: right; font-size: 10px; margin-top: 2px;">E. & O.E</div>
 
           <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 2px;">
             <tr>
@@ -544,39 +626,18 @@
                 ` : `
                   <th colspan="2" style="border: 1px solid #000; padding: 3px;">IGST</th>
                 `}
-                <th rowspan="2" style="border: 1px solid #000; padding: 3px;">Total<br>Tax Amount</th>
+                <th rowspan="2" style="border: 1px solid #000; padding: 3px;">Total Tax</th>
               </tr>
               <tr style="background: #f1f5f9; text-align: center;">
                 ${isIntra ? `
-                  <th style="border: 1px solid #000; padding: 3px;">Rate</th>
-                  <th style="border: 1px solid #000; padding: 3px;">Amount</th>
-                  <th style="border: 1px solid #000; padding: 3px;">Rate</th>
-                  <th style="border: 1px solid #000; padding: 3px;">Amount</th>
+                  <th style="border: 1px solid #000; padding: 3px;">Rate</th><th style="border: 1px solid #000; padding: 3px;">Amount</th>
+                  <th style="border: 1px solid #000; padding: 3px;">Rate</th><th style="border: 1px solid #000; padding: 3px;">Amount</th>
                 ` : `
-                  <th style="border: 1px solid #000; padding: 3px;">Rate</th>
-                  <th style="border: 1px solid #000; padding: 3px;">Amount</th>
+                  <th style="border: 1px solid #000; padding: 3px;">Rate</th><th style="border: 1px solid #000; padding: 3px;">Amount</th>
                 `}
               </tr>
             </thead>
-            <tbody>
-              ${taxSummaryRows}
-            </tbody>
-            <tfoot>
-              <tr style="font-weight: bold;">
-                <td style="border: 1px solid #000; padding: 3px; text-align: center;">Total</td>
-                <td style="border: 1px solid #000; padding: 3px; text-align: right;">${totalTaxable.toFixed(2)}</td>
-                ${isIntra ? `
-                  <td style="border: 1px solid #000; padding: 3px;"></td>
-                  <td style="border: 1px solid #000; padding: 3px; text-align: right;">${totalCGST.toFixed(2)}</td>
-                  <td style="border: 1px solid #000; padding: 3px;"></td>
-                  <td style="border: 1px solid #000; padding: 3px; text-align: right;">${totalSGST.toFixed(2)}</td>
-                ` : `
-                  <td style="border: 1px solid #000; padding: 3px;"></td>
-                  <td style="border: 1px solid #000; padding: 3px; text-align: right;">${totalIGST.toFixed(2)}</td>
-                `}
-                <td style="border: 1px solid #000; padding: 3px; text-align: right;">${totalTax.toFixed(2)}</td>
-              </tr>
-            </tfoot>
+            <tbody>${taxSummaryRows}</tbody>
           </table>
 
           <div style="font-size: 10px; padding: 4px 0; margin-top: 2px;">
@@ -587,12 +648,12 @@
             <tr>
               <td style="width: 60%; vertical-align: top;">
                 <div style="font-weight: bold; text-decoration: underline;">Declaration</div>
-                <div>Terms: Goods once sold, will not be taken back. Warranty will be directly serviced as per manufacturer's Limited Warranty Policy.</div>
+                <div>Goods once sold will not be taken back. Warranty directly serviced by manufacturer.</div>
               </td>
-              <td style="width: 40%; text-align: center; vertical-align: bottom; padding-bottom: 5px;">
+              <td style="width: 40%; text-align: center; vertical-align: bottom;">
                 <div style="font-weight: bold;">for ${C.escapeHTML(p.name || 'My Store')}</div>
-                <div style="height: 40px;"></div>
-                <div style="border-top: 1px solid #000; display: inline-block; padding: 0 20px;">Authorised Signatory</div>
+                <div style="height: 35px;"></div>
+                <div style="border-top: 1px solid #000; display: inline-block; padding: 0 15px;">Authorised Signatory</div>
               </td>
             </tr>
           </table>
@@ -635,7 +696,7 @@
   }
 
   /* ============================================================
-     A4 NON-GST LAYOUT
+     A4 NON-GST TEMPLATE
      ============================================================ */
   function renderA4NonGst({ invNo, datePretty, custName, custPhone, custAddr, discount, p, shopCode, items, baseUrl }) {
     let totalGross = 0, totalQty = 0;
@@ -753,7 +814,7 @@
   }
 
   /* ============================================================
-     THERMAL LAYOUT (58mm / 80mm)
+     COMPLETE THERMAL TEMPLATE (58mm / 80mm Full Format)
      ============================================================ */
   function renderThermal({ invNo, datePretty, custName, custPhone, custGSTIN, custState, custStateCode, storeState, storeStateCode, taxType, discount, p, shopCode, items, portalQrUrl, isNonGst }) {
     let totalGross = 0;
@@ -791,7 +852,6 @@
 
     return `
       <div style="font-family: Arial, sans-serif; color: #000; background: #fff; width: 100%;">
-        
         <div style="text-align: center; margin-bottom: 5px;">
           ${p.logo ? `<img src="${p.logo}" style="max-height: 40px; margin-bottom: 4px;">` : ''}
           <div style="font-size: 1.2em; font-weight: 900;">${C.escapeHTML(p.name || 'My Store')}</div>
@@ -815,9 +875,7 @@
         <hr style="border: none; border-top: 1px dashed #000; margin: 4px 0;">
         
         <table style="width: 100%; border-collapse: collapse; font-size: 0.85em;">
-          <tbody>
-            ${rows}
-          </tbody>
+          <tbody>${rows}</tbody>
         </table>
 
         <hr style="border: none; border-top: 1px dashed #000; margin: 4px 0;">
@@ -850,36 +908,37 @@
           Thank You! Visit Again.<br>
           Powered by SmartFix
         </div>
-
       </div>
     `;
   }
 
   /* ============================================================
-     CART
+     CART TABLE LOGIC
      ============================================================ */
   function renderCart() {
-    const el = document.getElementById('billCartItems');
+    const tbody = document.getElementById('billCartTableBody');
     const cnt = document.getElementById('billCartCount');
-    if (!el) return;
+    if (!tbody) return;
     const items = S.activeCart || [];
     if (cnt) cnt.textContent = items.length + ' item' + (items.length !== 1 ? 's' : '');
 
     if (items.length === 0) {
-      el.innerHTML = '<div class="text-center text-slate-500 text-xs py-4">No items yet.</div>';
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center py-10 text-slate-500 text-xs">No items added yet.</td></tr>`;
       return;
     }
 
-    el.innerHTML = items.map((it, idx) => `
-      <div class="flex items-center gap-2 bg-slate-950/70 border border-slate-800 rounded-lg p-2 text-xs">
-        <div class="flex-1 min-w-0">
-          <div class="font-bold text-white truncate">${C.escapeHTML(it.model || '')}</div>
-          ${it.imei ? `<div class="text-[9px] text-sky-400 font-mono truncate">${C.escapeHTML(it.imei)}</div>` : ''}
-          <div class="text-[10px] text-slate-500">${it.qty} × ₹${(it.rate || 0).toFixed(2)}${billType === 'GST' ? ' • GST ' + it.gst + '%' : ''}</div>
-        </div>
-        <div class="text-right flex-shrink-0"><div class="font-black text-emerald-400 font-mono text-sm">₹${((it.rate || 0) * (it.qty || 1)).toFixed(2)}</div></div>
-        <button type="button" onclick="SF.billing.removeItem(${idx})" class="w-6 h-6 flex items-center justify-center rounded-md bg-rose-950/60 text-rose-400 hover:bg-rose-900/60 hover:text-rose-300 font-bold text-xs flex-shrink-0">✕</button>
-      </div>
+    tbody.innerHTML = items.map((it, idx) => `
+      <tr class="hover:bg-slate-800/40 transition">
+        <td class="p-2.5 font-bold text-white text-xs">${C.escapeHTML(it.model || '')}</td>
+        <td class="p-2.5 text-[10px] font-mono text-yellow-300">${C.escapeHTML(it.imei || '—')}</td>
+        <td class="p-2.5 text-center font-bold text-slate-200 text-xs">${it.qty}</td>
+        <td class="p-2.5 text-right font-mono text-slate-300 text-xs">₹${(it.rate || 0).toFixed(2)}</td>
+        <td class="p-2.5 text-right font-mono text-slate-400 text-xs">${billType === 'GST' ? it.gst + '%' : '0%'}</td>
+        <td class="p-2.5 text-right font-mono font-bold text-emerald-400 text-xs">₹${((it.rate || 0) * (it.qty || 1)).toFixed(2)}</td>
+        <td class="p-2.5 text-center">
+          <button type="button" onclick="SF.billing.removeItem(${idx})" class="w-6 h-6 inline-flex items-center justify-center rounded bg-rose-950/60 hover:bg-rose-900/60 text-rose-400 font-bold text-xs">✕</button>
+        </td>
+      </tr>
     `).join('');
   }
 
@@ -932,7 +991,7 @@
   }
 
   /* ============================================================
-     BARCODE & SCANNING (WITH COOLDOWN)
+     SCANNING & COOLDOWN LOGIC
      ============================================================ */
   function handleBarcodeKey(e) {
     if (e.key !== 'Enter') return;
@@ -945,22 +1004,17 @@
 
   function handleScannedCode(code, isFromScanner = false) {
     if (!requirePerm('billing.create')) return;
-    
     const norm = C.normalizeIMEI(code);
     if (!norm) return;
 
-    // ⭐ Cooldown Logic (একই কোড ২.৫ সেকেন্ডের মধ্যে স্ক্যান হলে ইগনোর করবে)
     if (isFromScanner) {
       const now = Date.now();
-      if (norm === lastScannedCode && (now - lastScannedTime < 2500)) {
-        return; // Ignore duplicate camera frame scan
-      }
+      if (norm === lastScannedCode && (now - lastScannedTime < 2500)) return;
       lastScannedCode = norm;
       lastScannedTime = now;
     }
 
     const stockItem = S.inventory.find((x) => (x.imei && C.normalizeIMEI(x.imei) === norm) || (x.model && x.model.toLowerCase() === code.toLowerCase()));
-    
     if (stockItem) {
       if (stockItem.status === 'Sold') { C.toast('Already SOLD: ' + stockItem.model, 'error'); C.playErrorBeep(); return; }
       pushItem({
@@ -970,17 +1024,11 @@
       });
       return;
     }
-    
     C.playErrorBeep();
     const rate = prompt('"' + code + '" not in stock.\n\nEnter selling price (₹):', '0');
     if (!rate || isNaN(rate) || parseFloat(rate) <= 0) return;
     const model = prompt('Enter model name:', 'Mobile Device') || 'Device';
-    
-    pushItem({ 
-      stockId: null, model, imei: code, 
-      hsn: billType === 'GST' ? '8517' : '', gst: billType === 'GST' ? 18 : 0, 
-      qty: 1, rate: parseFloat(rate), purchaseCost: 0 
-    });
+    pushItem({ stockId: null, model, imei: code, hsn: billType === 'GST' ? '8517' : '', gst: billType === 'GST' ? 18 : 0, qty: 1, rate: parseFloat(rate), purchaseCost: 0 });
   }
 
   function lookupIMEI(val) {
@@ -994,9 +1042,6 @@
     }
   }
 
-  /* ============================================================
-     INVOICE NUMBER
-     ============================================================ */
   async function refreshInvoiceNo() {
     const el = document.getElementById('billInvNo');
     if (!el) return;
@@ -1020,16 +1065,11 @@
     renderPreview();
   }
 
-  /* ============================================================
-     SCANNER
-     ============================================================ */
-  let scannerActive = false;
-  let html5Qr = null;
-
+  /* Scanner */
+  let scannerActive = false, html5Qr = null;
   async function toggleScanner() {
     const wrap = document.getElementById('billScannerWrap');
     const btn  = document.getElementById('billScannerBtn');
-
     if (typeof Html5Qrcode === 'undefined') {
       try {
         await new Promise((resolve, reject) => {
@@ -1040,55 +1080,36 @@
         });
       } catch (e) { C.toast('Scanner library failed', 'error'); return; }
     }
-
     if (scannerActive) {
       try { await html5Qr.stop(); await html5Qr.clear(); } catch (e) {}
       scannerActive = false;
       if (wrap) wrap.style.display = 'none';
-      if (btn) btn.textContent = '📷 Scan';
+      if (btn) btn.textContent = '📷 Camera Scan';
       return;
     }
-
     if (wrap) wrap.style.display = 'block';
     if (btn) btn.textContent = '✕ Close';
-
     try {
       html5Qr = new Html5Qrcode('billReader');
-      await html5Qr.start(
-        { facingMode: 'environment' }, 
-        { fps: 12, qrbox: { width: 280, height: 160 } }, 
-        (decodedText) => { handleScannedCode(decodedText, true); }, 
-        () => {}
-      );
+      await html5Qr.start({ facingMode: 'environment' }, { fps: 12, qrbox: { width: 280, height: 160 } }, (text) => handleScannedCode(text, true), () => {});
       scannerActive = true;
     } catch (e) {
       C.toast('Camera error: ' + (e.message || 'denied'), 'error');
       if (wrap) wrap.style.display = 'none';
-      if (btn) btn.textContent = '📷 Scan';
+      if (btn) btn.textContent = '📷 Camera Scan';
     }
   }
 
   /* ============================================================
-     FINALIZE
+     FINALIZE & SAVE
      ============================================================ */
   async function finalize() {
     if (!requirePerm('billing.create', 'You cannot create invoices')) return;
-
     const items = S.activeCart || [];
     if (items.length === 0) { C.toast('Cart is empty', 'warning'); return; }
 
-    for (const it of items) {
-      if (it.imei) {
-        const norm = C.normalizeIMEI(it.imei);
-        const sold = S.inventory.find((x) => x.imei && C.normalizeIMEI(x.imei) === norm && x.status === 'Sold');
-        if (sold) { C.toast('IMEI already sold: ' + it.imei, 'error'); return; }
-      }
-    }
-
     const invNo = document.getElementById('billInvNo')?.value || '';
-    if (!invNo || invNo === 'Fetching...' || invNo.includes('ERROR')) {
-      C.toast('Invoice number not ready.', 'warning'); return;
-    }
+    if (!invNo || invNo === 'Fetching...' || invNo.includes('ERROR')) { C.toast('Invoice number not ready.', 'warning'); return; }
 
     const invDate   = document.getElementById('billInvDate')?.value || C.fmtDate(new Date());
     const custName  = (document.getElementById('billCustName')?.value || 'Cash Customer').trim() || 'Cash Customer';
@@ -1099,40 +1120,25 @@
     const taxType   = billType === 'GST' ? (document.getElementById('billGstType')?.value || 'INTRA') : 'NONE';
     const discount  = parseFloat(document.getElementById('billDiscount')?.value) || 0;
 
-    let tGross = 0, tTaxable = 0, tTax = 0, tPurchase = 0;
-    let tCGST = 0, tSGST = 0, tIGST = 0;
+    let tGross = 0, tTaxable = 0, tTax = 0, tPurchase = 0, tCGST = 0, tSGST = 0, tIGST = 0;
 
     items.forEach((it) => {
       const lineTotal = (it.rate || 0) * (it.qty || 1);
-      if (billType === 'NON_GST') {
-        tGross += lineTotal;
-        tTaxable += lineTotal;
-        tPurchase += (it.purchaseCost || 0) * (it.qty || 1);
-      } else {
-        const lineTaxable = lineTotal / (1 + (it.gst || 0) / 100);
-        const lineTax = lineTotal - lineTaxable;
-        tGross += lineTotal;
-        tTaxable += lineTaxable;
-        tTax += lineTax;
-        tPurchase += (it.purchaseCost || 0) * (it.qty || 1);
-        if (taxType === 'INTRA') { tCGST += lineTax / 2; tSGST += lineTax / 2; }
-        else { tIGST += lineTax; }
-      }
+      const lineTaxable = billType === 'GST' ? (lineTotal / (1 + (it.gst || 0) / 100)) : lineTotal;
+      const lineTax = lineTotal - lineTaxable;
+      tGross += lineTotal;
+      tTaxable += lineTaxable;
+      tTax += lineTax;
+      tPurchase += (it.purchaseCost || 0) * (it.qty || 1);
+      if (taxType === 'INTRA') { tCGST += lineTax / 2; tSGST += lineTax / 2; }
+      else { tIGST += lineTax; }
     });
 
-    if (discount < 0 || discount > tGross) { C.toast('Discount must be between ₹0 and total', 'warning'); return; }
-
-    const finalPayable = tGross - discount;
+    const finalPayable = Math.max(0, tGross - discount);
     const factor = tGross > 0 ? finalPayable / tGross : 1;
-    const fTaxable = tTaxable * factor;
-    const fTax = tTax * factor;
-    const fCGST = tCGST * factor;
-    const fSGST = tSGST * factor;
-    const fIGST = tIGST * factor;
 
     const record = {
-      id: invNo, invoiceNo: invNo, date: invDate,
-      billType: billType,
+      id: invNo, invoiceNo: invNo, date: invDate, billType,
       financialYear: C.getFY(new Date(invDate)).label,
       customerName: custName, customerPhone: custPhone,
       customerAddress: custAddr, customerGSTIN: custGSTIN,
@@ -1140,22 +1146,17 @@
       customerStateCode: GST_STATES[document.getElementById('billCustState')?.value || 'West Bengal'] || '19',
       taxType, ledger, discount,
       items: JSON.parse(JSON.stringify(items)),
-      totalTaxable: +fTaxable.toFixed(2),
-      totalCGST: +fCGST.toFixed(2), totalSGST: +fSGST.toFixed(2), totalIGST: +fIGST.toFixed(2),
-      totalTax: +fTax.toFixed(2), totalGross: +finalPayable.toFixed(2),
-      totalPurchaseCost: +tPurchase.toFixed(2),
-      createdAt: new Date().toISOString()
+      totalTaxable: +(tTaxable * factor).toFixed(2),
+      totalCGST: +(tCGST * factor).toFixed(2), totalSGST: +(tSGST * factor).toFixed(2), totalIGST: +(tIGST * factor).toFixed(2),
+      totalTax: +(tTax * factor).toFixed(2), totalGross: +finalPayable.toFixed(2),
+      totalPurchaseCost: +tPurchase.toFixed(2), createdAt: new Date().toISOString()
     };
 
-    // ⭐ Credit Sale / Udhar Auto-Party Sync ⭐
+    // Credit Debtors Sync
     if (ledger === 'Credit / Sundry Debtors' && custPhone) {
       let party = (S.parties || []).find((p) => p.type === 'CUSTOMER' && (p.phone === custPhone || p.name.toLowerCase() === custName.toLowerCase()));
       if (!party) {
-        party = {
-          id: 'cust-' + Date.now(), type: 'CUSTOMER',
-          name: custName, phone: custPhone, gstin: custGSTIN, address: custAddr,
-          opening: 0, drCr: 'DR', createdAt: new Date().toISOString()
-        };
+        party = { id: 'cust-' + Date.now(), type: 'CUSTOMER', name: custName, phone: custPhone, gstin: custGSTIN, address: custAddr, opening: 0, drCr: 'DR', createdAt: new Date().toISOString() };
         if (!Array.isArray(S.parties)) S.parties = [];
         S.parties.push(party);
         C.safeSave('sfp_parties', S.parties);
@@ -1184,9 +1185,7 @@
           if (stk) await Cl.pushOne('inventory', stk);
         }
       }
-    } catch (e) { C.toast('Saved locally. Sync pending.', 'warning', 4000); }
-
-    try { window.SF.state.logAudit('INVOICE_CREATE', (billType === 'NON_GST' ? '[NonGST] ' : '') + invNo + ' | ' + custName + ' | ₹' + finalPayable.toFixed(2)); } catch (e) {}
+    } catch (e) {}
 
     printInvoice();
 
@@ -1198,19 +1197,13 @@
     document.getElementById('billCustName').value = '';
     document.getElementById('billCustPhone').value = '';
     document.getElementById('billCustAddr').value = '';
-    const gstinEl = document.getElementById('billCustGSTIN');
-    if (gstinEl) gstinEl.value = '';
     document.getElementById('billDiscount').value = '0';
-
     renderPreview();
-
-    setTimeout(() => {
-      try { C.toast('✅ ' + (billType === 'NON_GST' ? 'Bill' : 'Invoice') + ' ' + invNo + ' saved', 'success', 2500); } catch (e) {}
-    }, 1200);
+    C.toast('✅ Invoice ' + invNo + ' saved', 'success', 2500);
   }
 
   /* ============================================================
-     PRINT — iframe
+     PRINT ENGINE (Complete CSS Rules)
      ============================================================ */
   function printInvoice() {
     const srcEl = document.getElementById('billInvoicePreview');
@@ -1237,10 +1230,12 @@
       button { display:none !important; }
     </style></head><body><div class="print-wrapper">${html}</div></body></html>`);
     doc.close();
+
     const triggerPrint = () => {
       try { iframe.contentWindow.focus(); iframe.contentWindow.print(); } catch (e) { C.toast('Print blocked. Allow popups.', 'error', 4000); }
       setTimeout(() => { try { document.body.removeChild(iframe); } catch (e) {} }, 1500);
     };
+
     if (iframe.contentWindow.document.readyState === 'complete') setTimeout(triggerPrint, 500);
     else { iframe.onload = () => setTimeout(triggerPrint, 500); setTimeout(triggerPrint, 1200); }
   }
@@ -1248,33 +1243,28 @@
   function populateCustomerList() {
     const dl = document.getElementById('billCustomerList');
     if (!dl) return;
-    const parties = S.parties || [];
-    dl.innerHTML = parties.filter((p) => p.type === 'CUSTOMER').map((p) => `<option value="${C.escapeHTML(p.name)}">${C.escapeHTML(p.phone || '')}</option>`).join('');
+    dl.innerHTML = (S.parties || []).filter((p) => p.type === 'CUSTOMER').map((p) => `<option value="${C.escapeHTML(p.name)}">${C.escapeHTML(p.phone || '')}</option>`).join('');
   }
 
-  /* ============================================================
-     INIT
-     ============================================================ */
+  /* Keyboard shortcut Ctrl+P for Save & Print */
+  window.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') {
+      const mod = document.getElementById('billingModule');
+      if (mod && mod.offsetParent !== null) {
+        e.preventDefault();
+        finalize();
+      }
+    }
+  });
+
   async function init_billingModule() {
     populateCustomerStates();
-    console.log('%c🧾 Billing module initialized (v5.0.2)', 'color:#0ea5e9;font-weight:bold');
-
-    if (!window.SF?.perms?.can?.('billing.view')) {
-      const c = document.getElementById('moduleContainer');
-      if (c) c.innerHTML = '<div style="max-width:520px;margin:60px auto;padding:28px;background:#1e1b2e;border:1px solid #7f1d1d;border-radius:16px;text-align:center;"><div style="font-size:42px;margin-bottom:12px">🔒</div><div style="font-size:16px;font-weight:800;color:#fca5a5;">Access Denied</div></div>';
-      return { onUnload: () => {} };
-    }
-
     const dateEl = document.getElementById('billInvDate');
     if (dateEl && !dateEl.value) dateEl.value = C.fmtDate(new Date());
-
-    const fy = C.getFY(new Date());
     const badge = document.getElementById('billFyBadge');
-    if (badge) badge.textContent = fy.label;
+    if (badge) badge.textContent = C.getFY(new Date()).label;
 
-    billType = 'GST';
     setBillType('GST');
-
     await refreshInvoiceNo();
 
     try {
@@ -1283,35 +1273,19 @@
     } catch (e) {}
 
     renderCart(); renderPreview();
-
-    setTimeout(() => {
-      const b = document.getElementById('billBarcodeInput');
-      if (b && window.innerWidth > 640) b.focus();
-    }, 400);
-
-    if (window.SF?.state?.on) {
-      window.SF.state.on('profile:updated', () => renderPreview());
-      window.SF.state.on('change:inventory', () => populateCustomerList());
-      window.SF.state.on('change:parties', () => populateCustomerList());
-    }
-
     populateCustomerList();
-
     return { onUnload: () => {} };
   }
 
   window.SF = window.SF || {};
   window.SF.billing = {
     renderPreview, onCustomerStateChange, renderCart, addManualItem, removeItem,
-    handleBarcodeKey, handleScannedCode, lookupIMEI,
-    onDateChange, toggleScanner, finalize, refreshInvoiceNo,
-    printInvoice, setBillType, onPrintSizeChange, init: init_billingModule
+    handleBarcodeKey, handleScannedCode, lookupIMEI, onDateChange, toggleScanner,
+    finalize, refreshInvoiceNo, printInvoice, setBillType, onPrintSizeChange, setLedger,
+    init: init_billingModule
   };
 
   window.init_billingModule = init_billingModule;
-
-  if (document.getElementById('billingModule')) {
-    init_billingModule();
-  }
+  if (document.getElementById('billingModule')) init_billingModule();
 })();
 </script>
