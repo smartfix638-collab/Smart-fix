@@ -1,8 +1,8 @@
 <!-- ============================================================
      SMARTFIX ERP — Accounting / P&L / Audit Module
      File: modules/accounting.html
-     Version: 4.7.0
-     Fixed: Added Repair Revenue, Inter-state GST in Excel
+     Version: 4.8.0
+     Fixed: Added Direct Invoice Duplicate Print Button & Action
      ============================================================ -->
 
 <section id="accountingModule" class="space-y-4">
@@ -408,7 +408,6 @@
       btn.classList.remove('bg-indigo-900/70', 'text-indigo-200', 'border', 'border-indigo-700/60');
       btn.classList.add('bg-slate-800', 'text-slate-300');
     });
-    /* Find matching button by onclick */
     document.querySelectorAll('.range-btn').forEach((btn) => {
       const oc = btn.getAttribute('onclick') || '';
       if (oc.includes("'" + period + "'")) {
@@ -440,7 +439,6 @@
      5. APPLY FILTER + RENDER
      ============================================================ */
   function apply() {
-    /* Read inputs */
     const fromEl = document.getElementById('accFromDate');
     const toEl   = document.getElementById('accToDate');
     const ledEl  = document.getElementById('accLedgerFilter');
@@ -459,7 +457,7 @@
     const fromDate = new Date(fromStr + 'T00:00:00');
     const toDate   = new Date(toStr   + 'T23:59:59');
 
-    /* -------- Filter invoices -------- */
+    /* Filter invoices */
     const fInv = (S.invoices || []).filter((i) => {
       const d = new Date((i.date || '') + 'T12:00:00');
       if (d < fromDate || d > toDate) return false;
@@ -467,25 +465,25 @@
       return true;
     });
 
-    /* -------- Filter credit notes -------- */
+    /* Filter credit notes */
     const fCRN = (S.creditNotes || []).filter((c) => {
       const d = new Date((c.date || '') + 'T12:00:00');
       return d >= fromDate && d <= toDate;
     });
 
-    /* -------- Filter vouchers -------- */
+    /* Filter vouchers */
     const fVch = (S.vouchers || []).filter((v) => {
       const d = new Date((v.date || '') + 'T12:00:00');
       return d >= fromDate && d <= toDate;
     });
 
-    /* -------- Filter purchases -------- */
+    /* Filter purchases */
     const fPur = (S.purchases || []).filter((p) => {
       const d = new Date((p.date || '') + 'T12:00:00');
       return d >= fromDate && d <= toDate;
     });
 
-    /* -------- Load Repairs -------- */
+    /* Load Repairs */
     let rawRepairs = [];
     try {
       const raw = localStorage.getItem('sfp_repairs');
@@ -497,9 +495,7 @@
       return d >= fromDate && d <= toDate;
     });
 
-    /* ============================================================
-       CALCULATE STATS (INCLUDING REPAIRS)
-       ============================================================ */
+    /* Stats Calculation */
     let gSales = 0, sTax = 0, tPC = 0;
     fInv.forEach((i) => {
       gSales += i.totalGross || 0;
@@ -527,22 +523,17 @@
       pTax += p.totalGST || 0;
     });
 
-    // ⭐ Net Turnover = (Sales - Returns) + Repair Revenue
     const netTurnover = (gSales - tReturns) + repairRevenue;
-    
-    // ⭐ GST calculation (Repair is outside GST, so only Sales)
     const netGST = sTax - rTax - pTax;
-    
     const netProfit = netTurnover - tPC - tExpense;
 
-    /* Credit sales + receipts */
     let creditSales = 0;
     fInv.forEach((i) => { if (i.ledger === 'Credit / Sundry Debtors') creditSales += i.totalGross || 0; });
 
     let receipts = 0;
     fVch.forEach((v) => { if (v.type === 'RECEIPT') receipts += v.amount || 0; });
 
-    /* Update cards */
+    /* Update stats cards */
     setText('accStatNetTurnover', C.money(netTurnover).replace(/\.\d+$/, ''));
     setText('accStatGrossVsReturn', 'Sales: ₹' + fmt0(gSales) + ' + Service: ₹' + fmt0(repairRevenue) + ' | Returns: ₹' + fmt0(tReturns));
     setText('accStatNetGST', C.money(netGST).replace(/\.\d+$/, ''));
@@ -552,19 +543,15 @@
     setText('accStatReceipts', C.money(receipts).replace(/\.\d+$/, ''));
     setText('accStatDebtorsBalance', C.money(creditSales - receipts).replace(/\.\d+$/, ''));
 
-    /* Range label */
     const rangeTextEl = document.getElementById('accRangeText');
     if (rangeTextEl) {
       rangeTextEl.textContent = 'Period: ' + fromStr + ' → ' + toStr +
         (searchQ ? ' | 🔎 "' + searchQ + '"' : '');
     }
 
-    /* ============================================================
-       BUILD COMBINED REGISTER (Sales + Service + Returns)
-       ============================================================ */
+    /* Combined Register */
     const combined = [];
 
-    /* Invoices */
     fInv.forEach((inv) => {
       const itemDesc = (inv.items || []).map((x) => x.model || '').join(', ');
       const imeiDesc = (inv.items || []).map((x) => x.imei || '').filter(Boolean).join(' ');
@@ -584,7 +571,6 @@
       });
     });
 
-    /* Repairs */
     fRep.forEach((rep) => {
       combined.push({
         date: rep.date,
@@ -594,15 +580,14 @@
         phone: rep.customerPhone || '',
         itemDesc: 'Repair: ' + (rep.deviceBrand || '') + ' ' + (rep.deviceModel || ''),
         imeiDesc: rep.deviceIMEI || '',
-        ledger: 'Cash-in-Hand', // Repairs are assumed cash
+        ledger: 'Cash-in-Hand',
         taxable: rep.finalCost || 0,
-        tax: 0, // No GST on repairs
+        tax: 0,
         total: rep.finalCost || 0,
         raw: rep
       });
     });
 
-    /* Credit notes */
     fCRN.forEach((crn) => {
       combined.push({
         date: crn.date,
@@ -620,7 +605,6 @@
       });
     });
 
-    /* Apply search */
     let filtered = combined;
     if (searchQ) {
       filtered = combined.filter((r) => {
@@ -635,20 +619,18 @@
       });
     }
 
-    /* Sort by date desc */
     filtered.sort((a, b) => {
       const da = new Date((a.date || '') + 'T12:00:00');
       const db = new Date((b.date || '') + 'T12:00:00');
       return db - da;
     });
 
-    /* Render */
     renderRegister(filtered, { searchQ });
   }
 
 
   /* ============================================================
-     6. RENDER REGISTER
+     6. RENDER REGISTER (WITH DUPLICATE PRINT BUTTON)
      ============================================================ */
   function renderRegister(rows, meta) {
     const body = document.getElementById('accRegisterBody');
@@ -675,6 +657,7 @@
 
       const totalColor = isCRN ? 'text-rose-400' : (isService ? 'text-violet-300' : 'text-slate-100');
 
+      // ⭐ Actions Row containing View, Print Duplicate, Edit, Delete
       const actionsHtml = isCRN
         ? '<span class="text-slate-700 text-[10px]">—</span>'
         : (isService 
@@ -683,6 +666,11 @@
             <div class="inline-flex gap-1">
               <button type="button" onclick="SF.accounting.viewInvoice('${C.escapeHTML(r.docNo)}')"
                       title="View" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-sky-300 font-bold px-2 py-1 rounded">👁</button>
+              
+              <!-- ⭐ নতুন প্রিন্ট বাটন -->
+              <button type="button" onclick="SF.accounting.printDuplicate('${C.escapeHTML(r.docNo)}')"
+                      title="Print Duplicate" class="text-[10px] bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-400 font-bold px-2 py-1 rounded">🖨️</button>
+
               <button type="button" onclick="SF.accounting.editInvoice('${C.escapeHTML(r.docNo)}')"
                       title="Edit" class="text-[10px] bg-amber-950/60 hover:bg-amber-900/60 text-amber-400 font-bold px-2 py-1 rounded">✏</button>
               <button type="button" onclick="SF.accounting.deleteInvoice('${C.escapeHTML(r.docNo)}')"
@@ -754,6 +742,14 @@
     if (!inv) { C.toast('Invoice not found', 'error'); return; }
 
     try {
+      if (!document.getElementById('billingModule')) {
+        if (window.SF?.router) {
+          window.SF.router.go('billing');
+          setTimeout(() => viewInvoice(invNo), 500);
+        }
+        return;
+      }
+
       const dateEl = document.getElementById('billInvDate');
       const invEl  = document.getElementById('billInvNo');
       const nameEl = document.getElementById('billCustName');
@@ -762,14 +758,6 @@
       const ledEl  = document.getElementById('billLedger');
       const taxEl  = document.getElementById('billGstType');
       const discEl = document.getElementById('billDiscount');
-
-      if (!document.getElementById('billingModule')) {
-        if (window.SF?.router) {
-          window.SF.router.go('billing');
-          setTimeout(() => viewInvoice(invNo), 500);
-        }
-        return;
-      }
 
       if (dateEl) dateEl.value = inv.date;
       if (invEl)  invEl.value  = inv.invoiceNo;
@@ -791,6 +779,56 @@
       console.error(e);
       C.toast('Cannot load invoice', 'error');
     }
+  }
+
+  // ⭐ নতুন প্রিন্ট ফাংশন (Direct Print Duplicate)
+  function printDuplicate(invNo) {
+    const inv = (S.invoices || []).find((i) => i.invoiceNo === invNo);
+    if (!inv) { C.toast('Invoice not found', 'error'); return; }
+
+    if (window.SF?.router) {
+      window.SF.router.go('billing');
+    }
+
+    setTimeout(() => {
+      try {
+        const invEl  = document.getElementById('billInvNo');
+        const dateEl = document.getElementById('billInvDate');
+        const nameEl = document.getElementById('billCustName');
+        const phEl   = document.getElementById('billCustPhone');
+        const ledEl  = document.getElementById('billLedger');
+        const taxEl  = document.getElementById('billGstType');
+        const discEl = document.getElementById('billDiscount');
+        const gstEl  = document.getElementById('billCustGSTIN');
+
+        if (invEl)  invEl.value  = inv.invoiceNo;
+        if (dateEl) dateEl.value = inv.date;
+        if (nameEl) nameEl.value = inv.customerName || '';
+        if (phEl)   phEl.value   = inv.customerPhone || '';
+        if (ledEl)  ledEl.value  = inv.ledger || 'Cash-in-Hand';
+        if (taxEl)  taxEl.value  = inv.taxType || 'INTRA';
+        if (discEl) discEl.value = inv.discount || 0;
+        if (gstEl)  gstEl.value  = inv.customerGSTIN || '';
+
+        S.activeCart = JSON.parse(JSON.stringify(inv.items || []));
+        C.safeSave('sfp_active_cart', S.activeCart);
+
+        if (typeof window.SF.billing?.renderCart === 'function') {
+          window.SF.billing.renderCart();
+          window.SF.billing.renderPreview();
+        }
+
+        setTimeout(() => {
+          if (typeof window.SF.billing?.printInvoice === 'function') {
+            window.SF.billing.printInvoice();
+          }
+        }, 500);
+
+      } catch (e) {
+        console.error(e);
+        C.toast('প্রিন্ট করতে সমস্যা হচ্ছে', 'error');
+      }
+    }, 500);
   }
 
   async function editInvoice(invNo) {
@@ -1132,7 +1170,7 @@
     }));
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(stockRows.length ? stockRows : [{ Note: 'No stock' }]), 'Stock');
 
-    /* Sheet 7: GST Summary (Properly Split) */
+    /* Sheet 7: GST Summary */
     let outTaxable = 0, outCGST = 0, outSGST = 0, outIGST = 0;
     let serviceRevenue = 0;
     let retTaxable = 0, retTax = 0;
@@ -1228,6 +1266,7 @@
     onSearchChange,
     clearSearch,
     viewInvoice,
+    printDuplicate,
     editInvoice,
     deleteInvoice,
     renderAuditTrail,
