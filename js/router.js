@@ -1,7 +1,7 @@
 /* ============================================================
-   SMARTFIX ERP — SPA Router (v4.7.0)
+   SMARTFIX ERP — SPA Router (v5.0.0 - Sidebar Layout)
    File: js/router.js
-   Added: GST Returns module
+   Purpose: Updated to render categorized sidebar menu
    ============================================================ */
 
 import { emit, on } from './state.js';
@@ -35,6 +35,28 @@ export const ROUTE_ORDER = [
   'manual', 'settings'
 ];
 
+/* ============================================================
+   SIDEBAR CATEGORIES (Match Screenshot Layout)
+   ============================================================ */
+const SIDEBAR_CATEGORIES = [
+  { 
+    title: null, // Top level
+    items: ['dashboard'] 
+  },
+  { 
+    title: 'Sales & Finance', 
+    items: ['billing', 'returns', 'repair', 'purchase', 'vouchers', 'accounting', 'books'] 
+  },
+  { 
+    title: 'Operations', 
+    items: ['gstReturns', 'parties', 'inventory', 'staff', 'attendance', 'attendance-report', 'mobileDoctor'] 
+  },
+  { 
+    title: 'Management', 
+    items: ['manual', 'settings'] 
+  }
+];
+
 
 const ROUTER = {
   container:      null,
@@ -52,7 +74,7 @@ export function initRouter(containerSelector = '#moduleContainer') {
     console.error('❌ Router container not found:', containerSelector);
     return;
   }
-  console.log('%c🧭 Router initialized', 'color:#06b6d4;font-weight:bold');
+  console.log('%c🧭 Router initialized (Sidebar Mode)', 'color:#06b6d4;font-weight:bold');
 
   const initialHash = window.location.hash.replace('#', '').trim();
   const route = ROUTES[initialHash] ? initialHash : 'dashboard';
@@ -117,7 +139,7 @@ export async function navigateTo(routeKey, opts = {}) {
 
     reExecuteScripts(ROUTER.container);
 
-    updateTabBar(routeKey);
+    updateSidebarActiveState(routeKey);
     ROUTER.currentRoute = routeKey;
     emit('route:changed', { route: routeKey, config: route });
 
@@ -160,7 +182,6 @@ function reExecuteScripts(container) {
   if (!container) return;
   const oldScripts = Array.from(container.querySelectorAll('script'));
   if (oldScripts.length === 0) return;
-  console.log('%c🔧 Re-executing ' + oldScripts.length + ' script(s)', 'color:#8b5cf6');
   oldScripts.forEach((oldScript) => {
     const newScript = document.createElement('script');
     Array.from(oldScript.attributes).forEach((attr) => newScript.setAttribute(attr.name, attr.value));
@@ -215,7 +236,6 @@ async function loadModuleHTML(routeKey) {
     if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
     const html = await res.text();
     ROUTER.moduleCache[routeKey] = html;
-    console.log('%c📄 Module loaded: ' + routeKey, 'color:#06b6d4');
     return html;
   } catch (e) {
     console.error('Failed to load module:', routeKey, e);
@@ -233,7 +253,7 @@ function showModuleLoading() {
   if (!ROUTER.container) return;
   ROUTER.container.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:center;padding:80px 20px;flex-direction:column;gap:16px">
-      <div style="width:48px;height:48px;border:3px solid rgba(14,165,233,0.2);border-top-color:#0ea5e9;border-radius:50%;animation:sfSpin 0.8s linear infinite;"></div>
+      <div style="width:40px;height:40px;border:3px solid rgba(14,165,233,0.2);border-top-color:#0ea5e9;border-radius:50%;animation:sfSpin 0.8s linear infinite;"></div>
       <div style="color:#64748b;font-size:13px;font-weight:600">Loading module...</div>
       <style>@keyframes sfSpin { to { transform: rotate(360deg); } }</style>
     </div>
@@ -252,42 +272,58 @@ function showModuleError(label, err) {
   `;
 }
 
-
-function updateTabBar(routeKey) {
+/* ============================================================
+   SIDEBAR RENDERING LOGIC
+   ============================================================ */
+function updateSidebarActiveState(routeKey) {
   const route = ROUTES[routeKey];
   if (!route) return;
-  ROUTE_ORDER.forEach((key) => {
-    const r = ROUTES[key];
-    if (!r) return;
-    const btn = document.getElementById('nav-' + key);
-    if (!btn) return;
-    if (key === routeKey) {
-      btn.classList.add('sf-tab-active');
-      btn.setAttribute('aria-current', 'page');
-    } else {
-      btn.classList.remove('sf-tab-active');
-      btn.removeAttribute('aria-current');
-    }
-  });
+  
+  // Remove active class from all links
+  document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
+  
+  // Add active class to current
+  const activeEl = document.getElementById('nav-' + routeKey);
+  if (activeEl) activeEl.classList.add('active');
+  
   document.title = `${route.label} — SmartFix ERP`;
 }
 
 export function renderTabBar(allowedRoutes) {
-  const nav = document.getElementById('sfTabBar');
+  const nav = document.getElementById('sidebarNavContainer');
   if (!nav) return;
+  
   const routes = Array.isArray(allowedRoutes) && allowedRoutes.length ? allowedRoutes : ROUTE_ORDER;
-  nav.innerHTML = routes.map((key) => {
-    const r = ROUTES[key];
-    if (!r) return '';
-    return `
-      <button type="button" id="nav-${key}" onclick="SF.router.go('${key}')"
-              class="sf-tab-btn" data-route="${key}" title="${r.description} (${r.shortcut})">
-        <span class="sf-tab-icon">${r.icon}</span>
-        <span class="sf-tab-label">${r.label}</span>
-      </button>
-    `;
-  }).join('');
-  if (ROUTER.currentRoute) updateTabBar(ROUTER.currentRoute);
+  
+  let html = '';
+  
+  SIDEBAR_CATEGORIES.forEach(category => {
+    // Filter items based on permissions
+    const catItems = category.items.filter(key => routes.includes(key));
+    
+    // Skip empty categories
+    if (catItems.length === 0) return;
+    
+    if (category.title) {
+      html += `<div class="sidebar-cat-title">${category.title}</div>`;
+    }
+    
+    catItems.forEach(key => {
+      const r = ROUTES[key];
+      if (!r) return;
+      html += `
+        <div id="nav-${key}" onclick="SF.router.go('${key}'); if(window.innerWidth < 768) toggleSidebar();" 
+             class="sidebar-link" title="${r.description} (${r.shortcut})">
+          <span class="text-base w-5 text-center">${r.icon}</span>
+          <span class="flex-1 truncate">${r.label}</span>
+        </div>
+      `;
+    });
+  });
+  
+  nav.innerHTML = html;
+  
+  if (ROUTER.currentRoute) updateSidebarActiveState(ROUTER.currentRoute);
 }
 
 
@@ -314,4 +350,4 @@ window.addEventListener('popstate', () => {
   }
 });
 
-console.log('%c🧭 Router ready (v4.7.0)', 'color:#06b6d4;font-weight:bold;font-size:11px', `| ${ROUTE_ORDER.length} routes`);
+console.log('%c🧭 Router ready (v5.0.0 Sidebar)', 'color:#06b6d4;font-weight:bold;font-size:11px');
