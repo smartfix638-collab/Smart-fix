@@ -1,8 +1,9 @@
 <!-- ============================================================
-     SMARTFIX ERP — Billing / POS (v5.0.1 - Bug Fixes)
+     SMARTFIX ERP — Billing / POS (v5.0.2 - Cooldown, QR & Credit Sync)
      File: modules/billing.html
-     Fixed: Customer phone missing in A4, Discount missing in A4 totals, 
-            CGST/SGST separated in A4 tax summary table.
+     Fixed: Scanner cooldown & duplicate prevention, 
+            A4 Consignee row with customer portal QR box, 
+            Auto-party creation/link on Credit sales.
      ============================================================ -->
 
 <section id="billingModule" class="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -194,6 +195,10 @@
   let billType = 'GST';
   let printSize = 'A4';
 
+  // Scanner Cooldown State
+  let lastScannedCode = '';
+  let lastScannedTime = 0;
+
   function requirePerm(perm, msg) {
     if (!window.SF?.perms?.can?.(perm)) {
       C.toast('🔒 ' + (msg || 'Permission denied'), 'error', 3000);
@@ -237,7 +242,6 @@
     renderPreview();
   }
 
-
   /* ============================================================
      PRINT SIZE CHANGE
      ============================================================ */
@@ -262,7 +266,6 @@
     renderPreview();
   }
 
-
   /* ============================================================
      RENDER PREVIEW
      ============================================================ */
@@ -273,6 +276,7 @@
     el.value = S.profile?.state || 'West Bengal';
     updateCustomerStateCode();
   }
+
   function updateCustomerStateCode() {
     const state = document.getElementById('billCustState')?.value || 'West Bengal';
     const code = GST_STATES[state] || '19';
@@ -283,6 +287,7 @@
     if (type) type.value = state === home ? 'INTRA' : 'INTER';
     renderPreview();
   }
+
   function onCustomerStateChange() { updateCustomerStateCode(); }
 
   function renderPreview() {
@@ -303,7 +308,7 @@
     const discount   = parseFloat(document.getElementById('billDiscount')?.value) || 0;
 
     const p = S.profile || {};
-    const shopCode = S.store?.shopCode || p.shopCode || '—';
+    const shopCode = S.store?.shopCode || p.shopCode || 'SF-DEMO';
     const items = S.activeCart || [];
 
     const datePretty = C.fmtDatePretty(new Date(invDateStr + 'T12:00:00'));
@@ -312,9 +317,9 @@
 
     if (printSize === 'A4') {
       if (billType === 'NON_GST') {
-        el.innerHTML = renderA4NonGst({ invNo, datePretty, custName, custPhone, custAddr, discount, p, items, baseUrl });
+        el.innerHTML = renderA4NonGst({ invNo, datePretty, custName, custPhone, custAddr, discount, p, shopCode, items, baseUrl });
       } else {
-        el.innerHTML = renderA4Gst({ invNo, datePretty, custName, custPhone, custAddr, custGSTIN, custState, custStateCode, storeState, storeStateCode, taxType, discount, p, items, baseUrl });
+        el.innerHTML = renderA4Gst({ invNo, datePretty, custName, custPhone, custAddr, custGSTIN, custState, custStateCode, storeState, storeStateCode, taxType, discount, p, shopCode, items, baseUrl });
       }
     } else {
       // Thermal Layout (58mm / 80mm)
@@ -322,11 +327,10 @@
     }
   }
 
-
   /* ============================================================
-     A4 GRID LAYOUT (Traditional Indian Tax Invoice)
+     A4 GRID LAYOUT (GST Tax Invoice)
      ============================================================ */
-  function renderA4Gst({ invNo, datePretty, custName, custPhone, custAddr, custGSTIN, custState, custStateCode, storeState, storeStateCode, taxType, discount, p, items, baseUrl }) {
+  function renderA4Gst({ invNo, datePretty, custName, custPhone, custAddr, custGSTIN, custState, custStateCode, storeState, storeStateCode, taxType, discount, p, shopCode, items, baseUrl }) {
     let totalTaxable = 0, totalTax = 0, totalGross = 0, totalQty = 0;
     let totalCGST = 0, totalSGST = 0, totalIGST = 0;
     const isIntra = taxType === 'INTRA';
@@ -366,15 +370,14 @@
     }).join('');
 
     let emptyRows = '';
-    for (let i = items.length; i < 8; i++) {
-      emptyRows += `<tr><td style="border: 1px solid #000; padding: 10px;">&nbsp;</td><td style="border: 1px solid #000;">&nbsp;</td><td style="border: 1px solid #000;">&nbsp;</td><td style="border: 1px solid #000;">&nbsp;</td><td style="border: 1px solid #000;">&nbsp;</td><td style="border: 1px solid #000;">&nbsp;</td><td style="border: 1px solid #000;">&nbsp;</td><td style="border: 1px solid #000;">&nbsp;</td></tr>`;
+    for (let i = items.length; i < 7; i++) {
+      emptyRows += `<tr><td style="border: 1px solid #000; padding: 8px;">&nbsp;</td><td style="border: 1px solid #000;">&nbsp;</td><td style="border: 1px solid #000;">&nbsp;</td><td style="border: 1px solid #000;">&nbsp;</td><td style="border: 1px solid #000;">&nbsp;</td><td style="border: 1px solid #000;">&nbsp;</td><td style="border: 1px solid #000;">&nbsp;</td><td style="border: 1px solid #000;">&nbsp;</td></tr>`;
     }
 
     const finalPayable = Math.max(0, totalGross - discount);
     const discountPct = totalGross > 0 ? ((discount / totalGross) * 100).toFixed(1) : 0;
     const words = C.numberToWords(finalPayable);
     
-    // Refactored rateMap to separate CGST, SGST, and IGST
     const rateMap = {};
     items.forEach(it => {
       const r = it.gst || 0;
@@ -447,15 +450,27 @@
                 </table>
               </td>
             </tr>
+            
+            <!-- ⭐ Consignee & Customer Portal QR Section ⭐ -->
             <tr>
-              <td colspan="2" style="border: 1px solid #000; padding: 5px; vertical-align: top;">
-                <div style="font-weight: bold;">Consignee (Ship to)</div>
+              <td style="width: 60%; border: 1px solid #000; padding: 5px; vertical-align: top;">
+                <div style="font-weight: bold; margin-bottom: 3px;">Consignee (Ship to)</div>
                 <div style="font-size: 12px; font-weight: bold;">${C.escapeHTML(custName)}</div>
-                <div>${C.escapeHTML(custAddr)}</div>
-                <!-- Added Phone Number here -->
+                <div>${C.escapeHTML(custAddr || '—')}</div>
                 <div><strong>Phone:</strong> ${C.escapeHTML(custPhone || '—')}</div>
                 <div>GSTIN/UIN : ${C.escapeHTML(custGSTIN || '—')}</div>
                 <div>State Name : ${C.escapeHTML(custState)}, Code : ${C.escapeHTML(custStateCode)}</div>
+              </td>
+              <td style="width: 40%; border: 1px solid #000; padding: 5px; text-align: center; vertical-align: middle; background: #fafafa;">
+                <div style="font-size: 9px; font-weight: bold; color: #0c4a6e; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px;">
+                  Customer Login Portal
+                </div>
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(baseUrl + 'index.html#customer')}" style="height: 60px; width: 60px; margin: 0 auto; display: block; border: 1px solid #cbd5e1; padding: 2px; background: #fff;">
+                <div style="font-size: 8px; margin-top: 4px; line-height: 1.3; color: #334155;">
+                  Scan QR or visit customer portal<br>
+                  Verify Bill, Warranty & Service History<br>
+                  Shop Code: <b style="color: #0c4a6e; font-family: monospace;">${C.escapeHTML(shopCode)}</b>
+                </div>
               </td>
             </tr>
           </table>
@@ -512,7 +527,6 @@
               </td>
               <td style="border: 1px solid #000; padding: 4px;">
                  <div style="display:flex; justify-content:space-between;"><span>Taxable Amount</span><span>${totalTaxable.toFixed(2)}</span></div>
-                 <!-- Added Discount Here -->
                  ${discount > 0 ? `<div style="display:flex; justify-content:space-between; color:red;"><span>Discount (${discountPct}%)</span><span>-${discount.toFixed(2)}</span></div>` : ''}
                  <div style="display:flex; justify-content:space-between;"><span>Add: ${isIntra ? 'CGST + SGST' : 'IGST'}</span><span>${totalTax.toFixed(2)}</span></div>
               </td>
@@ -573,7 +587,7 @@
             <tr>
               <td style="width: 60%; vertical-align: top;">
                 <div style="font-weight: bold; text-decoration: underline;">Declaration</div>
-                <div>Terms: Goods once sold, will not be taken back warranty be as per manufacture's Limited Warranty Policy.</div>
+                <div>Terms: Goods once sold, will not be taken back. Warranty will be directly serviced as per manufacturer's Limited Warranty Policy.</div>
               </td>
               <td style="width: 40%; text-align: center; vertical-align: bottom; padding-bottom: 5px;">
                 <div style="font-weight: bold;">for ${C.escapeHTML(p.name || 'My Store')}</div>
@@ -620,6 +634,123 @@
     `;
   }
 
+  /* ============================================================
+     A4 NON-GST LAYOUT
+     ============================================================ */
+  function renderA4NonGst({ invNo, datePretty, custName, custPhone, custAddr, discount, p, shopCode, items, baseUrl }) {
+    let totalGross = 0, totalQty = 0;
+    const f = (n) => (Number(n) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    const rows = items.map((it, idx) => {
+      const lineTotal = (it.rate || 0) * (it.qty || 1);
+      totalGross += lineTotal;
+      totalQty += (it.qty || 1);
+      return `
+        <tr>
+          <td style="border: 1px solid #000; padding: 6px; text-align: center;">${idx + 1}</td>
+          <td style="border: 1px solid #000; padding: 6px;">
+            <div style="font-weight: 700;">${C.escapeHTML(it.model || '')}</div>
+            ${it.imei ? `<div style="font-size: 9px; font-family: monospace;">IMEI/SN: ${C.escapeHTML(it.imei)}</div>` : ''}
+          </td>
+          <td style="border: 1px solid #000; padding: 6px; text-align: center;">${it.qty || 1} PCS</td>
+          <td style="border: 1px solid #000; padding: 6px; text-align: right;">${f(it.rate || 0)}</td>
+          <td style="border: 1px solid #000; padding: 6px; text-align: right;">${f(lineTotal)}</td>
+        </tr>
+      `;
+    }).join('');
+
+    let emptyRows = '';
+    for (let i = items.length; i < 9; i++) {
+      emptyRows += `<tr><td style="border: 1px solid #000; padding: 8px;">&nbsp;</td><td style="border: 1px solid #000;">&nbsp;</td><td style="border: 1px solid #000;">&nbsp;</td><td style="border: 1px solid #000;">&nbsp;</td><td style="border: 1px solid #000;">&nbsp;</td></tr>`;
+    }
+
+    const finalPayable = Math.max(0, totalGross - discount);
+    const words = C.numberToWords(finalPayable);
+
+    return `
+      <div style="font-family: Arial, Helvetica, sans-serif; color: #000; background: #fff; font-size: 11px; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <div style="text-align: center; font-size: 16px; font-weight: bold; margin-bottom: 5px;">RETAIL INVOICE / BILL</div>
+          
+          <table style="width: 100%; border-collapse: collapse; border: 1px solid #000;">
+            <tr>
+              <td style="width: 55%; border: 1px solid #000; padding: 5px; vertical-align: top;">
+                <div style="font-size: 15px; font-weight: 900;">${C.escapeHTML(p.name || 'My Store')}</div>
+                <div>${C.escapeHTML(p.address || '')}</div>
+                <div>Help Line: ${C.escapeHTML(p.phone || '—')}</div>
+              </td>
+              <td style="width: 45%; border: 1px solid #000; padding: 5px; vertical-align: top;">
+                <div>Bill No: <strong>${C.escapeHTML(invNo)}</strong></div>
+                <div>Date: <strong>${datePretty}</strong></div>
+                <div>Payment Mode: <strong>${C.escapeHTML(document.getElementById('billLedger')?.value || 'Cash')}</strong></div>
+              </td>
+            </tr>
+            <tr>
+              <td style="width: 60%; border: 1px solid #000; padding: 5px; vertical-align: top;">
+                <div style="font-weight: bold;">Customer Details:</div>
+                <div style="font-size: 12px; font-weight: bold;">${C.escapeHTML(custName)}</div>
+                <div>${C.escapeHTML(custAddr || '—')}</div>
+                <div><strong>Phone:</strong> ${C.escapeHTML(custPhone || '—')}</div>
+              </td>
+              <td style="width: 40%; border: 1px solid #000; padding: 5px; text-align: center; vertical-align: middle; background: #fafafa;">
+                <div style="font-size: 9px; font-weight: bold; color: #0c4a6e; margin-bottom: 3px; text-transform: uppercase;">Customer Portal</div>
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(baseUrl + 'index.html#customer')}" style="height: 55px; width: 55px; margin: 0 auto; display: block; border: 1px solid #cbd5e1; padding: 2px; background: #fff;">
+                <div style="font-size: 8px; margin-top: 3px; color: #334155;">Shop Code: <b style="font-family:monospace; color:#0c4a6e;">${C.escapeHTML(shopCode)}</b></div>
+              </td>
+            </tr>
+          </table>
+
+          <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-top: -1px;">
+            <thead>
+              <tr style="background: #f1f5f9; font-weight: bold; text-align: center;">
+                <th style="border: 1px solid #000; padding: 5px; width: 35px;">Sl.</th>
+                <th style="border: 1px solid #000; padding: 5px; text-align: left;">Item Description</th>
+                <th style="border: 1px solid #000; padding: 5px; width: 60px;">Quantity</th>
+                <th style="border: 1px solid #000; padding: 5px; width: 100px;">Rate</th>
+                <th style="border: 1px solid #000; padding: 5px; width: 110px;">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows}
+              ${emptyRows}
+            </tbody>
+            <tfoot>
+              ${discount > 0 ? `
+                <tr>
+                  <td colspan="4" style="border: 1px solid #000; padding: 4px; text-align: right; color: red; font-weight: bold;">Special Discount</td>
+                  <td style="border: 1px solid #000; padding: 4px; text-align: right; color: red; font-weight: bold;">-₹ ${discount.toFixed(2)}</td>
+                </tr>
+              ` : ''}
+              <tr style="font-weight: bold; background: #f8fafc;">
+                <td colspan="2" style="border: 1px solid #000; padding: 5px; text-align: right;">Total</td>
+                <td style="border: 1px solid #000; padding: 5px; text-align: center;">${totalQty} PCS</td>
+                <td style="border: 1px solid #000;"></td>
+                <td style="border: 1px solid #000; padding: 5px; text-align: right; font-size: 13px;">₹ ${finalPayable.toFixed(2)}</td>
+              </tr>
+            </tfoot>
+          </table>
+
+          <div style="border: 1px solid #000; border-top: none; padding: 5px;">
+            <span style="font-size: 10px;">Amount in words:</span> <strong>INR ${words}</strong>
+          </div>
+
+          <table style="width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 15px;">
+            <tr>
+              <td style="width: 60%; vertical-align: top;">
+                <div style="font-weight: bold; text-decoration: underline;">Terms & Conditions</div>
+                <div>1. Goods once sold will not be returned.<br>2. Warranty as per manufacturer terms.</div>
+              </td>
+              <td style="width: 40%; text-align: center; vertical-align: bottom;">
+                <div style="font-weight: bold;">for ${C.escapeHTML(p.name || 'My Store')}</div>
+                <div style="height: 35px;"></div>
+                <div style="border-top: 1px solid #000; display: inline-block; padding: 0 15px;">Authorised Signatory</div>
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    `;
+  }
 
   /* ============================================================
      THERMAL LAYOUT (58mm / 80mm)
@@ -630,7 +761,7 @@
     let totalTax = 0;
     let tCGST = 0, tSGST = 0, tIGST = 0;
 
-    const rows = items.map((it, idx) => {
+    const rows = items.map((it) => {
       const lineTotal = (it.rate || 0) * (it.qty || 1);
       const lineTaxable = lineTotal / (1 + (it.gst || 0) / 100);
       const lineTax = lineTotal - lineTaxable;
@@ -678,7 +809,7 @@
           <span>Date: ${datePretty}</span>
         </div>
         <div style="font-size: 0.85em;">Name: ${C.escapeHTML(custName)}</div>
-        ${custPhone !== '—' ? `<div style="font-size: 0.85em;">Phone: ${C.escapeHTML(custPhone)}</div>` : ''}
+        ${custPhone && custPhone !== '—' ? `<div style="font-size: 0.85em;">Phone: ${C.escapeHTML(custPhone)}</div>` : ''}
         ${!isNonGst ? `${custGSTIN ? `<div style="font-size:0.85em;">GSTIN: ${C.escapeHTML(custGSTIN)}</div>` : ''}<div style="font-size:0.85em;">State: ${C.escapeHTML(custState)} (${C.escapeHTML(custStateCode)})</div>` : ''}
         
         <hr style="border: none; border-top: 1px dashed #000; margin: 4px 0;">
@@ -712,7 +843,7 @@
         
         <div style="text-align: center; font-size: 0.8em; margin-top: 5px;">
           <img src="${portalQrUrl}" style="width: 70px; height: 70px; display: block; margin: 0 auto;">
-          <div>Scan to view bill</div>
+          <div>Scan to view bill | Shop: <b>${C.escapeHTML(shopCode)}</b></div>
         </div>
         
         <div style="text-align: center; font-size: 0.75em; margin-top: 8px;">
@@ -723,7 +854,6 @@
       </div>
     `;
   }
-
 
   /* ============================================================
      CART
@@ -801,9 +931,8 @@
     renderCart(); renderPreview();
   }
 
-
   /* ============================================================
-     BARCODE
+     BARCODE & SCANNING (WITH COOLDOWN)
      ============================================================ */
   function handleBarcodeKey(e) {
     if (e.key !== 'Enter') return;
@@ -811,13 +940,27 @@
     const code = (e.target.value || '').trim();
     if (!code) return;
     e.target.value = '';
-    handleScannedCode(code);
+    handleScannedCode(code, false);
   }
 
-  function handleScannedCode(code) {
+  function handleScannedCode(code, isFromScanner = false) {
     if (!requirePerm('billing.create')) return;
+    
     const norm = C.normalizeIMEI(code);
+    if (!norm) return;
+
+    // ⭐ Cooldown Logic (একই কোড ২.৫ সেকেন্ডের মধ্যে স্ক্যান হলে ইগনোর করবে)
+    if (isFromScanner) {
+      const now = Date.now();
+      if (norm === lastScannedCode && (now - lastScannedTime < 2500)) {
+        return; // Ignore duplicate camera frame scan
+      }
+      lastScannedCode = norm;
+      lastScannedTime = now;
+    }
+
     const stockItem = S.inventory.find((x) => (x.imei && C.normalizeIMEI(x.imei) === norm) || (x.model && x.model.toLowerCase() === code.toLowerCase()));
+    
     if (stockItem) {
       if (stockItem.status === 'Sold') { C.toast('Already SOLD: ' + stockItem.model, 'error'); C.playErrorBeep(); return; }
       pushItem({
@@ -827,11 +970,17 @@
       });
       return;
     }
+    
     C.playErrorBeep();
     const rate = prompt('"' + code + '" not in stock.\n\nEnter selling price (₹):', '0');
     if (!rate || isNaN(rate) || parseFloat(rate) <= 0) return;
     const model = prompt('Enter model name:', 'Mobile Device') || 'Device';
-    pushItem({ stockId: null, model, imei: code, hsn: billType === 'GST' ? '8517' : '', gst: billType === 'GST' ? 18 : 0, qty: 1, rate: parseFloat(rate), purchaseCost: 0 });
+    
+    pushItem({ 
+      stockId: null, model, imei: code, 
+      hsn: billType === 'GST' ? '8517' : '', gst: billType === 'GST' ? 18 : 0, 
+      qty: 1, rate: parseFloat(rate), purchaseCost: 0 
+    });
   }
 
   function lookupIMEI(val) {
@@ -844,7 +993,6 @@
       C.playBeep();
     }
   }
-
 
   /* ============================================================
      INVOICE NUMBER
@@ -871,7 +1019,6 @@
     refreshInvoiceNo();
     renderPreview();
   }
-
 
   /* ============================================================
      SCANNER
@@ -907,7 +1054,12 @@
 
     try {
       html5Qr = new Html5Qrcode('billReader');
-      await html5Qr.start({ facingMode: 'environment' }, { fps: 12, qrbox: { width: 280, height: 160 } }, (decodedText) => { handleScannedCode(decodedText); }, () => {});
+      await html5Qr.start(
+        { facingMode: 'environment' }, 
+        { fps: 12, qrbox: { width: 280, height: 160 } }, 
+        (decodedText) => { handleScannedCode(decodedText, true); }, 
+        () => {}
+      );
       scannerActive = true;
     } catch (e) {
       C.toast('Camera error: ' + (e.message || 'denied'), 'error');
@@ -915,7 +1067,6 @@
       if (btn) btn.textContent = '📷 Scan';
     }
   }
-
 
   /* ============================================================
      FINALIZE
@@ -996,6 +1147,23 @@
       createdAt: new Date().toISOString()
     };
 
+    // ⭐ Credit Sale / Udhar Auto-Party Sync ⭐
+    if (ledger === 'Credit / Sundry Debtors' && custPhone) {
+      let party = (S.parties || []).find((p) => p.type === 'CUSTOMER' && (p.phone === custPhone || p.name.toLowerCase() === custName.toLowerCase()));
+      if (!party) {
+        party = {
+          id: 'cust-' + Date.now(), type: 'CUSTOMER',
+          name: custName, phone: custPhone, gstin: custGSTIN, address: custAddr,
+          opening: 0, drCr: 'DR', createdAt: new Date().toISOString()
+        };
+        if (!Array.isArray(S.parties)) S.parties = [];
+        S.parties.push(party);
+        C.safeSave('sfp_parties', S.parties);
+        try { await Cl.pushOne('parties', party); } catch (e) {}
+      }
+      record.partyId = party.id;
+    }
+
     if (!Array.isArray(S.invoices)) S.invoices = [];
     S.invoices.unshift(record);
     C.safeSave('sfp_invoices', S.invoices);
@@ -1041,7 +1209,6 @@
     }, 1200);
   }
 
-
   /* ============================================================
      PRINT — iframe
      ============================================================ */
@@ -1078,7 +1245,6 @@
     else { iframe.onload = () => setTimeout(triggerPrint, 500); setTimeout(triggerPrint, 1200); }
   }
 
-
   function populateCustomerList() {
     const dl = document.getElementById('billCustomerList');
     if (!dl) return;
@@ -1086,13 +1252,12 @@
     dl.innerHTML = parties.filter((p) => p.type === 'CUSTOMER').map((p) => `<option value="${C.escapeHTML(p.name)}">${C.escapeHTML(p.phone || '')}</option>`).join('');
   }
 
-
   /* ============================================================
      INIT
      ============================================================ */
   async function init_billingModule() {
     populateCustomerStates();
-    console.log('%c🧾 Billing module initialized (v5.0.1)', 'color:#0ea5e9;font-weight:bold');
+    console.log('%c🧾 Billing module initialized (v5.0.2)', 'color:#0ea5e9;font-weight:bold');
 
     if (!window.SF?.perms?.can?.('billing.view')) {
       const c = document.getElementById('moduleContainer');
@@ -1107,7 +1272,6 @@
     const badge = document.getElementById('billFyBadge');
     if (badge) badge.textContent = fy.label;
 
-    /* Default GST */
     billType = 'GST';
     setBillType('GST');
 
@@ -1135,7 +1299,6 @@
 
     return { onUnload: () => {} };
   }
-
 
   window.SF = window.SF || {};
   window.SF.billing = {
