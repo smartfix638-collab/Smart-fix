@@ -1,7 +1,7 @@
 <!-- ============================================================
-     SMARTFIX ERP — Purchase (v4.6.0 Fixed)
+     SMARTFIX ERP — Purchase (v5.1.0 - Scanner Cooldown Fix)
      File: modules/purchase.html
-     Fixed: Inter-state GST selection
+     Fixed: Scanner debounce, removed annoying duplicate toasts.
      ============================================================ -->
 
 <section id="purchaseModule" class="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -57,7 +57,7 @@
           <input type="text" id="purGSTIN" maxlength="15" placeholder="Optional" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-mono uppercase">
         </div>
       </div>
-      <!-- ⭐ INTER/INTRA STATE OPTION -->
+      <!-- INTER/INTRA STATE OPTION -->
       <div id="purTaxTypeWrap">
         <label class="block text-[10px] font-bold uppercase mb-1 text-sky-400">GST Type</label>
         <select id="purTaxType" class="w-full bg-slate-950 border border-sky-700/60 rounded-lg px-2.5 py-1.5 text-xs text-sky-200 font-semibold">
@@ -87,9 +87,13 @@
         </div>
       </div>
 
+      <!-- RAPID SCAN INPUT WITH ADD BUTTON -->
       <div>
         <label class="block text-[9px] font-bold uppercase text-amber-400 mb-1">Rapid USB / Bluetooth Scanner</label>
-        <input type="text" id="purRapidInput" onkeydown="SF.purchase.handleRapidScan(event)" placeholder="⚡ Scan IMEI now (auto-adds to batch)" class="w-full bg-slate-950 border-2 border-amber-600 rounded-lg px-3 py-2 text-xs font-mono font-bold text-amber-100 placeholder-amber-700">
+        <div class="flex gap-2">
+          <input type="text" id="purRapidInput" onkeydown="SF.purchase.handleRapidScan(event)" placeholder="⚡ Scan IMEI now" class="flex-1 bg-slate-950 border-2 border-amber-600 rounded-lg px-3 py-2 text-xs font-mono font-bold text-amber-100 placeholder-amber-700">
+          <button type="button" onclick="SF.purchase.manualAddBatch()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-3 py-2 rounded-lg text-xs transition">+ Add</button>
+        </div>
       </div>
 
       <div class="bg-slate-950/70 border border-amber-800/40 rounded-lg p-2.5">
@@ -197,7 +201,14 @@
 
   let billType = 'GST';
 
-  const P = { batch: [], lines: [], scannerActive: false, html5Qr: null };
+  const P = { 
+    batch: [], 
+    lines: [], 
+    scannerActive: false, 
+    html5Qr: null,
+    lastScannedCode: '',
+    lastScannedTime: 0
+  };
 
 
   function setBillType(type) {
@@ -233,10 +244,12 @@
 
 
   function init_purchaseModule() {
-    console.log('%c🛒 Purchase module initialized (v4.6.0)', 'color:#f59e0b;font-weight:bold');
+    console.log('%c🛒 Purchase module initialized (v5.1.0)', 'color:#f59e0b;font-weight:bold');
 
     P.batch = [];
     P.lines = [];
+    P.lastScannedCode = '';
+    P.lastScannedTime = 0;
 
     const dEl = document.getElementById('purDate');
     if (dEl && !dEl.value) dEl.value = C.fmtDate(new Date());
@@ -289,30 +302,62 @@
 
   /* ============ RAPID SCAN ============ */
   function handleRapidScan(e) {
-    if (e.key !== 'Enter') return;
+    if (e.key !== 'Enter' && e.key !== 'NumpadEnter') return;
     e.preventDefault();
-    const code = (e.target.value || '').trim();
-    if (!code) return;
-    e.target.value = '';
-    addToBatch(code);
+    manualAddBatch();
   }
 
-  function addToBatch(code) {
+  function manualAddBatch() {
+    const input = document.getElementById('purRapidInput');
+    const code = (input?.value || '').trim();
+    if (!code) return;
+    input.value = '';
+    addToBatch(code, false); // false = Manual entry, show toasts
+    input.focus();
+  }
+
+  function addToBatch(code, isFromScanner = false) {
     const clean = C.normalizeIMEI(code);
     if (!clean) return;
-    if (P.batch.some((x) => x.imei === clean)) { C.toast('Already in batch', 'warning'); C.playErrorBeep(); return; }
+
+    // ⭐ Cooldown Logic for Scanner: Ignore identical scans within 2.5 seconds
+    if (isFromScanner) {
+      const now = Date.now();
+      if (clean === P.lastScannedCode && (now - P.lastScannedTime < 2500)) {
+        return; // Silently ignore repeated scans
+      }
+      P.lastScannedCode = clean;
+      P.lastScannedTime = now;
+    }
+    
+    // Check duplicate in batch
+    if (P.batch.some((x) => x.imei === clean)) { 
+      if (!isFromScanner) { C.toast('Already in batch', 'warning'); C.playErrorBeep(); }
+      return; 
+    }
+    
+    // Check if exists in inventory (and not sold)
     const inStock = (S.inventory || []).some((x) => x.imei && C.normalizeIMEI(x.imei) === clean && x.status !== 'Sold');
-    if (inStock) { C.toast('Already in stock', 'warning'); C.playErrorBeep(); return; }
+    if (inStock) { 
+      if (!isFromScanner) { C.toast('Already in stock', 'warning'); C.playErrorBeep(); }
+      return; 
+    }
+
     P.batch.push({ imei: clean, raw: code });
     renderBatch();
     C.playBeep();
   }
 
-  function removeFromBatch(idx) { P.batch.splice(idx, 1); renderBatch(); }
+  function removeFromBatch(idx) { 
+    P.batch.splice(idx, 1); 
+    renderBatch(); 
+  }
+  
   function clearBatch() {
     if (P.batch.length === 0) return;
     if (!confirm('Clear all ' + P.batch.length + ' scanned?')) return;
-    P.batch = []; renderBatch();
+    P.batch = []; 
+    renderBatch();
   }
 
   function renderBatch() {
@@ -320,7 +365,10 @@
     const counter = document.getElementById('purBatchCounter');
     if (counter) counter.textContent = 'Scanned: ' + P.batch.length + ' units';
     if (!c) return;
-    if (P.batch.length === 0) { c.innerHTML = '<span class="text-[10px] text-slate-500 italic">No IMEIs scanned yet</span>'; return; }
+    if (P.batch.length === 0) { 
+      c.innerHTML = '<span class="text-[10px] text-slate-500 italic">No IMEIs scanned yet</span>'; 
+      return; 
+    }
     c.innerHTML = P.batch.map((b, idx) => `<span class="inline-flex items-center gap-1 bg-amber-900/40 border border-amber-700/60 text-amber-100 text-[10px] font-mono px-2 py-0.5 rounded"><span>${C.escapeHTML(b.imei)}</span><button type="button" onclick="SF.purchase.removeFromBatch(${idx})" class="text-rose-400 hover:text-rose-300 font-bold">✕</button></span>`).join('');
   }
 
@@ -349,7 +397,8 @@
     if (btn) btn.textContent = '✕ Close';
     try {
       P.html5Qr = new Html5Qrcode('purReader');
-      await P.html5Qr.start({ facingMode: 'environment' }, { fps: 12, qrbox: { width: 280, height: 160 } }, (t) => addToBatch(t), () => {});
+      // Reduced fps from 12 to 10 to prevent excessive scans
+      await P.html5Qr.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 280, height: 160 } }, (t) => addToBatch(t, true), () => {});
       P.scannerActive = true;
     } catch (e) {
       C.toast('Camera error', 'error');
@@ -681,7 +730,7 @@
     init: init_purchaseModule,
     setBillType,
     addLine, removeLine, renderLines,
-    handleRapidScan, addToBatch, removeFromBatch, clearBatch,
+    handleRapidScan, manualAddBatch, addToBatch, removeFromBatch, clearBatch,
     toggleScanner, savePurchase, renderRegister,
     viewPurchase, deletePurchase, onDateChange
   };
