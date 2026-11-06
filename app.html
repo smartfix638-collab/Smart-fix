@@ -9,7 +9,7 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%230ea5e9'/%3E%3Cstop offset='1' stop-color='%230369a1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='100' fill='url(%23g)'/%3E%3Ctext x='50%25' y='65%25' font-size='300' text-anchor='middle' fill='white'%3E%F0%9F%94%A7%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%230ea5e9'/%3E%3Cstop offset='1' stop-color='%230369a1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='100' fill='url(%23g)'/%3E%3Ctext x='50%25' y='65%25' font-size='300' text-anchor='middle' fill='white'%3E%F0%9F%94%A7%3C/text%3E%3C/svg%3E">
 
-<meta name="theme-color" content="#0a0a1a">
+<meta name="theme-color" content="#060b14">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="SmartFix ERP">
@@ -27,7 +27,7 @@ html, body { margin: 0; padding: 0; height: 100vh; font-family: -apple-system, B
 ::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.2); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(56, 189, 248, 0.4); }
 
-/* Sidebar */
+/* Sidebar Links */
 .sidebar-link { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; color: #94a3b8; transition: all 0.2s; text-decoration: none; margin-bottom: 2px; cursor: pointer; outline: none; }
 .sidebar-link:hover { background: rgba(30, 41, 59, 0.6); color: #e2e8f0; }
 .sidebar-link:focus { background: rgba(14, 165, 233, 0.2); color: #38bdf8; box-shadow: inset 0 0 0 1px #0ea5e9; }
@@ -49,10 +49,6 @@ html, body { margin: 0; padding: 0; height: 100vh; font-family: -apple-system, B
   #app-sidebar, .no-print, #topbar { display: none !important; }
   #isolatedPrintContainer { display: flex !important; flex-direction: column !important; justify-content: space-between !important; position: static !important; width: 100% !important; max-width: 202mm !important; min-height: 285mm !important; height: 285mm !important; margin: 0 auto !important; padding: 2mm 3mm !important; box-sizing: border-box !important; page-break-after: avoid !important; page-break-inside: avoid !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 }
-
-/* Loader */
-.sf-spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(56, 189, 248, 0.2); border-top-color: #0ea5e9; border-radius: 50%; animation: sfSpin 0.7s linear infinite; }
-@keyframes sfSpin { to { transform: rotate(360deg); } }
 
 /* Status Dot */
 .status-dot { width: 6px; height: 6px; background: #10b981; border-radius: 50%; display: inline-block; box-shadow: 0 0 8px #10b981; margin-right: 5px; }
@@ -106,13 +102,16 @@ html, body { margin: 0; padding: 0; height: 100vh; font-family: -apple-system, B
         </div>
       </div>
 
-      <!-- Center: Global Search -->
-      <div class="flex-1 max-w-md mx-4 hidden md:block">
+      <!-- ⭐ Center: Global Search -->
+      <div class="flex-1 max-w-md mx-4 hidden md:block relative" id="globalSearchContainer">
         <div class="relative">
           <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">🔍</span>
-          <input type="text" placeholder="Search 'Ctrl + K'" class="w-full bg-[#0f172a] border border-slate-700 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500 transition-colors">
-          <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded font-mono border border-slate-700">Ctrl K</span>
+          <input type="text" id="globalSearchInput" placeholder="Search anything... (Ctrl + K)" autocomplete="off" class="w-full bg-[#0f172a] border border-slate-700 rounded-lg pl-9 pr-12 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500 transition-colors">
+          <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded font-mono border border-slate-700 pointer-events-none">Ctrl K</span>
         </div>
+        
+        <!-- Search Results Dropdown -->
+        <div id="globalSearchResults" class="absolute top-full left-0 right-0 mt-2 bg-[#0b1120] border border-slate-700 rounded-xl shadow-2xl max-h-[400px] overflow-y-auto hidden z-50"></div>
       </div>
 
       <!-- Right: Actions & Profile -->
@@ -158,7 +157,9 @@ html, body { margin: 0; padding: 0; height: 100vh; font-family: -apple-system, B
 <script type="module" src="./js/pwa-install.js"></script>
 
 <script>
-// Sidebar Toggle Logic
+// ════════════════════════════════════════════════════════════
+// 1. SIDEBAR TOGGLE LOGIC
+// ════════════════════════════════════════════════════════════
 window.toggleSidebar = function() {
   const sidebar = document.getElementById('app-sidebar');
   const overlay = document.getElementById('sidebarOverlay');
@@ -172,16 +173,16 @@ window.toggleSidebar = function() {
   }
 }
 
-// ⭐ One-Click Backup Logic
+// ════════════════════════════════════════════════════════════
+// 2. ONE-CLICK BACKUP LOGIC
+// ════════════════════════════════════════════════════════════
 window.triggerQuickBackup = async function() {
   try {
-    // Try using the settings module if loaded
     if (window.SF && window.SF.settings && typeof window.SF.settings.runDailyBackupNow === 'function') {
       await window.SF.settings.runDailyBackupNow();
       return;
     }
     
-    // Fallback: simple JSON download from localStorage
     const keys = ['sfp_store_profile', 'sfp_invoices', 'sfp_stock', 'sfp_parties', 'sfp_purchases', 'sfp_vouchers', 'sfp_credit_notes', 'sfp_staff', 'sfp_repairs'];
     const backup = { exportedAt: new Date().toISOString(), app: 'SmartFix ERP' };
     
@@ -209,7 +210,167 @@ window.triggerQuickBackup = async function() {
   }
 };
 
-// Service Worker
+// ════════════════════════════════════════════════════════════
+// 3. GLOBAL SEARCH LOGIC
+// ════════════════════════════════════════════════════════════
+const searchInput = document.getElementById('globalSearchInput');
+const searchResults = document.getElementById('globalSearchResults');
+
+// Ctrl + K to focus search
+window.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    e.preventDefault();
+    searchInput?.focus();
+    searchInput?.select();
+  }
+});
+
+// Input event for search
+searchInput?.addEventListener('input', debounce((e) => {
+  const query = e.target.value.trim().toLowerCase();
+  if (!query) {
+    searchResults.classList.add('hidden');
+    return;
+  }
+  performGlobalSearch(query);
+}, 300));
+
+// Close dropdown on outside click
+document.addEventListener('click', (e) => {
+  if (!document.getElementById('globalSearchContainer')?.contains(e.target)) {
+    searchResults?.classList.add('hidden');
+  }
+});
+
+// Debounce function
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => { clearTimeout(timeout); func(...args); };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+// Main Search Function
+function performGlobalSearch(query) {
+  const S = window.SF?.state?.state;
+  if (!S) return;
+
+  let results = [];
+  const limit = 5;
+
+  // 1. Modules Navigation
+  const modules = [
+    { name: 'Dashboard', key: 'dashboard', icon: '📊' },
+    { name: 'Sales / Billing', key: 'billing', icon: '🧾' },
+    { name: 'Returns', key: 'returns', icon: '↩️' },
+    { name: 'Repair', key: 'repair', icon: '🔧' },
+    { name: 'Purchase', key: 'purchase', icon: '🛒' },
+    { name: 'Stock / Inventory', key: 'inventory', icon: '📦' },
+    { name: 'Parties / Customers', key: 'parties', icon: '👥' },
+    { name: 'GST Returns', key: 'gstReturns', icon: '📋' },
+    { name: 'Settings', key: 'settings', icon: '⚙️' }
+  ].filter(m => m.name.toLowerCase().includes(query)).slice(0, 3);
+
+  if (modules.length > 0) {
+    results.push({ title: 'Pages & Modules', items: modules.map(m => ({ icon: m.icon, main: m.name, sub: 'Go to page', onClick: `SF.router.go('${m.key}')` })) });
+  }
+
+  // 2. Customers / Parties
+  const parties = (S.parties || []).filter(p => 
+    (p.name || '').toLowerCase().includes(query) || (p.phone || '').includes(query)
+  ).slice(0, limit);
+
+  if (parties.length > 0) {
+    results.push({ title: 'Customers / Parties', items: parties.map(p => ({
+      icon: '👤', main: p.name, sub: p.phone || p.gstin || 'Customer',
+      onClick: `SF.router.go('parties'); setTimeout(() => { const el = document.getElementById('prtSearchInput'); if(el){ el.value = '${p.name}'; SF.parties.renderList(); } }, 500);`
+    }))});
+  }
+
+  // 3. Invoices
+  const invoices = (S.invoices || []).filter(i => 
+    (i.invoiceNo || '').toLowerCase().includes(query) || 
+    (i.customerName || '').toLowerCase().includes(query) ||
+    (i.customerPhone || '').includes(query) ||
+    (i.items || []).some(it => (it.imei || '').toLowerCase().includes(query))
+  ).slice(0, limit);
+
+  if (invoices.length > 0) {
+    results.push({ title: 'Invoices', items: invoices.map(i => ({
+      icon: '🧾', main: `Inv: ${i.invoiceNo} - ₹${i.totalGross}`, sub: `${i.customerName} (${i.date})`,
+      onClick: `SF.router.go('accounting'); setTimeout(() => { const el = document.getElementById('accSearchInput'); if(el){ el.value = '${i.invoiceNo}'; SF.accounting.apply(); } }, 500);`
+    }))});
+  }
+
+  // 4. Stock / Inventory
+  const stock = (S.inventory || []).filter(it => 
+    (it.model || '').toLowerCase().includes(query) || 
+    (it.imei || '').toLowerCase().includes(query)
+  ).slice(0, limit);
+
+  if (stock.length > 0) {
+    results.push({ title: 'Stock / Inventory', items: stock.map(it => ({
+      icon: '📦', main: it.model, sub: `IMEI: ${it.imei || 'N/A'} | ₹${it.cost}`,
+      onClick: `SF.router.go('inventory'); setTimeout(() => { const el = document.getElementById('invSearchInput'); if(el){ el.value = '${it.imei || it.model}'; SF.inventory.renderRegister(); } }, 500);`
+    }))});
+  }
+
+  // 5. Repairs
+  let repairs = [];
+  try { repairs = JSON.parse(localStorage.getItem('sfp_repairs') || '[]'); } catch(e){}
+  const filteredRepairs = repairs.filter(r => 
+    (r.jobNo || '').toLowerCase().includes(query) || 
+    (r.customerName || '').toLowerCase().includes(query) ||
+    (r.customerPhone || '').includes(query) ||
+    (r.deviceIMEI || '').toLowerCase().includes(query)
+  ).slice(0, limit);
+
+  if (filteredRepairs.length > 0) {
+    results.push({ title: 'Repairs', items: filteredRepairs.map(r => ({
+      icon: '🔧', main: `${r.jobNo} - ${r.deviceModel}`, sub: `${r.customerName} (${r.status})`,
+      onClick: `SF.router.go('repair'); setTimeout(() => { SF.repair.openDetail('${r.id}'); }, 600);`
+    }))});
+  }
+
+  renderSearchResults(results);
+}
+
+function renderSearchResults(results) {
+  if (!searchResults) return;
+
+  if (results.length === 0) {
+    searchResults.innerHTML = `<div class="p-4 text-center text-xs text-slate-500">No results found for your search.</div>`;
+    searchResults.classList.remove('hidden');
+    return;
+  }
+
+  let html = '';
+  results.forEach(group => {
+    html += `<div class="p-2 border-b border-slate-800/50 last:border-0"><div class="text-[9px] font-bold uppercase tracking-wider text-slate-500 px-2 mb-1">${group.title}</div>`;
+    group.items.forEach(item => {
+      html += `
+        <div onclick="${item.onClick}; document.getElementById('globalSearchResults').classList.add('hidden'); document.getElementById('globalSearchInput').value='';" 
+             class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-800 cursor-pointer transition">
+          <div class="w-8 h-8 rounded bg-slate-900 border border-slate-700 flex items-center justify-center text-sm">${item.icon}</div>
+          <div class="min-w-0 flex-1">
+            <div class="text-xs font-bold text-white truncate">${item.main}</div>
+            <div class="text-[10px] text-slate-400 truncate">${item.sub}</div>
+          </div>
+        </div>
+      `;
+    });
+    html += `</div>`;
+  });
+
+  searchResults.innerHTML = html;
+  searchResults.classList.remove('hidden');
+}
+
+// ════════════════════════════════════════════════════════════
+// 4. SERVICE WORKER & ROUTING
+// ════════════════════════════════════════════════════════════
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js', { scope: './' })
@@ -218,7 +379,6 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// Hash routing default
 window.addEventListener('load', () => {
   if (!window.location.hash) {
     history.replaceState(null, '', '#dashboard');
