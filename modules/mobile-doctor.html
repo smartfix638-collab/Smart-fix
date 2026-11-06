@@ -1,227 +1,78 @@
 <!-- ============================================================
-     SMARTFIX ERP — Mobile Doctor Pro (v4.0.0 - QR Bridge Edition)
-     File: modules/mobile-doctor.html
-     Engine: QR Scan & Local Storage Sync (No Install Required)
+     SMARTFIX ERP — Mobile Doctor Pro (v5.0.0 - Total Diagnostic)
      ============================================================ -->
 
 <div id="mobileDoctorModule" class="min-h-screen bg-[#030712] text-slate-100 font-sans p-2 md:p-4 select-none relative overflow-x-hidden">
-
-  <!-- Ambient Glow Effects -->
   <div class="fixed top-0 left-1/4 w-[500px] h-[300px] bg-cyan-600/10 blur-[130px] rounded-full pointer-events-none -z-10"></div>
-  <div class="fixed bottom-0 right-1/4 w-[600px] h-[350px] bg-blue-600/10 blur-[150px] rounded-full pointer-events-none -z-10"></div>
 
-  <!-- TOP APP HEADER -->
   <header class="bg-[#0b1120]/80 backdrop-blur-xl border border-cyan-900/40 rounded-2xl p-3 md:px-5 md:py-3 mb-4 shadow-[0_0_25px_rgba(6,182,212,0.1)] flex flex-wrap items-center justify-between gap-4">
     <div class="flex items-center gap-3">
-      <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 p-[1px] shadow-[0_0_15px_rgba(6,182,212,0.4)]">
-        <div class="w-full h-full bg-[#070d19] rounded-[11px] flex items-center justify-center text-cyan-400 font-bold text-xl">
-          🩺
-        </div>
+      <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 p-[1px]">
+        <div class="w-full h-full bg-[#070d19] rounded-[11px] flex items-center justify-center text-cyan-400 font-bold text-xl">🩺</div>
       </div>
       <div>
-        <div class="flex items-center gap-2">
-          <h1 class="text-base font-black tracking-wide bg-gradient-to-r from-cyan-400 via-sky-300 to-blue-400 bg-clip-text text-transparent uppercase">SMARTFIX DOCTOR</h1>
-          <span class="text-[9px] px-1.5 py-0.5 rounded-md bg-cyan-950 border border-cyan-800 text-cyan-400 font-mono font-bold">QR Live</span>
-        </div>
-        <p class="text-[11px] text-slate-400 font-medium">Scan QR to check real device hardware</p>
+        <h1 class="text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 uppercase">SMARTFIX DOCTOR</h1>
+        <p class="text-[11px] text-slate-400">Scan QR to check real device hardware</p>
       </div>
     </div>
 
-    <!-- Active Connected Device Header Bar -->
     <div class="flex items-center gap-3 flex-wrap">
-      <div id="mdDeviceHeaderCard" class="hidden items-center gap-3 bg-[#0d1628]/90 border border-cyan-800/60 rounded-xl px-3.5 py-1.5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">
-        <div class="w-7 h-7 rounded-lg bg-cyan-950/80 border border-cyan-700/50 flex items-center justify-center text-sm">📱</div>
-        <div class="leading-tight">
-          <div id="mdHeaderModel" class="text-xs font-black text-white font-mono tracking-wide">Device Connected</div>
-          <div class="text-[10px] text-slate-400 flex items-center gap-1.5">
-            <span id="mdHeaderAndroid" class="text-cyan-400 font-mono">Live Test</span>
-            <span class="w-1 h-1 rounded-full bg-slate-600"></span>
-            <span class="text-slate-400 font-mono text-[9px]">Web Link</span>
-          </div>
-        </div>
-        <div class="ml-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-950/90 border border-emerald-500/40 text-emerald-300 text-[10px] font-mono">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-          <span>Connected</span>
+      <div id="mdDeviceHeaderCard" class="hidden items-center gap-3 bg-[#0d1628]/90 border border-cyan-800/60 rounded-xl px-3.5 py-1.5">
+        <div class="w-7 h-7 rounded-lg bg-cyan-950/80 flex items-center justify-center text-sm">📱</div>
+        <div>
+          <div id="mdHeaderModel" class="text-xs font-black text-white font-mono">Device Connected</div>
+          <div class="text-[10px] text-emerald-400 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>Live Test</div>
         </div>
       </div>
 
-      <!-- Connect Button -->
       <button type="button" id="mdConnectBtn" onclick="SF.mobileDoctor.connect()"
-              class="relative group overflow-hidden bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-extrabold px-5 py-2.5 rounded-xl text-xs transition duration-200 shadow-[0_0_20px_rgba(6,182,212,0.35)] flex items-center gap-2 cursor-pointer">
-        <span class="text-sm">📷</span>
-        <span id="mdConnectBtnText">Scan QR to Connect</span>
+              class="bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-extrabold px-5 py-2.5 rounded-xl text-xs shadow-lg flex items-center gap-2 cursor-pointer">
+        <span>📷</span><span id="mdConnectBtnText">Scan QR to Connect</span>
       </button>
     </div>
   </header>
 
-  <!-- DASHBOARD WRAPPER -->
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-
-    <!-- ═══ SIDEBAR NAVIGATION ═══ -->
-    <aside class="lg:col-span-2 flex flex-col gap-1.5 bg-[#0b1120]/70 backdrop-blur-md border border-slate-800/80 p-2.5 rounded-2xl h-fit">
-      <button type="button" onclick="SF.mobileDoctor.showTab('overview')" id="mdTab-overview" class="md-tab flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition text-white bg-gradient-to-r from-cyan-600/80 to-blue-600/60 shadow-[0_0_12px_rgba(6,182,212,0.3)] border border-cyan-400/30">
-        <span>📊</span><span>Overview</span>
-      </button>
-      <button type="button" onclick="SF.mobileDoctor.showTab('hardware')" id="mdTab-hardware" class="md-tab flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800/50">
-        <span>⚙️</span><span>Hardware Tests</span>
-      </button>
-      <button type="button" onclick="SF.mobileDoctor.showTab('terminal')" id="mdTab-terminal" class="md-tab flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800/50">
-        <span>📊</span><span>Live Data</span>
-      </button>
-
-      <!-- Sidebar Status -->
-      <div class="mt-6 p-3 rounded-xl bg-[#070b14] border border-cyan-900/30 text-center">
-        <div class="text-[9px] uppercase tracking-wider text-slate-500 font-mono font-bold mb-1">Bridge Connection</div>
-        <div id="mdSidebarStatusText" class="text-[11px] font-mono text-rose-400 font-bold">Disconnected</div>
-      </div>
-    </aside>
-
-    <!-- ═══ MAIN WORKSPACE PANELS ═══ -->
-    <main class="lg:col-span-10 space-y-4">
-
-      <!-- ═════════ 1. OVERVIEW & CYBER DIAL ═════════ -->
-      <div id="mdPanel-overview" class="md-panel space-y-4">
+    <main class="lg:col-span-12 space-y-4">
+      
+      <!-- Metric Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div class="bg-[#0b1120]/90 border border-cyan-600/40 rounded-xl p-3">
+          <div class="text-[10px] text-cyan-400 font-bold uppercase">Network</div>
+          <div id="mdCardNetVal" class="text-sm font-black text-white mt-1 truncate">--</div>
+        </div>
         
-        <!-- TOP ROW -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-
-          <!-- PHONE 3D SHOWCASE -->
-          <div class="lg:col-span-3 bg-gradient-to-b from-[#0e172a]/80 to-[#070c18]/90 border border-cyan-900/40 rounded-2xl p-4 flex flex-col items-center justify-center relative overflow-hidden shadow-[0_0_20px_rgba(6,182,212,0.08)]">
-            <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(6,182,212,0.15)_0%,transparent_70%)] pointer-events-none"></div>
-            <div class="w-32 h-52 md:w-36 md:h-56 rounded-2xl bg-gradient-to-b from-cyan-400/20 via-blue-900/40 to-slate-950 border-2 border-cyan-400/40 p-2 shadow-[0_0_30px_rgba(6,182,212,0.3)] flex flex-col justify-between items-center relative">
-              <div class="w-12 h-2.5 bg-black/80 rounded-full"></div>
-              <div class="text-center">
-                <div class="text-4xl">📱</div>
-                <div id="mdHeroModel" class="text-[11px] font-black text-cyan-300 font-mono mt-2 truncate w-28">Phone Test</div>
-                <div id="mdHeroBrand" class="text-[9px] text-slate-400 font-mono tracking-widest uppercase">STANDBY</div>
-              </div>
-              <div class="w-full bg-cyan-950/60 rounded py-1 text-[9px] font-mono text-center text-cyan-400 border border-cyan-800/40">Web Sync</div>
-            </div>
-          </div>
-
-          <!-- OVERALL HEALTH SCORE -->
-          <div class="lg:col-span-5 bg-[#0b1120]/80 border border-cyan-900/40 rounded-2xl p-4 flex flex-col justify-between shadow-[0_0_20px_rgba(6,182,212,0.05)]">
-            <div class="flex items-center justify-between">
-              <h2 class="text-xs font-black uppercase tracking-wider text-cyan-300">Overall Health Score</h2>
-              <span class="text-[10px] text-slate-400 font-mono">Live Computed</span>
-            </div>
-
-            <div class="flex items-center justify-around my-2">
-              <div class="relative w-32 h-32 flex items-center justify-center">
-                <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                  <circle cx="50" cy="50" r="40" stroke="#1e293b" stroke-width="8" fill="transparent"/>
-                  <circle id="mdScoreCircle" cx="50" cy="50" r="40" stroke="url(#cyanGradient)" stroke-dasharray="251.2" stroke-dashoffset="100" stroke-linecap="round" stroke-width="8" fill="transparent" class="transition-all duration-1000"/>
-                  <defs>
-                    <linearGradient id="cyanGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stop-color="#10b981" />
-                      <stop offset="50%" stop-color="#06b6d4" />
-                      <stop offset="100%" stop-color="#3b82f6" />
-                    </linearGradient>
-                  </defs>
-                </svg>
-                <div class="absolute inset-0 flex flex-col items-center justify-center">
-                  <span id="mdHeroScore" class="text-3xl font-black text-white font-mono">--</span>
-                  <span id="mdHeroScoreLabel" class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Pending</span>
-                </div>
-              </div>
-
-              <!-- Pass/Fail breakdown -->
-              <div class="space-y-1.5 text-xs font-mono">
-                <div class="flex items-center justify-between gap-4">
-                  <span class="flex items-center gap-1.5 text-slate-300"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> Passed</span>
-                  <span id="mdPassCount" class="font-bold text-emerald-400">0</span>
-                </div>
-                <div class="flex items-center justify-between gap-4">
-                  <span class="flex items-center gap-1.5 text-slate-300"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Warning</span>
-                  <span id="mdWarnCount" class="font-bold text-amber-400">0</span>
-                </div>
-                <div class="flex items-center justify-between gap-4">
-                  <span class="flex items-center gap-1.5 text-slate-300"><span class="w-2 h-2 rounded-full bg-rose-400"></span> Failed</span>
-                  <span id="mdFailCount" class="font-bold text-rose-400">0</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- INSTRUCTION PANEL -->
-          <div class="lg:col-span-4 bg-[#0b1120]/80 border border-cyan-900/40 rounded-2xl p-4 flex flex-col justify-center">
-            <h2 class="text-xs font-black uppercase tracking-wider text-cyan-300 mb-3 flex items-center gap-1.5">
-              <span>📱</span> How to Connect
-            </h2>
-            <div class="space-y-2 text-xs text-slate-300 leading-relaxed">
-              <div class="flex gap-2"><span class="text-cyan-400 font-bold">1.</span> Click <b>Scan QR to Connect</b>.</div>
-              <div class="flex gap-2"><span class="text-cyan-400 font-bold">2.</span> Open Camera on the mobile phone.</div>
-              <div class="flex gap-2"><span class="text-cyan-400 font-bold">3.</span> Scan the QR code shown on this screen.</div>
-              <div class="flex gap-2"><span class="text-cyan-400 font-bold">4.</span> Wait for the page to load & sync.</div>
-            </div>
-          </div>
-
+        <div class="bg-[#0b1120]/90 border border-emerald-600/40 rounded-xl p-3">
+          <div class="text-[10px] text-emerald-400 font-bold uppercase">Battery</div>
+          <div id="mdCardBatteryVal" class="text-sm font-black text-white mt-1">--%</div>
         </div>
 
-        <!-- METRIC CARDS -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-          <div class="bg-[#0b1120]/90 border border-cyan-600/40 rounded-xl p-3 shadow-[0_0_15px_rgba(6,182,212,0.08)]">
-            <div class="flex items-center justify-between text-cyan-400">
-              <span class="text-sm">🔋</span>
-              <span class="text-[9px] font-mono uppercase text-slate-400">Battery</span>
-            </div>
-            <div id="mdCardBatteryVal" class="text-xl font-black text-white font-mono mt-1">--%</div>
-            <div id="mdCardBatterySub" class="text-[9px] text-cyan-300 font-mono mt-0.5 truncate">Waiting...</div>
-          </div>
-
-          <div class="bg-[#0b1120]/90 border border-purple-600/40 rounded-xl p-3 shadow-[0_0_15px_rgba(168,85,247,0.08)]">
-            <div class="flex items-center justify-between text-purple-400">
-              <span class="text-sm">🧠</span>
-              <span class="text-[9px] font-mono uppercase text-slate-400">RAM</span>
-            </div>
-            <div id="mdCardRamVal" class="text-xl font-black text-white font-mono mt-1">--</div>
-            <div id="mdCardRamSub" class="text-[9px] text-purple-300 font-mono mt-0.5 truncate">Waiting...</div>
-          </div>
-
-          <div class="bg-[#0b1120]/90 border border-amber-600/40 rounded-xl p-3 shadow-[0_0_15px_rgba(245,158,11,0.08)]">
-            <div class="flex items-center justify-between text-amber-400">
-              <span class="text-sm">🖥️</span>
-              <span class="text-[9px] font-mono uppercase text-amber-400/90 font-bold">Screen</span>
-            </div>
-            <div id="mdCardScreenVal" class="text-xl font-black text-white font-mono mt-1">--</div>
-            <div class="text-[9px] text-amber-300 font-mono mt-0.5 truncate">Resolution</div>
-          </div>
-
-          <div class="bg-[#0b1120]/90 border border-sky-600/40 rounded-xl p-3 shadow-[0_0_15px_rgba(14,165,233,0.08)]">
-            <div class="flex items-center justify-between text-sky-400">
-              <span class="text-sm">📶</span>
-              <span class="text-[9px] font-mono uppercase text-slate-400">Network</span>
-            </div>
-            <div id="mdCardNetVal" class="text-xl font-black text-white font-mono mt-1">--</div>
-            <div class="text-[9px] text-sky-300 font-mono mt-0.5 truncate">Connection</div>
-          </div>
+        <div class="bg-[#0b1120]/90 border border-amber-600/40 rounded-xl p-3">
+          <div class="text-[10px] text-amber-400 font-bold uppercase">Charging</div>
+          <div id="mdCardChargeVal" class="text-sm font-black text-white mt-1 truncate">--</div>
         </div>
 
-      </div>
+        <div class="bg-[#0b1120]/90 border border-purple-600/40 rounded-xl p-3">
+          <div class="text-[10px] text-purple-400 font-bold uppercase">RAM</div>
+          <div id="mdCardRamVal" class="text-sm font-black text-white mt-1 truncate">--</div>
+        </div>
 
-      <!-- ═════════ 2. HARDWARE TESTS PANEL ═════════ -->
-      <div id="mdPanel-hardware" class="md-panel space-y-4" style="display:none">
-        <div class="bg-[#0b1120]/80 border border-cyan-900/40 rounded-2xl p-5">
-          <h3 class="text-sm font-black text-cyan-400 mb-3">🖥️ Screen Pure Color Diagnostics</h3>
-          <p class="text-xs text-slate-400 mb-4">Click to inspect dead pixels on the computer monitor.</p>
-          <div class="grid grid-cols-3 sm:grid-cols-6 gap-3">
-            <button onclick="SF.mobileDoctor.testColor('red')" class="py-3 rounded-xl font-bold text-xs text-white bg-red-600 cursor-pointer shadow-lg shadow-red-600/20">RED</button>
-            <button onclick="SF.mobileDoctor.testColor('green')" class="py-3 rounded-xl font-bold text-xs text-white bg-emerald-600 cursor-pointer shadow-lg shadow-emerald-600/20">GREEN</button>
-            <button onclick="SF.mobileDoctor.testColor('blue')" class="py-3 rounded-xl font-bold text-xs text-white bg-blue-600 cursor-pointer shadow-lg shadow-blue-600/20">BLUE</button>
-            <button onclick="SF.mobileDoctor.testColor('white')" class="py-3 rounded-xl font-bold text-xs text-slate-950 bg-white cursor-pointer shadow-lg">WHITE</button>
-            <button onclick="SF.mobileDoctor.testColor('black')" class="py-3 rounded-xl font-bold text-xs text-white bg-black border border-slate-700 cursor-pointer">BLACK</button>
-            <button onclick="SF.mobileDoctor.testColor('cyan')" class="py-3 rounded-xl font-bold text-xs text-slate-950 bg-cyan-400 cursor-pointer shadow-lg shadow-cyan-400/20">CYAN</button>
-          </div>
+        <div class="bg-[#0b1120]/90 border border-rose-600/40 rounded-xl p-3">
+          <div class="text-[10px] text-rose-400 font-bold uppercase">CPU Cores</div>
+          <div id="mdCardCpuVal" class="text-sm font-black text-white mt-1 truncate">--</div>
+        </div>
+
+        <div class="bg-[#0b1120]/90 border border-blue-600/40 rounded-xl p-3">
+          <div class="text-[10px] text-blue-400 font-bold uppercase">Screen</div>
+          <div id="mdCardScreenVal" class="text-sm font-black text-white mt-1 truncate">--</div>
         </div>
       </div>
 
-      <!-- ═════════ 3. TERMINAL / LIVE DATA PANEL ═════════ -->
-      <div id="mdPanel-terminal" class="md-panel space-y-4" style="display:none">
-        <div class="bg-[#0b1120]/80 border border-slate-800 rounded-2xl p-5">
-          <h3 class="text-sm font-black text-white mb-3">📊 Raw Live Data (From Phone)</h3>
-          <div id="mdRawDataOutput" class="bg-black/95 border border-cyan-900/40 rounded-xl p-3 font-mono text-[11px] text-green-400 overflow-y-auto mb-3 h-64">
-            <div class="text-slate-600"># Waiting for device scan...</div>
-          </div>
+      <!-- Detail List -->
+      <div class="bg-[#0b1120]/80 border border-cyan-900/40 rounded-2xl p-5">
+        <h3 class="text-sm font-black text-cyan-400 mb-4">📊 Full Diagnostic Report</h3>
+        <div id="mdDetailedReport" class="text-xs text-slate-300 space-y-3">
+          <div class="text-center py-10 text-slate-500">Connect a device to view full report.</div>
         </div>
       </div>
 
@@ -229,203 +80,99 @@
   </div>
 </div>
 
-<!-- ═══ FULLSCREEN COLOR TEST OVERLAY ═══ -->
-<div id="mdScreenTest" style="display:none; position:fixed; inset:0; z-index:99999; cursor:pointer;" onclick="SF.mobileDoctor.cycleScreenTest()">
-  <div id="mdScreenTestContent" style="width:100%; height:100%;"></div>
-  <div style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); color:white; padding:8px 18px; border-radius:12px; font-family:monospace; font-size:12px; border:1px solid rgba(255,255,255,0.2);">
-    Tap to switch color • ESC to exit [<span id="mdScreenTestCounter">1/6</span>]
-  </div>
-</div>
-
 <script>
 (function () {
   'use strict';
-
   window.SF = window.SF || {};
   
-  // Fallback Toast if SF.common is not loaded
   const C = window.SF?.common || {
-    toast: (msg, type) => {
-      const t = document.createElement('div');
-      t.className = 'fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-xl font-mono text-xs shadow-2xl transition duration-300 flex items-center gap-2 ' +
-        (type === 'error' ? 'bg-rose-950 border border-rose-500 text-white' : 'bg-cyan-950 border border-cyan-400 text-cyan-200');
-      t.innerHTML = `<span>⚡</span><span>${msg}</span>`;
-      document.body.appendChild(t);
-      setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3500);
-    }
+    toast: (msg) => alert(msg)
   };
 
   const MD = {
     connected: false,
     currentSessionId: null,
-    pollInterval: null,
-    screenTestColors: ['#dc2626', '#16a34a', '#2563eb', '#ffffff', '#000000', '#06b6d4'],
-    screenTestIndex: 0
+    pollInterval: null
   };
 
-  /* ═══ TAB NAVIGATION ═══ */
-  function showTab(tabId) {
-    const tabs = ['overview', 'hardware', 'terminal'];
-    tabs.forEach(t => {
-      const panel = document.getElementById('mdPanel-' + t);
-      const btn = document.getElementById('mdTab-' + t);
-      if (t === tabId) {
-        if (panel) panel.style.display = 'block';
-        if (btn) btn.className = 'md-tab flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition text-white bg-gradient-to-r from-cyan-600/80 to-blue-600/60 shadow-[0_0_12px_rgba(6,182,212,0.3)] border border-cyan-400/30';
-      } else {
-        if (panel) panel.style.display = 'none';
-        if (btn) btn.className = 'md-tab flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800/50';
-      }
-    });
-  }
-
-  /* ═══ CONNECT LOGIC (QR CODE) ═══ */
   async function connect() {
     if (MD.connected) {
-      // Reset Logic
       MD.connected = false;
       clearInterval(MD.pollInterval);
       document.getElementById('mdDeviceHeaderCard').classList.add('hidden');
-      document.getElementById('mdSidebarStatusText').textContent = 'Disconnected';
-      document.getElementById('mdSidebarStatusText').className = 'text-[11px] font-mono text-rose-400 font-bold';
       document.getElementById('mdConnectBtnText').textContent = 'Scan QR to Connect';
-      document.getElementById('mdConnectBtn').className = 'relative group overflow-hidden bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 text-white font-extrabold px-5 py-2.5 rounded-xl text-xs flex items-center gap-2 cursor-pointer';
       
-      // Reset UI Cards
-      document.getElementById('mdCardBatteryVal').textContent = '--%';
-      document.getElementById('mdCardBatterySub').textContent = 'Waiting...';
-      document.getElementById('mdCardRamVal').textContent = '--';
-      document.getElementById('mdCardRamSub').textContent = 'Waiting...';
-      document.getElementById('mdCardScreenVal').textContent = '--';
-      document.getElementById('mdCardNetVal').textContent = '--';
-      document.getElementById('mdHeroScore').textContent = '--';
-      document.getElementById('mdHeroScoreLabel').textContent = 'Pending';
+      // Reset Cards
+      ['NetVal','BatteryVal','ChargeVal','RamVal','CpuVal','ScreenVal'].forEach(id => {
+        document.getElementById(id).textContent = '--';
+      });
+      document.getElementById('mdDetailedReport').innerHTML = '<div class="text-center py-10 text-slate-500">Connect a device to view full report.</div>';
       return;
     }
 
-    // Generate unique session ID
     MD.currentSessionId = 'doc-' + Date.now();
-    
-    // Construct the URL for phone-test.html
     const baseUrl = window.location.origin + window.location.pathname.replace(/\/app\.html.*$/, '/').replace(/\/index\.html.*$/, '/');
     const testUrl = baseUrl + 'phone-test.html?id=' + MD.currentSessionId;
-    
-    // Generate QR Code using API
     const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(testUrl)}`;
 
-    // Create Modal Overlay
     const overlay = document.createElement('div');
     overlay.id = 'qrOverlay';
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.85);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;padding:20px;';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;';
     
     overlay.innerHTML = `
-      <div style="background:#0b1120;border:2px solid #0ea5e9;border-radius:20px;padding:30px;text-align:center;max-width:380px;width:100%;box-shadow:0 0 30px rgba(14,165,233,0.3);">
-        <h3 style="color:#38bdf8;font-size:20px;font-weight:900;margin-bottom:10px;">📱 Scan to Test</h3>
-        <p style="color:#94a3b8;font-size:12px;margin-bottom:20px;line-height:1.6;">
-          ১. আপনার ফোনের ক্যামেরা খুলুন<br>
-          ২. নিচের QR কোডটি স্ক্যান করুন<br>
-          ৩. ফোনে পেজটি ওপেন হলে অপেক্ষা করুন
-        </p>
-        <div style="background:white;padding:10px;border-radius:12px;display:inline-block;box-shadow:0 0 15px rgba(255,255,255,0.1);">
-          <img src="${qrImageUrl}" alt="QR Code" style="width:220px;height:220px;display:block;">
+      <div style="background:#0b1120;border:2px solid #0ea5e9;border-radius:20px;padding:30px;text-align:center;max-width:380px;width:100%;">
+        <h3 style="color:#38bdf8;font-size:20px;font-weight:900;margin-bottom:10px;">Scan to Test Device</h3>
+        <div style="background:white;padding:10px;border-radius:12px;display:inline-block;">
+          <img src="${qrImageUrl}" style="width:220px;height:220px;">
         </div>
-        <div id="scanStatus" style="margin-top:20px;font-size:12px;color:#f59e0b;font-weight:bold;padding:10px;border-radius:8px;background:rgba(245,158,11,0.1);">
-          ⏳ ফোন থেকে ডেটা আসার অপেক্ষায়...
-        </div>
-        <button onclick="document.getElementById('qrOverlay').remove(); clearInterval(SF.mobileDoctor.state.pollInterval);" style="margin-top:20px;background:#1e293b;color:#cbd5e1;padding:10px 24px;border-radius:8px;font-weight:bold;border:none;cursor:pointer;font-size:12px;">Cancel</button>
+        <div style="margin-top:20px;font-size:12px;color:#f59e0b;font-weight:bold;">⏳ Waiting for mobile connection...</div>
+        <button onclick="document.getElementById('qrOverlay').remove(); clearInterval(SF.mobileDoctor.state.pollInterval);" style="margin-top:20px;background:#1e293b;color:white;padding:8px 20px;border-radius:8px;border:none;cursor:pointer;">Cancel</button>
       </div>
     `;
     
     document.body.appendChild(overlay);
     MD.connected = true;
-    document.getElementById('mdConnectBtnText').textContent = 'Connecting...';
 
-    // Poll for data from localStorage
+    // Poll localStorage for data
     MD.pollInterval = setInterval(() => {
-      try {
-        const dataStr = localStorage.getItem('sfp_doc_session_' + MD.currentSessionId);
-        if (dataStr) {
-          const data = JSON.parse(dataStr);
-          clearInterval(MD.pollInterval);
-          
-          // Remove Modal
-          const modal = document.getElementById('qrOverlay');
-          if (modal) modal.remove();
+      const dataStr = localStorage.getItem('sfp_doc_session_' + MD.currentSessionId);
+      if (dataStr) {
+        const data = JSON.parse(dataStr);
+        clearInterval(MD.pollInterval);
+        
+        const modal = document.getElementById('qrOverlay');
+        if (modal) modal.remove();
 
-          // Update UI with Real Data
-          C.toast('✅ Device Connected!', 'success');
-          document.getElementById('mdDeviceHeaderCard').classList.remove('hidden');
-          document.getElementById('mdDeviceHeaderCard').classList.add('flex');
-          document.getElementById('mdSidebarStatusText').textContent = 'ONLINE (QR)';
-          document.getElementById('mdSidebarStatusText').className = 'text-[11px] font-mono text-emerald-400 font-bold';
-          
-          document.getElementById('mdCardBatteryVal').textContent = data.battery;
-          document.getElementById('mdCardBatterySub').textContent = data.charging;
-          
-          document.getElementById('mdCardRamVal').textContent = data.ram;
-          document.getElementById('mdCardRamSub').textContent = 'Real Hardware';
-          
-          document.getElementById('mdCardScreenVal').textContent = data.screen;
-          document.getElementById('mdCardNetVal').textContent = data.network;
+        C.toast('✅ Device Connected!');
+        document.getElementById('mdDeviceHeaderCard').classList.remove('hidden');
+        document.getElementById('mdDeviceHeaderCard').classList.add('flex');
+        
+        // Populate Cards
+        document.getElementById('mdCardNetVal').textContent = data.network.split(' ')[0]; // Just 4G/5G
+        document.getElementById('mdCardBatteryVal').textContent = data.battery;
+        document.getElementById('mdCardChargeVal').textContent = data.charging.split(' ')[0]; // Yes/No
+        document.getElementById('mdCardRamVal').textContent = data.ram;
+        document.getElementById('mdCardCpuVal').textContent = data.cpu;
+        document.getElementById('mdCardScreenVal').textContent = data.screen.split(' ')[0] + 'px';
 
-          // Update Health Score to 100% for successful connection
-          document.getElementById('mdHeroScore').textContent = '100%';
-          document.getElementById('mdHeroScoreLabel').textContent = 'GOOD';
-          document.getElementById('mdHeroScoreLabel').className = 'text-[10px] font-bold text-emerald-400 uppercase tracking-widest';
-          document.getElementById('mdScoreCircle').setAttribute('stroke-dashoffset', '0');
-          
-          document.getElementById('mdPassCount').textContent = '8';
-          document.getElementById('mdWarnCount').textContent = '0';
-          document.getElementById('mdFailCount').textContent = '0';
+        // Populate Detailed Report
+        document.getElementById('mdDetailedReport').innerHTML = `
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="bg-slate-900 p-3 rounded-lg flex justify-between"><span class="text-slate-400">📱 OS Platform:</span><span class="font-bold text-white">${data.os}</span></div>
+            <div class="bg-slate-900 p-3 rounded-lg flex justify-between"><span class="text-slate-400">📶 Network:</span><span class="font-bold text-sky-400">${data.network}</span></div>
+            <div class="bg-slate-900 p-3 rounded-lg flex justify-between"><span class="text-slate-400">🔋 Battery:</span><span class="font-bold text-emerald-400">${data.battery} (${data.charging})</span></div>
+            <div class="bg-slate-900 p-3 rounded-lg flex justify-between"><span class="text-slate-400">🧠 RAM:</span><span class="font-bold text-purple-400">${data.ram}</span></div>
+            <div class="bg-slate-900 p-3 rounded-lg flex justify-between"><span class="text-slate-400">⚙️ CPU:</span><span class="font-bold text-amber-400">${data.cpu}</span></div>
+            <div class="bg-slate-900 p-3 rounded-lg flex justify-between"><span class="text-slate-400">🖥️ Display:</span><span class="font-bold text-blue-400">${data.screen}</span></div>
+            <div class="bg-slate-900 p-3 rounded-lg flex justify-between col-span-1 md:col-span-2"><span class="text-slate-400">💾 Browser Storage Limit:</span><span class="font-bold text-rose-400">${data.storage}</span></div>
+          </div>
+        `;
 
-          // Reset Button
-          document.getElementById('mdConnectBtnText').textContent = 'Disconnect';
-          document.getElementById('mdConnectBtn').className = 'relative group overflow-hidden bg-gradient-to-r from-rose-600 to-red-700 text-white font-extrabold px-5 py-2.5 rounded-xl text-xs flex items-center gap-2 cursor-pointer';
-
-          // Update Raw Data Tab
-          document.getElementById('mdRawDataOutput').innerHTML = `<div class="text-cyan-400 font-bold mb-2">// Connection Successful</div>` + 
-            `<pre class="text-emerald-400">${JSON.stringify(data, null, 2)}</pre>`;
-        }
-      } catch (e) {
-        console.error('Polling error:', e);
+        document.getElementById('mdConnectBtnText').textContent = 'Disconnect';
       }
-    }, 1000); // Check every 1 second
+    }, 1000);
   }
 
-  /* ═══ HARDWARE TESTS ═══ */
-  function testColor(c) {
-    const colors = { red: '#dc2626', green: '#16a34a', blue: '#2563eb', white: '#ffffff', black: '#000000', cyan: '#06b6d4' };
-    MD.screenTestColors = [colors.red, colors.green, colors.blue, colors.white, colors.black, colors.cyan];
-    MD.screenTestIndex = MD.screenTestColors.indexOf(colors[c]) >= 0 ? MD.screenTestColors.indexOf(colors[c]) : 0;
-    const overlay = document.getElementById('mdScreenTest');
-    const content = document.getElementById('mdScreenTestContent');
-    content.style.background = MD.screenTestColors[MD.screenTestIndex];
-    document.getElementById('mdScreenTestCounter').textContent = (MD.screenTestIndex + 1) + '/6';
-    overlay.style.display = 'block';
-  }
-
-  function cycleScreenTest() {
-    MD.screenTestIndex = (MD.screenTestIndex + 1) % MD.screenTestColors.length;
-    const content = document.getElementById('mdScreenTestContent');
-    content.style.background = MD.screenTestColors[MD.screenTestIndex];
-    document.getElementById('mdScreenTestCounter').textContent = (MD.screenTestIndex + 1) + '/6';
-  }
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      const overlay = document.getElementById('mdScreenTest');
-      if (overlay) overlay.style.display = 'none';
-    }
-  });
-
-  // Expose API
-  window.SF.mobileDoctor = {
-    connect,
-    showTab,
-    testColor,
-    cycleScreenTest,
-    state: MD
-  };
-
+  window.SF.mobileDoctor = { connect, state: MD };
 })();
 </script>
