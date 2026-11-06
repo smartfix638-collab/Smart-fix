@@ -1,7 +1,7 @@
 /* ============================================================
-   SMARTFIX ERP — SPA Router (v5.0.0 - Sidebar Layout)
+   SMARTFIX ERP — SPA Router (v5.1.0 - Updated Sidebar)
    File: js/router.js
-   Purpose: Updated to render categorized sidebar menu
+   Purpose: Removed Settings from Sidebar (Moved to Top Bar)
    ============================================================ */
 
 import { emit, on } from './state.js';
@@ -36,7 +36,7 @@ export const ROUTE_ORDER = [
 ];
 
 /* ============================================================
-   SIDEBAR CATEGORIES (Match Screenshot Layout)
+   SIDEBAR CATEGORIES (Settings removed - now in Top Bar)
    ============================================================ */
 const SIDEBAR_CATEGORIES = [
   { 
@@ -53,7 +53,7 @@ const SIDEBAR_CATEGORIES = [
   },
   { 
     title: 'Management', 
-    items: ['manual', 'settings'] 
+    items: ['manual'] // ⭐ 'settings' removed from here
   }
 ];
 
@@ -279,10 +279,8 @@ function updateSidebarActiveState(routeKey) {
   const route = ROUTES[routeKey];
   if (!route) return;
   
-  // Remove active class from all links
   document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
   
-  // Add active class to current
   const activeEl = document.getElementById('nav-' + routeKey);
   if (activeEl) activeEl.classList.add('active');
   
@@ -298,10 +296,7 @@ export function renderTabBar(allowedRoutes) {
   let html = '';
   
   SIDEBAR_CATEGORIES.forEach(category => {
-    // Filter items based on permissions
     const catItems = category.items.filter(key => routes.includes(key));
-    
-    // Skip empty categories
     if (catItems.length === 0) return;
     
     if (category.title) {
@@ -311,8 +306,11 @@ export function renderTabBar(allowedRoutes) {
     catItems.forEach(key => {
       const r = ROUTES[key];
       if (!r) return;
+      
       html += `
-        <div id="nav-${key}" onclick="SF.router.go('${key}'); if(window.innerWidth < 768) toggleSidebar();" 
+        <div id="nav-${key}" tabindex="0" 
+             onclick="SF.router.go('${key}'); if(window.innerWidth < 768) toggleSidebar();" 
+             onkeydown="handleSidebarKeydown(event, '${key}')"
              class="sidebar-link" title="${r.description} (${r.shortcut})">
           <span class="text-base w-5 text-center">${r.icon}</span>
           <span class="flex-1 truncate">${r.label}</span>
@@ -325,6 +323,26 @@ export function renderTabBar(allowedRoutes) {
   
   if (ROUTER.currentRoute) updateSidebarActiveState(ROUTER.currentRoute);
 }
+
+// Keyboard navigation for Sidebar
+window.handleSidebarKeydown = function(event, routeKey) {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    SF.router.go(routeKey);
+    if (window.innerWidth < 768) toggleSidebar();
+  } 
+  else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    event.preventDefault();
+    const links = Array.from(document.querySelectorAll('.sidebar-link'));
+    const currentIndex = links.findIndex(link => link.id === 'nav-' + routeKey);
+    
+    if (event.key === 'ArrowDown' && currentIndex < links.length - 1) {
+      links[currentIndex + 1].focus();
+    } else if (event.key === 'ArrowUp' && currentIndex > 0) {
+      links[currentIndex - 1].focus();
+    }
+  }
+};
 
 
 export const Router = {
@@ -350,4 +368,4 @@ window.addEventListener('popstate', () => {
   }
 });
 
-console.log('%c🧭 Router ready (v5.0.0 Sidebar)', 'color:#06b6d4;font-weight:bold;font-size:11px');
+console.log('%c🧭 Router ready (v5.1.0 Sidebar)', 'color:#06b6d4;font-weight:bold;font-size:11px');
