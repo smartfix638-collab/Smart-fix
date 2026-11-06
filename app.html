@@ -28,8 +28,9 @@ html, body { margin: 0; padding: 0; height: 100vh; font-family: -apple-system, B
 ::-webkit-scrollbar-thumb:hover { background: rgba(56, 189, 248, 0.4); }
 
 /* Sidebar */
-.sidebar-link { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; color: #94a3b8; transition: all 0.2s; text-decoration: none; margin-bottom: 2px; cursor: pointer; }
+.sidebar-link { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; color: #94a3b8; transition: all 0.2s; text-decoration: none; margin-bottom: 2px; cursor: pointer; outline: none; }
 .sidebar-link:hover { background: rgba(30, 41, 59, 0.6); color: #e2e8f0; }
+.sidebar-link:focus { background: rgba(14, 165, 233, 0.2); color: #38bdf8; box-shadow: inset 0 0 0 1px #0ea5e9; }
 .sidebar-link.active { background: rgba(14, 165, 233, 0.15); color: #38bdf8; border-right: 3px solid #38bdf8; }
 .sidebar-cat-title { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #475569; letter-spacing: 1px; padding: 16px 16px 8px 16px; }
 
@@ -116,21 +117,25 @@ html, body { margin: 0; padding: 0; height: 100vh; font-family: -apple-system, B
 
       <!-- Right: Actions & Profile -->
       <div class="flex items-center gap-2 sm:gap-3">
-        <button class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 text-sm">🔔</button>
-        <button class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 text-sm">⚙️</button>
+        
+        <!-- ⭐ Backup Button (One Click) -->
+        <button onclick="triggerQuickBackup()" class="w-8 h-8 rounded-lg bg-emerald-950/40 hover:bg-emerald-900/60 border border-emerald-800/50 text-emerald-400 flex items-center justify-center text-sm transition-colors" title="Quick Backup">💾</button>
+        
+        <!-- ⭐ Settings Button (Direct Link) -->
+        <button onclick="SF.router.go('settings')" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 text-sm transition-colors" title="Settings">⚙️</button>
         
         <div class="w-px h-6 bg-slate-700 mx-1 hidden sm:block"></div>
 
-        <!-- User Profile -->
-        <div class="flex items-center gap-2 cursor-pointer p-1 pr-2 rounded-lg hover:bg-slate-800/50 transition">
-          <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-lg">D</div>
+        <!-- ⭐ User Profile (Store Name) -->
+        <div class="flex items-center gap-2 cursor-pointer p-1 pr-2 rounded-lg hover:bg-slate-800/50 transition" onclick="SF.router.go('settings')">
+          <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-lg">🏪</div>
           <div class="hidden sm:block text-left">
-            <div class="text-[11px] font-bold text-white leading-tight" data-store-name>Demo mobile store</div>
-            <div class="text-[9px] text-slate-400" data-owner-email>owner@gmail.com</div>
+            <div class="text-[12px] font-bold text-white leading-tight truncate max-w-[120px]" data-store-name>Store Name</div>
+            <div class="text-[9px] text-slate-400">Manage Account</div>
           </div>
         </div>
 
-        <button type="button" id="logoutBtn" class="w-8 h-8 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/50 text-rose-400 flex items-center justify-center text-sm ml-1" title="Sign out">⏏</button>
+        <button type="button" id="logoutBtn" class="w-8 h-8 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/50 text-rose-400 flex items-center justify-center text-sm ml-1 transition-colors" title="Sign out">⏏</button>
       </div>
     </header>
 
@@ -166,6 +171,43 @@ window.toggleSidebar = function() {
     overlay.classList.add('hidden');
   }
 }
+
+// ⭐ One-Click Backup Logic
+window.triggerQuickBackup = async function() {
+  try {
+    // Try using the settings module if loaded
+    if (window.SF && window.SF.settings && typeof window.SF.settings.runDailyBackupNow === 'function') {
+      await window.SF.settings.runDailyBackupNow();
+      return;
+    }
+    
+    // Fallback: simple JSON download from localStorage
+    const keys = ['sfp_store_profile', 'sfp_invoices', 'sfp_stock', 'sfp_parties', 'sfp_purchases', 'sfp_vouchers', 'sfp_credit_notes', 'sfp_staff', 'sfp_repairs'];
+    const backup = { exportedAt: new Date().toISOString(), app: 'SmartFix ERP' };
+    
+    keys.forEach(k => {
+      try { backup[k] = JSON.parse(localStorage.getItem(k) || '[]'); } catch(e) {}
+    });
+    
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `SmartFix_Backup_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    if (window.SF && window.SF.common && window.SF.common.toast) {
+      window.SF.common.toast('✅ Backup downloaded successfully', 'success');
+    } else {
+      alert('✅ Backup downloaded successfully');
+    }
+  } catch (err) {
+    alert('Backup failed: ' + err.message);
+  }
+};
 
 // Service Worker
 if ('serviceWorker' in navigator) {
